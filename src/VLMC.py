@@ -18,32 +18,10 @@ class VLMC(object):
   @classmethod
   def from_json(cls, s):
     """
-      Expects the json to be in a tree-like format:
-      '{"label":"","children":[{"prob":0.5,"label":"A","children":[{"prob":0.5,"label":"B","children":[{"label":"A","prob":0.5},{"label":"B","prob":0.5}]},{"prob":0.5,"label":"A","children":[{"label":"A","prob":0.5},{"label":"B","prob":0.5}]}]},{"prob":0.5,"label":"B","children":[{"label":"A","prob":0.5},{"label":"B","prob":0.5}]}]}'
+      Expects the json to be in the following format:
+      '{"":{"A":0.5,"B":0.5},"A":{"B":0.5,"A":0.5},"B":{"A":0.5,"B":0.5},"BA":{"A":0.5,"B":0.5},"AA":{"A":0.5,"B":0.5}}'
     """
-    graph = {}
-
-    data = json.loads(s)
-
-    queue = Queue()
-    queue.put({'data': data, 'prev_label': ""})
-
-    while not queue.empty():
-      item = queue.get()
-      children = item['data']['children']
-
-      key = item['data']['label'] + item['prev_label']
-      #node = [{'label': child['label']: 'prob': child['prob']} for child in children]
-      #graph[key] = node
-      dict_children = {}
-      for child in children:
-        dict_children[child['label']] = child['prob']
-      graph[key] = dict_children
-
-      # Filter children who aren't nodes (have no own children)
-      node_children = list(filter(lambda c: 'children' in c, children))
-      [queue.put({'data': child, 'prev_label': key}) for child in node_children]
-
+    graph = json.loads(s)
     return VLMC(graph)
 
   def to_json(self):
@@ -74,7 +52,7 @@ class VLMC(object):
     return prob
 
 
-s = '{"label":"","children":[{"prob":0.5,"label":"A","children":[{"prob":0.5,"label":"B","children":[{"label":"A","prob":0.5},{"label":"B","prob":0.5}]},{"prob":0.5,"label":"A","children":[{"label":"A","prob":0.5},{"label":"B","prob":0.5}]}]},{"prob":0.5,"label":"B","children":[{"label":"A","prob":0.5},{"label":"B","prob":0.5}]}]}'
+s = '{"":{"A":0.5,"B":0.5},"A":{"B":0.5,"A":0.5},"B":{"A":0.5,"B":0.5},"BA":{"A":0.5,"B":0.5},"AA":{"A":0.5,"B":0.5}}'
 
 vlmc = VLMC.from_json(s)
 vlmc.print()
