@@ -13,6 +13,7 @@ def parse_trees(directory):
     with open(os.path.join(directory, new_file_name), 'w') as f:
       f.write(j)
 
+
 def __parse_file(file):
   graph = {}
   with open(file) as f:
@@ -38,10 +39,10 @@ def __parse_line(line):
     key = ''
   return key, children
 
+
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(description='Process directory of .tree files into .json.')
   parser.add_argument('dir', help='the directory with .tree files')
   args = parser.parse_args()
   parse_trees(args.dir)
-
 

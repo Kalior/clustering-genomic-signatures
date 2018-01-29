@@ -2,6 +2,7 @@ import numpy as np
 import json
 from queue import Queue
 import os
+from random import choices
 
 class VLMC(object):
   """
@@ -44,16 +45,16 @@ class VLMC(object):
     """
     return json.dumps(self.graph)
 
-  def negative_log_likelihood(self, sequence):
+  def log_likelihood(self, sequence):
     sequence_so_far = ""
     log_likelihood = 0
     for s in sequence:
-      prob = self.likelihood_of_char_given_sequence(s, sequence_so_far)
+      prob = self.probability_of_char_given_sequence(s, sequence_so_far)
       log_likelihood += np.log(prob)
       sequence_so_far += s
-    return -log_likelihood
+    return log_likelihood
 
-  def likelihood_of_char_given_sequence(self, char, seq):
+  def probability_of_char_given_sequence(self, char, seq):
     reverse_seq = seq[::-1]
     depth = 0
     prob = 1
@@ -62,9 +63,18 @@ class VLMC(object):
       prob = self.graph[current_node][char]
       depth += 1
       current_node = reverse_seq[0:depth]
-
     return prob
 
+  def generate_sequence(self, sequence_length):
+    generated_sequence = ""
+    for i in range(sequence_length):
+      generated_sequence += self.__generate_next_letter(generated_sequence)
+    return generated_sequence
+
+  def __generate_next_letter(self, current_sequence):
+    letters = ["A", "C", "G", "T"]
+    probabilities = map(lambda char: self.probability_of_char_given_sequence(char, current_sequence), letters)
+    return choices(letters, weights = probabilities)[0]
 
 if __name__ == "__main__":
   s = '{"":{"A":0.5,"B":0.5},"A":{"B":0.5,"A":0.5},"B":{"A":0.5,"B":0.5},"BA":{"A":0.5,"B":0.5},"AA":{"A":0.5,"B":0.5}}'
