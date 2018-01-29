@@ -1,6 +1,7 @@
 import numpy as np
 import json
 from queue import Queue
+import os
 
 class VLMC(object):
   """
@@ -22,6 +23,17 @@ class VLMC(object):
     """
     graph = json.loads(s)
     return VLMC(graph)
+
+  @classmethod
+  def from_json_dir(cls, directory):
+    all_vlmcs = []
+    for file in [f for f in os.listdir(directory) if f.endswith(".json")]:
+      with open(os.path.join(directory, file)) as f:
+        data = json.load(f)
+        all_vlmcs.append(VLMC(data))
+
+    return all_vlmcs
+
 
   def to_json(self):
     """
@@ -59,3 +71,4 @@ if __name__ == "__main__":
   print(vlmc.to_json())
 
   print(vlmc.negative_log_likelihood("ABABBABA"))
+  print(VLMC.from_json_dir('../../trees'))
