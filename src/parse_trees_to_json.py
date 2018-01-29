@@ -7,22 +7,23 @@ import argparse
 
 def parse_trees(directory):
   for file in [f for f in os.listdir(directory) if f.endswith(".tree")]:
-    j = __parse_file(os.path.join(directory, file))
-    name, _ = os.path.splitext(file)
+    j = parse_file(os.path.join(directory, file))
+    name, ext = os.path.splitext(file)
     new_file_name = name + '.json'
     with open(os.path.join(directory, new_file_name), 'w') as f:
       f.write(j)
 
-def __parse_file(file):
+
+def parse_file(file):
   graph = {}
   with open(file) as f:
     for line in f:
       if line[0:5] == "Node:":
-        key, children = __parse_line(line)
+        key, children = parse_line(line)
         graph[key] = children
   return json.dumps(graph)
 
-def __parse_line(line):
+def parse_line(line):
   numbers = re.findall('-?[0-9]+', line)
   children = {}
   # Assumes we're only working with ACGT (in that order)
@@ -38,10 +39,10 @@ def __parse_line(line):
     key = ''
   return key, children
 
+
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(description='Process directory of .tree files into .json.')
   parser.add_argument('dir', help='the directory with .tree files')
   args = parser.parse_args()
   parse_trees(args.dir)
-
 
