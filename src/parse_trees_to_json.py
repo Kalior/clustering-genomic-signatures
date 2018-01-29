@@ -8,7 +8,7 @@ import argparse
 def parse_trees(directory):
   for file in [f for f in os.listdir(directory) if f.endswith(".tree")]:
     j = __parse_file(os.path.join(directory, file))
-    name, ext = os.path.splitext(file)
+    name, _ = os.path.splitext(file)
     new_file_name = name + '.json'
     with open(os.path.join(directory, new_file_name), 'w') as f:
       f.write(j)
