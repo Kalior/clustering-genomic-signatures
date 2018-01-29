@@ -2,7 +2,6 @@ import numpy as np
 import json
 from queue import Queue
 
-
 class VLMC(object):
   """
 
@@ -52,10 +51,11 @@ class VLMC(object):
     return prob
 
 
-s = '{"":{"A":0.5,"B":0.5},"A":{"B":0.5,"A":0.5},"B":{"A":0.5,"B":0.5},"BA":{"A":0.5,"B":0.5},"AA":{"A":0.5,"B":0.5}}'
+if __name__ == "__main__":
+  s = '{"":{"A":0.5,"B":0.5},"A":{"B":0.5,"A":0.5},"B":{"A":0.5,"B":0.5},"BA":{"A":0.5,"B":0.5},"AA":{"A":0.5,"B":0.5}}'
 
-vlmc = VLMC.from_json(s)
-vlmc.print()
-print(vlmc.to_json())
+  vlmc = VLMC.from_json(s)
+  vlmc.print()
+  print(vlmc.to_json())
 
-print(vlmc.negative_log_likelihood("ABABBABA"))
+  print(vlmc.negative_log_likelihood("ABABBABA"))
