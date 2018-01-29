@@ -71,3 +71,4 @@ if __name__ == "__main__":
   print(vlmc.to_json())
 
   print(vlmc.negative_log_likelihood("ABABBABA"))
+  print(VLMC.from_json_dir('../../trees'))
