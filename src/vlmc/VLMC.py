@@ -14,8 +14,8 @@ class VLMC(object):
     self.graph = graph
     self.name = name
 
-  def print(self):
-    print(self.graph)
+  def __str__(self):
+    return self.name
 
   @classmethod
   def from_json(cls, s, name=""):
@@ -70,8 +70,8 @@ if __name__ == "__main__":
   s = '{"":{"A":0.5,"B":0.5},"A":{"B":0.5,"A":0.5},"B":{"A":0.5,"B":0.5},"BA":{"A":0.5,"B":0.5},"AA":{"A":0.5,"B":0.5}}'
 
   vlmc = VLMC.from_json(s)
-  vlmc.print()
+  print(str(vlmc))
   print(vlmc.to_json())
 
   print(vlmc.negative_log_likelihood("ABABBABA"))
-  print([v.name for v in VLMC.from_json_dir('../../trees')])
+  print([str(v) for v in VLMC.from_json_dir('../../trees')])
