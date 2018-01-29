@@ -1,5 +1,17 @@
+#! /usr/bin/python
+
 import json
 import re
+import os
+import argparse
+
+def parse_trees(directory):
+  for file in [f for f in os.listdir(directory) if f.endswith(".tree")]:
+    j = parse_file(os.path.join(directory, file))
+    name, ext = os.path.splitext(file)
+    new_file_name = name + '.json'
+    with open(os.path.join(directory, new_file_name), 'w') as f:
+      f.write(j)
 
 def parse_file(file):
   graph = {}
@@ -26,6 +38,10 @@ def parse_line(line):
     key = ''
   return key, children
 
-j = parse_file('M3_AB026117.1_10229_34094.tree')
-#vlmc = VLMC.from_json(j)
-#print(j.negative_log_likelihood("ACCACAGT"))
+if __name__ == '__main__':
+  parser = argparse.ArgumentParser(description='Process directory of .tree files into .json.')
+  parser.add_argument('dir', help='the directory with .tree files')
+  args = parser.parse_args()
+  parse_trees(args.dir)
+
+
