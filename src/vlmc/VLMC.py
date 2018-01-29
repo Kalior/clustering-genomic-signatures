@@ -9,28 +9,31 @@ class VLMC(object):
 
   """
   graph = {}
-  def __init__(self, graph):
+  name = ""
+  def __init__(self, graph, name):
     self.graph = graph
+    self.name = name
 
   def print(self):
     print(self.graph)
 
   @classmethod
-  def from_json(cls, s):
+  def from_json(cls, s, name=""):
     """
       Expects the json to be in the following format:
       '{"":{"A":0.5,"B":0.5},"A":{"B":0.5,"A":0.5},"B":{"A":0.5,"B":0.5},"BA":{"A":0.5,"B":0.5},"AA":{"A":0.5,"B":0.5}}'
     """
     graph = json.loads(s)
-    return VLMC(graph)
+    return VLMC(graph, name)
 
   @classmethod
   def from_json_dir(cls, directory):
     all_vlmcs = []
     for file in [f for f in os.listdir(directory) if f.endswith(".json")]:
+      name, _ = os.path.splitext(file)
       with open(os.path.join(directory, file)) as f:
-        data = json.load(f)
-        all_vlmcs.append(VLMC(data))
+        graph = json.load(f)
+        all_vlmcs.append(VLMC(graph, name))
 
     return all_vlmcs
 
@@ -71,4 +74,4 @@ if __name__ == "__main__":
   print(vlmc.to_json())
 
   print(vlmc.negative_log_likelihood("ABABBABA"))
-  print(VLMC.from_json_dir('../../trees'))
+  print([v.name for v in VLMC.from_json_dir('../../trees')])
