@@ -45,14 +45,14 @@ class VLMC(object):
     """
     return json.dumps(self.graph)
 
-  def negative_log_likelihood(self, sequence):
+  def log_likelihood(self, sequence):
     sequence_so_far = ""
     log_likelihood = 0
     for s in sequence:
       prob = self.likelihood_of_char_given_sequence(s, sequence_so_far)
       log_likelihood += np.log(prob)
       sequence_so_far += s
-    return -log_likelihood
+    return log_likelihood
 
   def likelihood_of_char_given_sequence(self, char, seq):
     reverse_seq = seq[::-1]

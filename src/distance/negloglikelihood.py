@@ -18,6 +18,6 @@ def distance(left_vlmc, right_vlmc):
 
 def calculate_cross_entropy(left, right, sequence_length):
   generated_sequence = left.generate_sequence(sequence_length)
-  return (-left.negative_log_likelihood(generated_sequence)
-          + right.negative_log_likelihood(generated_sequence))
+  return (left.log_likelihood(generated_sequence)
+          - right.log_likelihood(generated_sequence))
 
