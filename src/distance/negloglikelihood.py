@@ -13,11 +13,11 @@ class NegativeLogLikelihood():
     self.generated_sequence_length = sequence_length
 
   def distance(self, left_vlmc, right_vlmc):
-    d_left_right = self.__calculate_cross_entropy(left_vlmc, right_vlmc)
-    d_right_left = self.__calculate_cross_entropy(right_vlmc, left_vlmc)
+    d_left_right = self._calculate_cross_entropy(left_vlmc, right_vlmc)
+    d_right_left = self._calculate_cross_entropy(right_vlmc, left_vlmc)
     return (d_left_right + d_right_left)/2
 
-  def __calculate_cross_entropy(self, left, right):
+  def _calculate_cross_entropy(self, left, right):
     generated_sequence = left.generate_sequence(self.generated_sequence_length)
     return (left.log_likelihood(generated_sequence)
             - right.log_likelihood(generated_sequence))
