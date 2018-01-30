@@ -70,7 +70,9 @@ class VLMC(object):
   def generate_sequence(self, sequence_length):
     generated_sequence = ""
     for i in range(sequence_length):
-      generated_sequence += self._generate_next_letter(generated_sequence)
+      # only send the last /order/ number of characters
+      next_letter = self._generate_next_letter(generated_sequence[-self.order:])
+      generated_sequence += next_letter
     return generated_sequence
 
   def _generate_next_letter(self, current_sequence):
