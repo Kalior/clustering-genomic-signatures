@@ -26,8 +26,8 @@ def test_distance_function(d):
     elapsed_time = time.time() - start_time
     closest_vlmc_i = distances.index(min(distances))
     closest_vlmc = vlmcs[closest_vlmc_i]
-    print(vlmc.name + "\nis closest to\n" + closest_vlmc.name + "\n" + str(vlmc == closest_vlmc)
-          + "\nDistance calculated in " + str(elapsed_time) + "s\n\n")
+    print("{} is closest to {}, matches self: {}.\nDistance calculated in: {}s\n\n".format(
+        vlmc.name, closest_vlmc.name, vlmc == closest_vlmc, elapsed_time))
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(
