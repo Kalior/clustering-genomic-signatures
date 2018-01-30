@@ -4,18 +4,20 @@ from queue import Queue
 import os
 from random import choices
 
+
 class VLMC(object):
   """
 
 
   """
-  graph = {}
+  tree = {}
   name = ""
   order = -1
-  def __init__(self, graph, name):
-    self.graph = graph
+
+  def __init__(self, tree, name):
+    self.tree = tree
     self.name = name
-    self.order = self._calculate_order(graph)
+    self.order = self._calculate_order(tree)
 
   def __str__(self):
     return self.name
@@ -26,8 +28,8 @@ class VLMC(object):
       Expects the json to be in the following format:
       '{"":{"A":0.5,"B":0.5},"A":{"B":0.5,"A":0.5},"B":{"A":0.5,"B":0.5},"BA":{"A":0.5,"B":0.5},"AA":{"A":0.5,"B":0.5}}'
     """
-    graph = json.loads(s)
-    return VLMC(graph, name)
+    tree = json.loads(s)
+    return VLMC(tree, name)
 
   @classmethod
   def from_json_dir(cls, directory):
@@ -35,17 +37,16 @@ class VLMC(object):
     for file in [f for f in os.listdir(directory) if f.endswith(".json")]:
       name, _ = os.path.splitext(file)
       with open(os.path.join(directory, file)) as f:
-        graph = json.load(f)
-        all_vlmcs.append(VLMC(graph, name))
+        tree = json.load(f)
+        all_vlmcs.append(VLMC(tree, name))
 
     return all_vlmcs
-
 
   def to_json(self):
     """
       Returns the vlmc tree in the same format as from_json expects.
     """
-    return json.dumps(self.graph)
+    return json.dumps(self.tree)
 
   def log_likelihood(self, sequence):
     sequence_so_far = ""
@@ -61,8 +62,8 @@ class VLMC(object):
     depth = 0
     prob = 1
     current_node = reverse_seq[0:depth]
-    while current_node in self.graph and depth < len(seq):
-      prob = self.graph[current_node][char]
+    while current_node in self.tree and depth < len(seq):
+      prob = self.tree[current_node][char]
       depth += 1
       current_node = reverse_seq[0:depth]
     return prob
@@ -77,11 +78,12 @@ class VLMC(object):
 
   def _generate_next_letter(self, current_sequence):
     letters = ["A", "C", "G", "T"]
-    probabilities = map(lambda char: self._probability_of_char_given_sequence(char, current_sequence), letters)
-    return choices(letters, weights = probabilities)[0]
+    probabilities = map(lambda char: self._probability_of_char_given_sequence(
+        char, current_sequence), letters)
+    return choices(letters, weights=probabilities)[0]
 
-  def _calculate_order(self, graph):
-    return max(map(lambda k: len(k), graph.keys()))
+  def _calculate_order(self, tree):
+    return max(map(lambda k: len(k), tree.keys()))
 
 
 if __name__ == "__main__":

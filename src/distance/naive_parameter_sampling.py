@@ -13,8 +13,8 @@ class NaiveParameterSampling():
   def distance(self, left_vlmc, right_vlmc):
     # Assume this is the alphabet, only relevant case for us.
     alphabet = ['A', 'C', 'G', 'T']
-    left_tree = left_vlmc.graph
-    right_tree = right_vlmc.graph
+    left_tree = left_vlmc.tree
+    right_tree = right_vlmc.tree
 
     symmetric_distance = (self._assymmetric_distance(left_tree, right_tree, alphabet)
                           + self._assymmetric_distance(right_tree, left_tree, alphabet)) / 2
