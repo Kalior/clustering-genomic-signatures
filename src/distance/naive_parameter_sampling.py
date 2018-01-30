@@ -28,7 +28,7 @@ class NaiveParameterSampling():
     s = np.sqrt(s)
     return s
 
-  def _min_value_of_same_order(self, tree, parameter, prob, char):
-    probabilities = [tree[k][char] for k in tree.keys() if len(k) == len(parameter)]
+  def _min_value_of_same_order(self, tree, context, prob, char):
+    probabilities = [tree[k][char] for k in tree.keys() if len(k) == len(context)]
     val = min(np.power((val - prob), 2) for val in probabilities)
     return val
