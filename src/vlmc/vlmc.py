@@ -11,9 +11,11 @@ class VLMC(object):
   """
   graph = {}
   name = ""
+  order = -1
   def __init__(self, graph, name):
     self.graph = graph
     self.name = name
+    self.order = self._calculate_order(graph)
 
   def __str__(self):
     return self.name
@@ -75,6 +77,10 @@ class VLMC(object):
     letters = ["A", "C", "G", "T"]
     probabilities = map(lambda char: self.probability_of_char_given_sequence(char, current_sequence), letters)
     return choices(letters, weights = probabilities)[0]
+
+  def _calculate_order(self, graph):
+    return max(map(lambda k: len(k), graph.keys()))
+
 
 if __name__ == "__main__":
   s = '{"":{"A":0.5,"B":0.5},"A":{"B":0.5,"A":0.5},"B":{"A":0.5,"B":0.5},"BA":{"A":0.5,"B":0.5},"AA":{"A":0.5,"B":0.5}}'
