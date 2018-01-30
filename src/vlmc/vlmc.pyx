@@ -1,18 +1,14 @@
-import numpy as np
+import math
 import json
 from queue import Queue
 import os
 from random import choices
 
 
-class VLMC(object):
-  """
-
-
-  """
-  tree = {}
-  name = ""
-  order = -1
+cdef class VLMC(object):
+  cdef public dict tree
+  cdef public str name
+  cdef int order
 
   def __init__(self, tree, name):
     self.tree = tree
@@ -48,38 +44,39 @@ class VLMC(object):
     """
     return json.dumps(self.tree)
 
-  def log_likelihood(self, sequence):
-    sequence_so_far = ""
-    log_likelihood = 0
+  cpdef double log_likelihood(self, sequence):
+    cdef str sequence_so_far = ""
+    cdef double log_likelihood = 0.0
     for s in sequence:
-      prob = self._probability_of_char_given_sequence(s, sequence_so_far)
-      log_likelihood += np.log(prob)
+      prob = self._probability_of_char_given_sequence(s, sequence_so_far[-self.order:])
+      log_likelihood += math.log(prob)
       sequence_so_far += s
     return log_likelihood
 
-  def _probability_of_char_given_sequence(self, char, seq):
-    reverse_seq = seq[::-1]
-    depth = 0
-    prob = 1
-    current_node = reverse_seq[0:depth]
+  cdef double _probability_of_char_given_sequence(self, char, seq):
+    cdef str reverse_seq = seq[::-1]
+    cdef int depth = 0
+    cdef double prob = 1.0
+    cdef str current_node = ""
+    # Search down the tree for either the order of the vlmc, or the length of the string
     while current_node in self.tree and depth < len(seq):
       prob = self.tree[current_node][char]
       depth += 1
       current_node = reverse_seq[0:depth]
     return prob
 
-  def generate_sequence(self, sequence_length):
-    generated_sequence = ""
+  cpdef public str generate_sequence(self, sequence_length):
+    cdef str generated_sequence = ""
     for i in range(sequence_length):
       # only send the last /order/ number of characters
       next_letter = self._generate_next_letter(generated_sequence[-self.order:])
       generated_sequence += next_letter
     return generated_sequence
 
-  def _generate_next_letter(self, current_sequence):
-    letters = ["A", "C", "G", "T"]
-    probabilities = map(lambda char: self._probability_of_char_given_sequence(
-        char, current_sequence), letters)
+  cdef str _generate_next_letter(self, current_sequence):
+    cdef list letters = ["A", "C", "G", "T"]
+    probabilities = map(lambda char_: self._probability_of_char_given_sequence(
+        char_, current_sequence), letters)
     return choices(letters, weights=probabilities)[0]
 
   def _calculate_order(self, tree):
