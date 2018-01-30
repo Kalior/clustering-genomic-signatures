@@ -1,1 +1,1 @@
-from .VLMC import VLMC
+from .vlmc import VLMC

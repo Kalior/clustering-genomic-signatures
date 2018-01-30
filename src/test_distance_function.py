@@ -3,6 +3,7 @@ from vlmc import VLMC
 from distance import NegativeLogLikelihood, NaiveParameterSampling
 import parse_trees_to_json
 import argparse
+import time
 
 
 def test_negloglike(sequence_length):
@@ -20,11 +21,13 @@ def test_distance_function(d):
   parse_trees_to_json.parse_trees(tree_dir)
   vlmcs = VLMC.from_json_dir(tree_dir)
   for vlmc in vlmcs:
+    start_time = time.time()
     distances = list(map(lambda other: d.distance(vlmc, other), vlmcs))
+    elapsed_time = time.time() - start_time
     closest_vlmc_i = distances.index(min(distances))
     closest_vlmc = vlmcs[closest_vlmc_i]
-    print(vlmc.name + "\nis closest to\n" + closest_vlmc.name +
-          "\n" + str(vlmc == closest_vlmc) + "\n\n")
+    print(vlmc.name + "\nis closest to\n" + closest_vlmc.name + "\n" + str(vlmc == closest_vlmc)
+          + "\nDistance calculated in " + str(elapsed_time) + "s\n\n")
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(

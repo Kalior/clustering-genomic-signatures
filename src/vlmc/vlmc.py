@@ -11,9 +11,11 @@ class VLMC(object):
   """
   graph = {}
   name = ""
+  order = -1
   def __init__(self, graph, name):
     self.graph = graph
     self.name = name
+    self.order = self._calculate_order(graph)
 
   def __str__(self):
     return self.name
@@ -49,12 +51,12 @@ class VLMC(object):
     sequence_so_far = ""
     log_likelihood = 0
     for s in sequence:
-      prob = self.probability_of_char_given_sequence(s, sequence_so_far)
+      prob = self._probability_of_char_given_sequence(s, sequence_so_far)
       log_likelihood += np.log(prob)
       sequence_so_far += s
     return log_likelihood
 
-  def probability_of_char_given_sequence(self, char, seq):
+  def _probability_of_char_given_sequence(self, char, seq):
     reverse_seq = seq[::-1]
     depth = 0
     prob = 1
@@ -68,13 +70,19 @@ class VLMC(object):
   def generate_sequence(self, sequence_length):
     generated_sequence = ""
     for i in range(sequence_length):
-      generated_sequence += self.__generate_next_letter(generated_sequence)
+      # only send the last /order/ number of characters
+      next_letter = self._generate_next_letter(generated_sequence[-self.order:])
+      generated_sequence += next_letter
     return generated_sequence
 
-  def __generate_next_letter(self, current_sequence):
+  def _generate_next_letter(self, current_sequence):
     letters = ["A", "C", "G", "T"]
-    probabilities = map(lambda char: self.probability_of_char_given_sequence(char, current_sequence), letters)
+    probabilities = map(lambda char: self._probability_of_char_given_sequence(char, current_sequence), letters)
     return choices(letters, weights = probabilities)[0]
+
+  def _calculate_order(self, graph):
+    return max(map(lambda k: len(k), graph.keys()))
+
 
 if __name__ == "__main__":
   s = '{"":{"A":0.5,"B":0.5},"A":{"B":0.5,"A":0.5},"B":{"A":0.5,"B":0.5},"BA":{"A":0.5,"B":0.5},"AA":{"A":0.5,"B":0.5}}'
