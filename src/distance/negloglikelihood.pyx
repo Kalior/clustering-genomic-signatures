@@ -9,6 +9,7 @@ cdef class NegativeLogLikelihood(object):
   Where log Pr(s | x) is the negative log-likelihood of sequence s given vlmc x.
   """
   cdef int generated_sequence_length
+  length_of_pregenerated_sequence = 500
 
   def __init__(self, sequence_length):
     self.generated_sequence_length = sequence_length
@@ -19,7 +20,8 @@ cdef class NegativeLogLikelihood(object):
     return (d_left_right + d_right_left) / 2
 
   cdef _calculate_cross_entropy(self, left, right):
-    cdef str generated_sequence = left.generate_sequence(self.generated_sequence_length)
+    cdef str generated_sequence = left.generate_sequence(self.generated_sequence_length,
+                                                         self.length_of_pregenerated_sequence)
     return (left.log_likelihood(generated_sequence)
             - right.log_likelihood(generated_sequence))
 

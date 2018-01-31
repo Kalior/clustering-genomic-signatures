@@ -65,13 +65,15 @@ cdef class VLMC(object):
       current_node = reverse_seq[0:depth]
     return prob
 
-  cpdef public str generate_sequence(self, sequence_length):
+  cpdef public str generate_sequence(self, sequence_length, pre_sample_length):
+    total_length = sequence_length + pre_sample_length
     cdef str generated_sequence = ""
-    for i in range(sequence_length):
-      # only send the last /order/ number of characters
+    for i in range(total_length):
+      # only send the last /order/ number of characters to generate next letter
       next_letter = self._generate_next_letter(generated_sequence[-self.order:])
       generated_sequence += next_letter
-    return generated_sequence
+    # return the suffix with length sequence_length
+    return generated_sequence[-sequence_length:]
 
   cdef str _generate_next_letter(self, current_sequence):
     cdef list letters = ["A", "C", "G", "T"]
