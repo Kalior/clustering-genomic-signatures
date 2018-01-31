@@ -68,7 +68,7 @@ cdef class VLMC(object):
       current_node = reverse_seq[0:depth]
     return prob
 
-  cpdef public str generate_sequence(self, sequence_length, pre_sample_length):
+  cpdef str generate_sequence(self, sequence_length, pre_sample_length):
     total_length = sequence_length + pre_sample_length
     cdef str generated_sequence = ""
     for i in range(total_length):
