@@ -55,6 +55,9 @@ cdef class VLMC(object):
 
   cdef double _probability_of_char_given_sequence(self, char, seq):
     cdef str reverse_seq = seq[::-1]
+    if len(seq) == self.order and reverse_seq in self.tree:
+      # early return if possible. will be often if the model is a full Markov chain
+      return self.tree[reverse_seq][char]
     cdef int depth = 0
     cdef double prob = 1.0
     cdef str current_node = ""
