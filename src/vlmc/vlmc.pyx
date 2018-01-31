@@ -44,10 +44,20 @@ cdef class VLMC(object):
     """
     return json.dumps(self.tree)
 
+  cpdef double log_likelihood_ignore_initial_bias(self, sequence):
+    # skip the first /order/ characters to ignore the bias from
+    # where the sequence was cut/taken
+    return self._log_likelihood(sequence, self.order)
+
   cpdef double log_likelihood(self, sequence):
-    cdef str sequence_so_far = ""
+    return self._log_likelihood(sequence, 0)
+
+  cdef double _log_likelihood(self, sequence, nbr_skipped_letters):
+    # assume we already looked at the first nbr_skipped_letters
+    cdef str sequence_so_far = sequence[:nbr_skipped_letters]
+    cdef str sequence_left = sequence[nbr_skipped_letters:]
     cdef double log_likelihood = 0.0
-    for s in sequence:
+    for s in sequence_left:
       prob = self._probability_of_char_given_sequence(s, sequence_so_far[-self.order:])
       log_likelihood += math.log(prob)
       sequence_so_far += s
