@@ -22,6 +22,6 @@ cdef class NegativeLogLikelihood(object):
   cdef _calculate_cross_entropy(self, left, right):
     cdef str generated_sequence = left.generate_sequence(self.generated_sequence_length,
                                                          self.length_of_pregenerated_sequence)
-    return (left.log_likelihood(generated_sequence)
-            - right.log_likelihood(generated_sequence))
+    return (left.log_likelihood_ignore_initial_bias(generated_sequence)
+            - right.log_likelihood_ignore_initial_bias(generated_sequence))
 
