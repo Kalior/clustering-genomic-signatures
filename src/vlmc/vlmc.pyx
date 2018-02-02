@@ -32,11 +32,20 @@ cdef class VLMC(object):
     all_vlmcs = []
     for file in [f for f in os.listdir(directory) if f.endswith(".json")]:
       name, _ = os.path.splitext(file)
+      name_without_parameter = VLMC.strip_parameters_from_name(name)
       with open(os.path.join(directory, file)) as f:
         tree = json.load(f)
-        all_vlmcs.append(VLMC(tree, name))
+        all_vlmcs.append(VLMC(tree, name_without_parameter))
 
     return all_vlmcs
+
+  @classmethod
+  def strip_parameters_from_name(cls, signature_name):
+    stripped_order_prefix = signature_name[3:]
+    split_name = stripped_order_prefix.split("_")
+    removed_start_stop_indicies = split_name[:len(split_name) - 2]
+    aid = '_'.join(removed_start_stop_indicies)
+    return aid
 
   def to_json(self):
     """
