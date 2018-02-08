@@ -1,6 +1,6 @@
 #! /usr/bin/python
 from vlmc import VLMC
-from distance import NegativeLogLikelihood, NaiveParameterSampling
+from distance import NegativeLogLikelihood, NaiveParameterSampling, StationaryDistribution
 import parse_trees_to_json
 import argparse
 import time
@@ -14,6 +14,11 @@ def test_negloglike(sequence_length):
 
 def test_parameter_sampling():
   d = NaiveParameterSampling()
+  test_distance_function(d)
+
+
+def test_stationary_distribution():
+  d = StationaryDistribution()
   test_distance_function(d)
 
 
@@ -69,6 +74,8 @@ if __name__ == '__main__':
 
   parser.add_argument('--parameter-sampling', action='store_true')
   parser.add_argument('--negative-log-likelihood', action='store_true')
+  parser.add_argument('--stationary-distribution', action='store_true')
+
   parser.add_argument('--seqlen', type=int, default=1000,
                       help='The length of the sequences that are generated to calculate the likelihood.')
 
@@ -81,3 +88,7 @@ if __name__ == '__main__':
   if (args.parameter_sampling):
     print('Testing the measure of estimation error distance function, the parameter based sampling.')
     test_parameter_sampling()
+
+  if (args.stationary_distribution):
+    print("Testing distance based on the stationary distribution")
+    test_stationary_distribution()
