@@ -26,22 +26,15 @@ cdef class StatisticalMetric(object):
   7. Else exit with no equivalence.
   """
   cpdef double distance(self, left_vlmc, right_vlmc):
+    if self.equivalence_test(left_vlmc, right_vlmc):
+      return 0
+    else:
+      return 100
+
+  cdef bint equivalence_test(self, left_vlmc, right_vlmc):
     pre_sample_length = 500
     cdef str sequence = left_vlmc.generate_sequence(self.sequence_length,
-                                                      pre_sample_length)
-
-    return self.generate_and_check_equivalence(right_vlmc, sequence)
-
-
-  cdef int nbr_of_non_zero_probabilities(self, vlmc):
-    counter = 0
-    for context, probabilites in vlmc.tree:
-      for char_, prob in probabilites:
-        if prob > 0:
-          counter += 1
-    return counter
-
-  cdef double generate_and_check_equivalence(self, right_vlmc, sequence):
+                                                    pre_sample_length)
     # For every starting state,
     possible_contexts = right_vlmc.tree.keys()
     for start_context in possible_contexts:
@@ -56,15 +49,22 @@ cdef class StatisticalMetric(object):
         current_context = self.get_next_context(current_context, char_, right_vlmc)
 
       # create VLMC-tree and add it to list of vlmcs
-      new_vlmc_tree = self.create_pst_from_estimated_probabilities(context_counters, context_probabilities)
+      new_vlmc_tree = self.create_pst_by_estimating_probabilities(context_counters, context_probabilities)
       expected_values, observed_values = self.get_expected_observed_values(new_vlmc_tree, right_vlmc, context_counters)
       chisq, p_value = stats.chisquare(f_obs=observed_values, f_exp=expected_values)
       if 1 - p_value < self.significance_level:
-        return 0
-    return 100
-
+        return True
+    return False
+  
+  cdef int nbr_of_non_zero_probabilities(self, vlmc):
+    counter = 0
+    for context, probabilites in vlmc.tree:
+      for char_, prob in probabilites:
+        if prob > 0:
+          counter += 1
+    return counter
+  
   cdef tuple get_expected_observed_values(self, estimated_vlmc_tree, original_vlmc, context_count):
-    chi2_statistic = 0
     expected_values = []
     observed_values = []
     for context in original_vlmc.tree.keys():
@@ -86,7 +86,7 @@ cdef class StatisticalMetric(object):
           observed_values.append(observed_frequency)
     return expected_values, observed_values
 
-  cdef dict create_pst_from_estimated_probabilities(self, context_counters, context_probabilites):
+  cdef dict create_pst_by_estimating_probabilities(self, context_counters, context_probabilites):
     tree = {}
     for context, count in context_counters.items():
       tree[context] = {}
