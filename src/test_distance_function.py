@@ -1,6 +1,6 @@
 #!/usr/bin/python3.6
 from vlmc import VLMC
-from distance import NegativeLogLikelihood, NaiveParameterSampling, StationaryDistribution, ACGTContent
+from distance import NegativeLogLikelihood, NaiveParameterSampling, StationaryDistribution, ACGTContent, StatisticalMetric
 import parse_trees_to_json
 import argparse
 import time
