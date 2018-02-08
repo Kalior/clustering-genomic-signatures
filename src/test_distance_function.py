@@ -1,6 +1,6 @@
-#! /usr/bin/python
+#!/usr/bin/python3.6
 from vlmc import VLMC
-from distance import NegativeLogLikelihood, NaiveParameterSampling
+from distance import NegativeLogLikelihood, NaiveParameterSampling, StatisticalMetric
 import parse_trees_to_json
 import argparse
 import time
@@ -16,6 +16,9 @@ def test_parameter_sampling():
   d = NaiveParameterSampling()
   test_distance_function(d)
 
+def test_statistical_metric():
+  d = StatisticalMetric(1200, 0.05)
+  test_distance_function(d)
 
 def test_distance_function(d):
   tree_dir = "../trees"
@@ -71,7 +74,7 @@ if __name__ == '__main__':
   parser.add_argument('--negative-log-likelihood', action='store_true')
   parser.add_argument('--seqlen', type=int, default=1000,
                       help='The length of the sequences that are generated to calculate the likelihood.')
-
+  parser.add_argument('--statistical-metric', action='store_true')
   args = parser.parse_args()
 
   if (args.negative_log_likelihood):
@@ -81,3 +84,7 @@ if __name__ == '__main__':
   if (args.parameter_sampling):
     print('Testing the measure of estimation error distance function, the parameter based sampling.')
     test_parameter_sampling()
+
+  if (args.statistical_metric):
+    print('Testing statistical metric thing')
+    test_statistical_metric()

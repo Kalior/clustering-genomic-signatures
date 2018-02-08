@@ -8,7 +8,7 @@ from random import choices
 cdef class VLMC(object):
   cdef public dict tree
   cdef public str name
-  cdef int order
+  cdef public int order
 
   def __init__(self, tree, name):
     self.tree = tree
