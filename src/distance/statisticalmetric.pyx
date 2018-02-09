@@ -1,4 +1,5 @@
 import scipy.stats as stats
+import numpy as np
 
 cdef class StatisticalMetric(object):
   cdef double significance_level
@@ -26,10 +27,42 @@ cdef class StatisticalMetric(object):
   7. Else exit with no equivalence.
   """
   cpdef double distance(self, left_vlmc, right_vlmc):
-    if self.equivalence_test(left_vlmc, right_vlmc):
-      return 0
-    else:
-      return 100
+    for p_value in np.arange(0, 0.05, 0.001):
+      left_vlmc.tree = self.remove_larger_probabilities(left_vlmc.tree, p_value)
+      right_vlmc.tree = self.remove_larger_probabilities(right_vlmc.tree, p_value)
+      if (not self.is_null_model(left_vlmc) and not self.is_null_model(right_vlmc)):
+        if self.equivalence_test(left_vlmc, right_vlmc):
+          print("Found equality at p_value " + str(p_value))
+          return p_value
+    return 1
+
+  cdef bint is_null_model(self, vlmc):
+    # TODO, this is clearly wrong
+    return False
+    for lookup_prob in vlmc.tree.values():
+      if any(prob > 0 for prob in lookup_prob.values()):
+        return False
+    return True
+
+  cdef dict remove_larger_probabilities(self, tree, p_value):
+    contexts_to_remove = []
+    for context in tree.keys():
+      nbr_greater_probabilities = 0
+      sum_of_other_probabilites = 0
+      for letter in tree[context]:
+        if tree[context][letter] <= p_value:
+          tree[context][letter] = 0
+        else:
+          sum_of_other_probabilites += tree[context][letter]
+          nbr_greater_probabilities += 1
+      if nbr_greater_probabilities == 0:
+        contexts_to_remove.append(context)
+      for letter in tree[context]:
+        if tree[context][letter] > p_value:
+          tree[context][letter] = tree[context][letter] / sum_of_other_probabilites
+    for context in contexts_to_remove:
+      tree.pop(context)
+    return tree
 
   cdef bint equivalence_test(self, left_vlmc, right_vlmc):
     pre_sample_length = 500
@@ -38,24 +71,29 @@ cdef class StatisticalMetric(object):
     # For every starting state,
     possible_contexts = right_vlmc.tree.keys()
     for start_context in possible_contexts:
-      current_context = start_context
-      # Map (Context -> Int)
-      # Map (Context -> Map (Letter -> Int))
-      context_counters, context_probabilities = self.initialize_counters(right_vlmc,
-                                                                         current_context)
-      for char_ in sequence:
-        context_counters[current_context] += 1
-        context_probabilities[current_context][char_] += 1
-        current_context = self.get_next_context(current_context, char_, right_vlmc)
-
-      # create VLMC-tree and add it to list of vlmcs
-      new_vlmc_tree = self.create_pst_by_estimating_probabilities(context_counters, context_probabilities)
-      expected_values, observed_values = self.get_expected_observed_values(new_vlmc_tree, right_vlmc, context_counters)
-      chisq, p_value = stats.chisquare(f_obs=observed_values, f_exp=expected_values)
-      if 1 - p_value < self.significance_level:
+      if self.check_from_context(start_context, sequence, right_vlmc):
         return True
     return False
-  
+
+  cdef bint check_from_context(self, start_context, sequence, right_vlmc):
+    current_context = start_context
+    # Map (Context -> Int)
+    # Map (Context -> Map (Letter -> Int))
+    context_counters, context_probabilities = self.initialize_counters(right_vlmc,
+                                                                       current_context)
+    for char_ in sequence:
+      context_counters[current_context] += 1
+      context_probabilities[current_context][char_] += 1
+      current_context = self.get_next_context(current_context, char_, right_vlmc)
+      if current_context == "":
+        return False
+
+    new_vlmc_tree = self.create_pst_by_estimating_probabilities(context_counters, context_probabilities)
+    expected_values, observed_values = self.get_expected_observed_values(new_vlmc_tree, right_vlmc, context_counters)
+    chisq, p_value = stats.chisquare(f_obs=observed_values, f_exp=expected_values)
+    if 1 - p_value < self.significance_level:
+      return True
+
   cdef int nbr_of_non_zero_probabilities(self, vlmc):
     counter = 0
     for context, probabilites in vlmc.tree:
@@ -63,7 +101,7 @@ cdef class StatisticalMetric(object):
         if prob > 0:
           counter += 1
     return counter
-  
+
   cdef tuple get_expected_observed_values(self, estimated_vlmc_tree, original_vlmc, context_count):
     expected_values = []
     observed_values = []

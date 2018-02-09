@@ -26,7 +26,7 @@ def test_distance_function(d):
   vlmcs = VLMC.from_json_dir(tree_dir)
   metadata = get_metadata_for([vlmc.name for vlmc in vlmcs])
 
-  for vlmc in vlmcs:
+  for vlmc in vlmcs[0:2]:
     start_time = time.time()
     distances = list(map(lambda other: d.distance(vlmc, other), vlmcs))
     elapsed_time = time.time() - start_time
