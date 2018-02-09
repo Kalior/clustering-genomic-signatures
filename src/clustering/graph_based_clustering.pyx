@@ -65,15 +65,13 @@ cdef class GraphBasedClustering(object):
     sorting_time = time.time() - start_time
     start_time = time.time()
 
-    cdef dict clustering = {}
+    clustering = {}
     cdef FLOATTYPE_t i_t
     for i, vlmc in enumerate(self.vlmcs):
       i_t = i
       clustering[i_t] = vlmc.name
 
-    cdef int connections_to_make = len(self.vlmcs) - num_clusters
-
-    cdef int min_index
+    connections_to_make = len(self.vlmcs) - num_clusters
     for _ in range(connections_to_make):
       # Add an edge for the shortest distance
       # Take the smallest distance
@@ -97,7 +95,7 @@ cdef class GraphBasedClustering(object):
         break
 
     cluster_time = time.time() - start_time
-    print("Distance time: {}s\nSorting time: {}s\nCluster time: {}s".format(distance_time, sorting_time, cluster_time))
+    print("Distance time: {} s\nSorting time: {} s\nCluster time: {} s".format(distance_time, sorting_time, cluster_time))
 
   cdef np.ndarray[FLOATTYPE_t, ndim=2] _calculate_distances(self):
     cdef int num_vlmcs = len(self.vlmcs)
@@ -125,8 +123,8 @@ cdef class GraphBasedClustering(object):
 
   def _print_connected_components(self, G):
     metadata = get_metadata_for([vlmc.name for vlmc in self.vlmcs])
-    output = [self._component_string(connected, metadata)
-              for connected in nx.connected_components(G)]
+    output = ["cluster {}:\n".format(i) + self._component_string(connected, metadata)
+              for i, connected in enumerate(nx.connected_components(G))]
 
     print('\n\n'.join(output))
 
