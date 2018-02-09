@@ -54,8 +54,15 @@ cdef class GraphBasedClustering(object):
 
   cdef _cluster_with_min_distance(self, G, num_clusters):
     start_time = time.time()
+
     cdef np.ndarray[FLOATTYPE_t, ndim=2] distances = self._calculate_distances()
+
     distance_time = time.time() - start_time
+    start_time = time.time()
+
+    cdef np.ndarray[FLOATTYPE_t, ndim=2] sorted_distances = distances[distances[:,2].argsort()]
+
+    sorting_time = time.time() - start_time
     start_time = time.time()
 
     cdef dict clustering = {}
@@ -69,15 +76,13 @@ cdef class GraphBasedClustering(object):
     cdef int min_index
     for _ in range(connections_to_make):
       # Add an edge for the shortest distance
-      # Finds the smallest distance (Would prefer if the distances were sorted instead, but numpy sorting was confusing)
-      [_ , _, min_index] = np.argmin(distances, axis=0)
-      [left, right, dist] = distances[min_index]
-      distances = np.delete(distances, min_index, axis=0)
+      # Take the smallest distance
+      [left, right, dist] = sorted_distances[0]
+      sorted_distances = np.delete(sorted_distances, 0, axis=0)
       # Remove distances for pairs which are in the same cluster
       while clustering[left] == clustering[right]:
-        [_ , _, min_index] = np.argmin(distances, axis=0)
-        [left, right, dist] = distances[min_index]
-        distances = np.delete(distances, min_index, axis=0)
+        [left, right, dist] = sorted_distances[0]
+        sorted_distances = np.delete(sorted_distances, 0, axis=0)
 
       G.add_edge(self.vlmcs[int(left)], self.vlmcs[int(right)], weight=dist)
 
@@ -92,8 +97,7 @@ cdef class GraphBasedClustering(object):
         break
 
     cluster_time = time.time() - start_time
-    print("Distance time: {}s \n".format(distance_time))
-    print("Cluster time: {}s \n".format(cluster_time))
+    print("Distance time: {}s\nSorting time: {}s\nCluster time: {}s".format(distance_time, sorting_time, cluster_time))
 
   cdef np.ndarray[FLOATTYPE_t, ndim=2] _calculate_distances(self):
     cdef int num_vlmcs = len(self.vlmcs)
