@@ -3,6 +3,8 @@ import json
 from queue import Queue
 import os
 from random import choices
+import numpy as np
+import scipy
 
 
 cdef class VLMC(object):
@@ -106,6 +108,57 @@ cdef class VLMC(object):
   def _calculate_order(self, tree):
     return max(map(lambda k: len(k), tree.keys()))
 
+  def _get_transition_matrix(self):
+    nbr_of_states = len(self.tree.keys())
+    alphabet = ["A", "C", "G", "T"]
+    rows = []
+    for left in self.tree.keys():
+      row = []
+      contexts_we_can_get_to = []
+      for char_ in alphabet:
+        probability_of_char = self.tree[left][char_]
+        if probability_of_char > 0:
+          new_context = left + char_
+          for i in range(self.order+1):
+            truncated_context = new_context[-(self.order - i):]
+            if truncated_context in self.tree:
+              contexts_we_can_get_to.append((truncated_context, probability_of_char))
+              break
+      print(contexts_we_can_get_to)
+      for right in self.tree.keys():
+        prob = 0
+        for x in contexts_we_can_get_to:
+          if x[0] == right:
+            prob = x[1]
+        row.append(prob)
+      rows.append(row)
+      return np.array(rows)
+
+  def get_context_distribution(self):
+    # TODO, cleanup
+    # if matrix A is the transition probabilites from row to column
+    # and x is the current state then transpose(A)*x is the next state
+    # this function returns the vector v such that transpose(A)*v = v,
+    # i.e., it returns the stationary distribution of this vlmc
+    transition_matrix = self._get_transition_matrix()
+    matrix = np.transpose(transition_matrix)
+    np.set_printoptions(threshold='nan')
+    # Get one eigen vector, with eigen value 1
+    # TODO, what happens if no eigen value 1 vector exists?
+    values, vectors = scipy.sparse.linalg.eigs(matrix, k=1, sigma=1)
+    np.set_printoptions(threshold=np.NaN)
+    print(values[0])
+    print(self.tree.keys())
+
+    one = vectors[:, 0]
+    sum_ = np.sum(one)
+    scaled_vector = np.real(np.around(one.real / sum_, decimals=4))
+    stationary_distibution = {}
+    for i, context in enumerate(self.tree.keys()):
+      # print("Probability of " + context + "\t" + str(scaled_vector[i]))
+      stationary_distibution[context] = scaled_vector[i]
+    # print(self.tree["GTA"])
+    return stationary_distibution
 
 if __name__ == "__main__":
   s = '{"":{"A":0.5,"B":0.5},"A":{"B":0.5,"A":0.5},"B":{"A":0.5,"B":0.5},"BA":{"A":0.5,"B":0.5},"AA":{"A":0.5,"B":0.5}}'
