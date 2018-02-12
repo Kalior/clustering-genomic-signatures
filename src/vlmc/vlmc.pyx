@@ -86,20 +86,28 @@ cdef class VLMC(object):
     return log_likelihood
 
 
-  cdef double _probability_of_char_given_sequence(self, char, seq):
-    cdef str reverse_seq = seq[::-1]
-    if len(seq) == self.order and reverse_seq in self.tree:
+
+  cdef double _probability_of_char_given_sequence(self, character, seq):
+    if len(seq) == self.order and seq in self.tree:
       # early return if possible. will be often if the model is a full Markov chain
-      return self.tree[reverse_seq][char]
-    cdef int depth = 0
-    cdef double prob = 1.0
-    cdef str current_node = ""
-    # Search down the tree for either the order of the vlmc, or the length of the string
-    while current_node in self.tree and depth < len(seq):
-      prob = self.tree[current_node][char]
-      depth += 1
-      current_node = reverse_seq[0:depth]
-    return prob
+      return self.tree[seq][character]
+
+    cdef str context = self.get_context(seq)
+    return self.tree[context][character]
+
+
+  cpdef str get_context(self, sequence):
+    if len(sequence) <= self.order and sequence in self.tree:
+      return self.tree[sequence]
+    for i in range(self.order+1):
+      if not i == self.order:
+        maybe_context = sequence[-(self.order-i):]
+      else:
+        maybe_context = ""
+      if maybe_context in self.tree:
+        return maybe_context
+    raise RuntimeError("get_context vlmc.pyx")
+
 
 
   cpdef str generate_sequence(self, sequence_length, pre_sample_length):
