@@ -29,11 +29,11 @@ cdef class GraphBasedClustering(object):
     self.vlmcs = vlmcs
     self.d = d
 
-  cpdef cluster(self, min_distance=True, draw_graph=False):
+  cpdef cluster(self, clusters, min_distance=True, draw_graph=False):
     G = nx.Graph()
     G.add_nodes_from(self.vlmcs)
     if min_distance:
-      self._cluster_with_min_distance(G, 12)
+      self._cluster_with_min_distance(G, clusters)
     else:
       self._cluster_with_threshold(G)
 
