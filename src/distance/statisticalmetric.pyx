@@ -1,12 +1,17 @@
 import scipy.stats as stats
 import numpy as np
 
+
 cdef class StatisticalMetric(object):
   cdef double significance_level
   cdef int sequence_length
+
+
   def __init__(self, sequence_length, significance_level):
       self.sequence_length = sequence_length
       self.significance_level = significance_level
+
+
   """
   1. Generate a sequence A of length N from G₁
   2. For every starting state in vₖ in G₂, estimate the transition
@@ -38,6 +43,7 @@ cdef class StatisticalMetric(object):
           return threshhold
     return 1
 
+
   cdef bint is_null_model(self, vlmc):
     # TODO, change this to check if there are any transitions left between any of the
     # context states.  This will work better if the vlmc is seen as an automata.
@@ -45,6 +51,7 @@ cdef class StatisticalMetric(object):
       if any(prob > 0 for prob in lookup_prob.values()):
         return False
     return True
+
 
   cdef dict remove_unlikely_transitions(self, tree, threshhold_probability):
     # TODO, change this to use event probabilites instead of the actual transition probabilites
@@ -75,6 +82,7 @@ cdef class StatisticalMetric(object):
       tree.pop(context)
     return tree
 
+
   cdef bint equivalence_test(self, left_vlmc, right_vlmc):
     pre_sample_length = 500
     cdef str sequence = left_vlmc.generate_sequence(self.sequence_length, pre_sample_length)
@@ -85,49 +93,49 @@ cdef class StatisticalMetric(object):
         return True
     return False
 
+
   cdef bint equality_test_given_starting_context(self, start_context, sequence, right_vlmc):
     current_context = start_context
-    # Map (Context -> Int)
-    # Map (Context -> Map (Character -> Int))
     context_counters, transition_counters = self.initialize_counters(right_vlmc,                                                                        current_context)
     for character in sequence:
       context_counters[current_context] += 1
       transition_counters[current_context][character] += 1
       current_context = self.get_relvant_context(current_context, character, right_vlmc)
+
       if current_context == None:
         # this means that the vlmc could not have produced the next character given its context
         # exit with no equivalence for this starting context
         return False
 
     new_vlmc_tree = self.create_pst_by_estimating_probabilities(context_counters, transition_counters)
-    expected_values, observed_values = self.get_expected_observed_values(new_vlmc_tree, right_vlmc, context_counters)
-    chisq, p_value = stats.chisquare(f_obs=observed_values, f_exp=expected_values)
-    if 1 - p_value < self.significance_level:
-      return True
+    chisq, p_value = self.perform_chi_squared_test(new_vlmc_tree, right_vlmc, context_counters)
+    return 1 - p_value < self.significance_level
 
-  cdef tuple get_expected_observed_values(self, estimated_vlmc_tree, original_vlmc, context_count):
+
+  cdef tuple perform_chi_squared_test(self, estimated_vlmc_tree, original_vlmc, context_count):
     expected_values = []
     observed_values = []
     for context in original_vlmc.tree.keys():
       times_visited_node = context_count[context]
       if times_visited_node > 0:
         alphabet = ["A", "C", "G", "T"]
-        transition_probabilitites = list(map(lambda x: original_vlmc.tree[context][x], alphabet ))
-        probabilites_original = list(zip(alphabet, transition_probabilitites))
+        transition_probabilitites = list(map(lambda x: (x, original_vlmc.tree[context][x]), alphabet ))
 
         # find probabilites that are greater than zero
-        probs_without_zeros = [item for item in probabilites_original if item[1] > 0]
+        probs_without_zeros = [item for item in transition_probabilitites if item[1] > 0]
         # loop through all of these exept one (last)
-        for char_prob in probs_without_zeros[:-1]:
-          character = char_prob[0]
-          probability_original_vlmc = char_prob[1]
+        for character_probability_tuple in probs_without_zeros[:-1]:
+          character = character_probability_tuple[0]
+          probability_original_vlmc = character_probability_tuple[1]
           probability_estimation = estimated_vlmc_tree[context][character]
 
-          expected_frequency = times_visited_node*probability_original_vlmc
-          observed_frequency = times_visited_node*probability_estimation
+          expected_frequency = times_visited_node * probability_original_vlmc
+          observed_frequency = times_visited_node * probability_estimation
           expected_values.append(expected_frequency)
           observed_values.append(observed_frequency)
-    return expected_values, observed_values
+    chisq, p_value = stats.chisquare(f_obs=observed_values, f_exp=expected_values)
+    return chisq, p_value
+
 
   cdef dict create_pst_by_estimating_probabilities(self, context_counters, transition_probabilities):
     tree = {}
@@ -140,6 +148,7 @@ cdef class StatisticalMetric(object):
           tree[context][character] = 0
 
     return tree
+
 
   cdef str get_relvant_context(self, context_before, next_char, vlmc_to_approximate):
     order = vlmc_to_approximate.order
@@ -159,6 +168,7 @@ cdef class StatisticalMetric(object):
     # returns None if the approximated vlmc does not have any context
     # that fits the sequence
     return None
+
 
   cdef tuple initialize_counters(self, right_vlmc, start_context):
     context_counters = {}  # Map (Context -> Int)
