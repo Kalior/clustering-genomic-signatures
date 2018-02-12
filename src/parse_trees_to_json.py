@@ -1,9 +1,10 @@
-#! /usr/bin/python
+#! /usr/bin/python3.6
 
 import json
 import re
 import os
 import argparse
+
 
 def parse_trees(directory):
   for file in [f for f in os.listdir(directory) if f.endswith(".tree")]:
@@ -22,6 +23,7 @@ def _parse_file(file):
         key, children = _parse_line(line)
         graph[key] = children
   return json.dumps(graph)
+
 
 def _parse_line(line):
   numbers = re.findall('-?[0-9]+', line)
@@ -45,4 +47,3 @@ if __name__ == '__main__':
   parser.add_argument('dir', help='the directory with .tree files')
   args = parser.parse_args()
   parse_trees(args.dir)
-
