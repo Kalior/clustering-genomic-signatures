@@ -225,8 +225,8 @@ cdef class VLMC(object):
   cdef dict _count_state_occourances(self, sequence):
     state_count = {}
 
-    for i in range(len(sequence)):
-      current_sequence = sequence[0:i][-self.order:]
+    for i in range(len(sequence) - self.order):
+      current_sequence = sequence[i:i + self.order]
       matching_state = self.get_context(current_sequence)
       if matching_state in state_count:
         state_count[matching_state] += 1
