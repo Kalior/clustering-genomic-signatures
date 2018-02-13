@@ -96,6 +96,14 @@ cdef class VLMC(object):
   cpdef str generate_sequence(self, sequence_length, pre_sample_length):
     total_length = sequence_length + pre_sample_length
     cdef str generated_sequence = ""
+
+    if not "" in self.tree:
+      # If the empty string does not exist in the vlmc, start
+      # generating the sequence from a random context.
+      # TODO: The probability of getting context c should be proportional
+      # the stationary distribution of c.
+      generated_sequence += random.choice(list(self.tree.keys()))
+
     for i in range(total_length):
       # only send the last /order/ number of characters to generate next letter
       next_letter = self._generate_next_letter(generated_sequence[-self.order:])
