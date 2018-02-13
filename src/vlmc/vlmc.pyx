@@ -24,6 +24,7 @@ cdef class VLMC(object):
   def __str__(self):
     return self.name
 
+
   @classmethod
   def from_json(cls, s, name=""):
     """
@@ -32,6 +33,7 @@ cdef class VLMC(object):
     """
     tree = json.loads(s)
     return VLMC(tree, name)
+
 
   @classmethod
   def from_json_dir(cls, directory):
@@ -45,6 +47,7 @@ cdef class VLMC(object):
 
     return all_vlmcs
 
+
   @classmethod
   def strip_parameters_from_name(cls, signature_name):
     stripped_order_prefix = signature_name[3:]
@@ -53,19 +56,23 @@ cdef class VLMC(object):
     aid = '_'.join(removed_start_stop_indicies)
     return aid
 
+
   def to_json(self):
     """
       Returns the vlmc tree in the same format as from_json expects.
     """
     return json.dumps(self.tree)
 
+
   cpdef double log_likelihood_ignore_initial_bias(self, sequence):
     # skip the first /order/ characters to ignore the bias from
     # where the sequence was cut/taken
     return self._log_likelihood(sequence, self.order)
 
+
   cpdef double log_likelihood(self, sequence):
     return self._log_likelihood(sequence, 0)
+
 
   cdef double _log_likelihood(self, sequence, nbr_skipped_letters):
     # assume we already looked at the first nbr_skipped_letters
@@ -77,6 +84,7 @@ cdef class VLMC(object):
       log_likelihood += math.log(prob)
       sequence_so_far += s
     return log_likelihood
+
 
   cdef double _probability_of_char_given_sequence(self, char, seq):
     cdef str reverse_seq = seq[::-1]
@@ -92,6 +100,7 @@ cdef class VLMC(object):
       depth += 1
       current_node = reverse_seq[0:depth]
     return prob
+
 
   cpdef str generate_sequence(self, sequence_length, pre_sample_length):
     total_length = sequence_length + pre_sample_length
@@ -111,6 +120,7 @@ cdef class VLMC(object):
     # return the suffix with length sequence_length
     return generated_sequence[-sequence_length:]
 
+
   cdef str _generate_next_letter(self, current_sequence):
     probabilities = map(lambda c: self._probability_of_char_given_sequence(
       c, current_sequence), self.alphabet)
@@ -118,7 +128,10 @@ cdef class VLMC(object):
 
 
   def _calculate_order(self, tree):
-    return max(map(lambda k: len(k), tree.keys()))
+    if tree:
+      return max(map(lambda k: len(k), tree.keys()))
+    return 0
+
 
   def _get_transition_matrix(self):
     nbr_of_states = len(self.tree.keys())
