@@ -124,7 +124,7 @@ cdef class VLMC(object):
   cdef str _generate_next_letter(self, current_sequence):
     probabilities = map(lambda c: self._probability_of_char_given_sequence(
       c, current_sequence), self.alphabet)
-    return random.choices(letters, weights=probabilities)[0] # is list, take only element
+    return random.choices(self.alphabet, weights=probabilities)[0] # is list, take only element
 
 
   def _calculate_order(self, tree):
