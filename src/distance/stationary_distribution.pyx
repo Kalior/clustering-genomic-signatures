@@ -38,25 +38,12 @@ cdef class StationaryDistribution(object):
     sequence = vlmc.generate_sequence(sequence_length, 500)
     state_count = {}
 
-    for i in range(len(sequence)):
+    for i in range(sequence_length):
       current_sequence = sequence[0:i][-vlmc.order:]
-      matching_state = self._find_matching_state(vlmc.tree, current_sequence)
+      matching_state = vlmc.get_context(current_sequence)
       if matching_state in state_count:
         state_count[matching_state] += 1
       else:
         state_count[matching_state] = 1
 
     return state_count
-
-  cdef str _find_matching_state(self, tree, sequence):
-    cdef str reverse_seq = sequence[::-1]
-    cdef int depth = 0
-    cdef str current_node = ""
-    # Search down the tree for either the order of the vlmc, or the length of the string
-    while current_node in tree and depth < len(reverse_seq):
-      depth += 1
-      current_node = reverse_seq[0:depth]
-    return current_node
-
-
-

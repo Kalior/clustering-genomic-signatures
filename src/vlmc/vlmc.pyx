@@ -98,7 +98,7 @@ cdef class VLMC(object):
 
   cpdef str get_context(self, sequence):
     if len(sequence) <= self.order and sequence in self.tree:
-      return self.tree[sequence]
+      return sequence
     for i in range(self.order+1):
       if not i == self.order:
         maybe_context = sequence[-(self.order-i):]
