@@ -2,7 +2,7 @@ import math
 import json
 from queue import Queue
 import os
-from random import choices
+import random
 import numpy as np
 import scipy
 
@@ -134,56 +134,99 @@ cdef class VLMC(object):
 
 
   def _get_transition_matrix(self):
+    """Creates the transition matrix of the VLMC, where each row sums to one.
+
+    The transition matrix is the square matrix A such that for each
+    context c in the VLMC, there exists a row in A, that contains the
+    probability of going from c to any other context c' (the columns).
+    Since the alphabet is only 4 letters long, there will only be up
+    to 4 non-zero probabilities per row.
+
+    """
     nbr_of_states = len(self.tree.keys())
-    alphabet = ["A", "C", "G", "T"]
     rows = []
-    for left in self.tree.keys():
+    for from_context in self.tree.keys():
       row = []
-      contexts_we_can_get_to = []
-      for char_ in alphabet:
-        probability_of_char = self.tree[left][char_]
+      reachable_contexts = []
+      for character in self.alphabet:
+        probability_of_char = self.tree[from_context][character]
         if probability_of_char > 0:
-          new_context = left + char_
+          possible_context = from_context + character
           for i in range(self.order+1):
-            truncated_context = new_context[-(self.order - i):]
-            if truncated_context in self.tree:
-              contexts_we_can_get_to.append((truncated_context, probability_of_char))
+            to_context = possible_context[-(self.order - i):]
+            if to_context in self.tree:
+              reachable_contexts.append((to_context, probability_of_char))
               break
-      print(contexts_we_can_get_to)
       for right in self.tree.keys():
         prob = 0
-        for x in contexts_we_can_get_to:
+        for x in reachable_contexts:
           if x[0] == right:
             prob = x[1]
         row.append(prob)
       rows.append(row)
-      return np.array(rows)
+    return np.array(rows)
 
-  def get_context_distribution(self):
-    # TODO, cleanup
-    # if matrix A is the transition probabilites from row to column
-    # and x is the current state then transpose(A)*x is the next state
-    # this function returns the vector v such that transpose(A)*v = v,
-    # i.e., it returns the stationary distribution of this vlmc
+
+  cpdef dict get_context_distribution(self):
+    """ Returns the stationary distribution probabilites of the contexts.
+
+    If matrix A is the transition matrix and x is the current state
+    then transpose(A)*x is the next state.  This function returns the
+    vector v such that transpose(A)*v = v, i.e., it returns the
+    stationary distribution of this vlmc """
     transition_matrix = self._get_transition_matrix()
+    if transition_matrix.size == 0:
+      return None
     matrix = np.transpose(transition_matrix)
-    np.set_printoptions(threshold='nan')
-    # Get one eigen vector, with eigen value 1
-    # TODO, what happens if no eigen value 1 vector exists?
-    values, vectors = scipy.sparse.linalg.eigs(matrix, k=1, sigma=1)
-    np.set_printoptions(threshold=np.NaN)
-    print(values[0])
-    print(self.tree.keys())
 
-    one = vectors[:, 0]
-    sum_ = np.sum(one)
-    scaled_vector = np.real(np.around(one.real / sum_, decimals=4))
+    # for debugging
+    # np.set_printoptions(threshold=np.NaN)
+
+    try:
+      # Get the eigen vector with eigen value 1 if it exist
+      values, vectors = scipy.sparse.linalg.eigs(matrix, k=1, sigma=1)
+    except scipy.sparse.linalg.eigen.arpack.ArpackNoConvergence:
+      print("Calculation of eigenvector did not converge, using estimated stationary distribution.")
+      return self._estimated_context_distribution(50000)
+
+    eigen_vector = vectors[:, 0]
+
+    # normalize the probabilites, so they sum to 1:
+    probability_weight = np.sum(eigen_vector)
+    normalized_eigen_vector = (np.real(eigen_vector) / probability_weight)
+
+    # fill distribution dictionary
     stationary_distibution = {}
     for i, context in enumerate(self.tree.keys()):
-      # print("Probability of " + context + "\t" + str(scaled_vector[i]))
-      stationary_distibution[context] = scaled_vector[i]
-    # print(self.tree["GTA"])
+      stationary_distibution[context] = normalized_eigen_vector[i]
     return stationary_distibution
+
+
+  cpdef dict _estimated_context_distribution(self, sequence_length):
+    sequence = self.generate_sequence(sequence_length, 500)
+    context_counters = self._count_state_occourances(sequence)
+    context_distribution = {}
+
+    for context, frequency in context_counters.items():
+      prob_of_state = frequency / sequence_length
+      context_distribution[context] = prob_of_state
+
+    return context_distribution
+
+
+  cdef dict _count_state_occourances(self, sequence):
+    state_count = {}
+
+    for i in range(len(sequence)):
+      current_sequence = sequence[0:i][-self.order:]
+      matching_state = self.get_context(current_sequence)
+      if matching_state in state_count:
+        state_count[matching_state] += 1
+      else:
+        state_count[matching_state] = 1
+
+    return state_count
+
 
 if __name__ == "__main__":
   s = '{"":{"A":0.5,"B":0.5},"A":{"B":0.5,"A":0.5},"B":{"A":0.5,"B":0.5},"BA":{"A":0.5,"B":0.5},"AA":{"A":0.5,"B":0.5}}'
