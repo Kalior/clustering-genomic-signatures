@@ -2,3 +2,4 @@ from .negloglikelihood import NegativeLogLikelihood
 from .naive_parameter_sampling import NaiveParameterSampling
 from .stationary_distribution import StationaryDistribution
 from .acgt import ACGTContent
+from .transient_distribution import TransientDistribution

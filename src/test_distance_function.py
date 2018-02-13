@@ -1,6 +1,6 @@
 #! /usr/bin/python
 from vlmc import VLMC
-from distance import NegativeLogLikelihood, NaiveParameterSampling, StationaryDistribution, ACGTContent
+from distance import NegativeLogLikelihood, NaiveParameterSampling, StationaryDistribution, ACGTContent, TransientDistribution
 import parse_trees_to_json
 import argparse
 import time
@@ -24,6 +24,11 @@ def test_acgt_content():
 
 def test_stationary_distribution():
   d = StationaryDistribution()
+  test_distance_function(d)
+
+
+def test_transient_distribution():
+  d = TransientDistribution()
   test_distance_function(d)
 
 
@@ -81,6 +86,7 @@ if __name__ == '__main__':
   parser.add_argument('--negative-log-likelihood', action='store_true')
   parser.add_argument('--acgt-content', action='store_true')
   parser.add_argument('--stationary-distribution', action='store_true')
+  parser.add_argument('--transient-distribution', action='store_true')
 
   parser.add_argument('--seqlen', type=int, default=1000,
                       help='The length of the sequences that are generated to calculate the likelihood.')
@@ -102,3 +108,7 @@ if __name__ == '__main__':
   if (args.stationary_distribution):
     print("Testing distance based on the stationary distribution")
     test_stationary_distribution()
+
+  if (args.transient_distribution):
+    print("Testing distance based on the transient distribution")
+    test_transient_distribution()
