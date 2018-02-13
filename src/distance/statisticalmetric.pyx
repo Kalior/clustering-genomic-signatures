@@ -1,5 +1,6 @@
 import scipy.stats as stats
 import numpy as np
+from vlmc import VLMC
 
 
 cdef class StatisticalMetric(object):
@@ -32,12 +33,13 @@ cdef class StatisticalMetric(object):
   7. Else exit with no equivalence.
   """
   cpdef double distance(self, left_vlmc, right_vlmc):
-    p_values = np.arange(0, 1, 0.04) # should come from a function
+    p_values = np.arange(0, 0.001, 0.00005) # should come from a function
     for threshhold in p_values:
-      left_vlmc.tree = self.remove_unlikely_transitions(left_vlmc.tree, threshhold)
-      right_vlmc.tree = self.remove_unlikely_transitions(right_vlmc.tree, threshhold)
+      left_vlmc = self.remove_unlikely_events(left_vlmc, threshhold)
+      right_vlmc = self.remove_unlikely_events(right_vlmc, threshhold)
       if (not self.is_null_model(left_vlmc) and not self.is_null_model(right_vlmc)):
         # as long as none of the models were null-models, perform an equivalence test
+        print("Performing equivalence test with p-value: " + str(threshhold))
         if self.equivalence_test(left_vlmc, right_vlmc):
           print("Found equality at p_value " + str(threshhold))
           return threshhold
@@ -45,42 +47,49 @@ cdef class StatisticalMetric(object):
 
 
   cdef bint is_null_model(self, vlmc):
-    # TODO, change this to check if there are any transitions left between any of the
-    # context states.  This will work better if the vlmc is seen as an automata.
+    # Not completely sure if this is everything that is neeed.
+    if vlmc == None or not vlmc.tree: #if tree is empty
+      return True
     for lookup_prob in vlmc.tree.values():
       if any(prob > 0 for prob in lookup_prob.values()):
         return False
     return True
 
 
-  cdef dict remove_unlikely_transitions(self, tree, threshhold_probability):
-    # TODO, change this to use event probabilites instead of the actual transition probabilites
-    # we should think of the vlmc as an automata where each transition in the automata is a single
-    # event.
+  cdef object remove_unlikely_events(self, vlmc, threshhold_probability):
+    stationary_distibution = vlmc.get_context_distribution()
+    if stationary_distibution == None:
+      # this should only happen when the _transition matrix_ is of size 0x0
+      # i.e., when a vlmc has no contexts what so ever
+      return VLMC({}, "null-vlmc")
     contexts_without_outgoing_transitions = []
-    for context in tree.keys():
+    alphabet = ["A", "C", "G", "T"]
+    for context in stationary_distibution.keys():
       nbr_transitions_to_keep = 0
       sum_probabilites_of_transitions_to_keep = 0
-      for character in tree[context]:
-        if tree[context][character] <= threshhold_probability:
-          # if a probability is smaller than threshhold, set it to zero
-          tree[context][character] = 0
+      for character in alphabet:
+        event_probability = stationary_distibution[context] * vlmc.tree[context][character]
+        if event_probability <= threshhold_probability:
+          # if the event probability is smaller than threshhold, set its
+          # corresponding transition probability to zero
+          vlmc.tree[context][character] = 0
         else:
           # else keep it
-          sum_probabilites_of_transitions_to_keep += tree[context][character]
+          sum_probabilites_of_transitions_to_keep += vlmc.tree[context][character]
           nbr_transitions_to_keep += 1
       if nbr_transitions_to_keep == 0:
         # if no transitions left, delete context
         contexts_without_outgoing_transitions.append(context)
 
-      for character in tree[context]:
+      for character in vlmc.tree[context]:
         # re-normalize the transitions probabilites that were kept
-        if tree[context][character] > threshhold_probability:
-          tree[context][character] = tree[context][character] / sum_probabilites_of_transitions_to_keep
+        if vlmc.tree[context][character] > 0:
+          vlmc.tree[context][character] = vlmc.tree[context][character] / sum_probabilites_of_transitions_to_keep
 
     for context in contexts_without_outgoing_transitions:
-      tree.pop(context)
-    return tree
+      vlmc.tree.pop(context)
+
+    return vlmc
 
 
   cdef bint equivalence_test(self, left_vlmc, right_vlmc):
