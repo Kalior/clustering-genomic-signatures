@@ -11,11 +11,15 @@ cdef class VLMC(object):
   cdef public dict tree
   cdef public str name
   cdef public int order
+  cdef public list alphabet
+
 
   def __init__(self, tree, name):
     self.tree = tree
     self.name = name
     self.order = self._calculate_order(tree)
+    self.alphabet = ["A", "C", "G", "T"]
+
 
   def __str__(self):
     return self.name
@@ -100,10 +104,10 @@ cdef class VLMC(object):
     return generated_sequence[-sequence_length:]
 
   cdef str _generate_next_letter(self, current_sequence):
-    cdef list letters = ["A", "C", "G", "T"]
-    probabilities = map(lambda char_: self._probability_of_char_given_sequence(
-        char_, current_sequence), letters)
-    return choices(letters, weights=probabilities)[0]
+    probabilities = map(lambda c: self._probability_of_char_given_sequence(
+      c, current_sequence), self.alphabet)
+    return random.choices(letters, weights=probabilities)[0] # is list, take only element
+
 
   def _calculate_order(self, tree):
     return max(map(lambda k: len(k), tree.keys()))
