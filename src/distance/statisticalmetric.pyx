@@ -35,8 +35,8 @@ cdef class StatisticalMetric(object):
   cpdef double distance(self, left_vlmc, right_vlmc):
     p_values = np.arange(0, 0.001, 0.00005) # should come from a function
     for threshhold in p_values:
-      left_vlmc = self.remove_unlikely_events(left_vlmc, threshhold)
-      right_vlmc = self.remove_unlikely_events(right_vlmc, threshhold)
+      left_vlmc = self._remove_unlikely_events(left_vlmc, threshhold)
+      right_vlmc = self._remove_unlikely_events(right_vlmc, threshhold)
       if (not self.is_null_model(left_vlmc) and not self.is_null_model(right_vlmc)):
         # as long as none of the models were null-models, perform an equivalence test
         print("Performing equivalence test with p-value: " + str(threshhold))
@@ -56,40 +56,48 @@ cdef class StatisticalMetric(object):
     return True
 
 
-  cdef object remove_unlikely_events(self, vlmc, threshhold_probability):
+  cdef object _remove_unlikely_events(self, vlmc, threshhold_probability):
+    vlmc = self._remove_transitions(vlmc, threshhold_probability)
+    if vlmc == None:
+      return VLMC({}, "null-model")
+    contexts_to_delete = self._get_states_with_all_zero_probability_transitions(vlmc)
+    self._delete_contexts(vlmc, contexts_to_delete)
+    self._normalize_transition_probabilites(vlmc)
+    return vlmc
+
+
+  cdef object _remove_transitions(self, vlmc, threshhold_probability):
     stationary_distibution = vlmc.get_context_distribution()
     if stationary_distibution == None:
-      # this should only happen when the _transition matrix_ is of size 0x0
-      # i.e., when a vlmc has no contexts what so ever
-      return VLMC({}, "null-vlmc")
-    contexts_without_outgoing_transitions = []
-    alphabet = ["A", "C", "G", "T"]
+      # Happens if there are no contexts in the model
+      return None
     for context in stationary_distibution.keys():
-      nbr_transitions_to_keep = 0
-      sum_probabilites_of_transitions_to_keep = 0
-      for character in alphabet:
+      for character in vlmc.alphabet:
         event_probability = stationary_distibution[context] * vlmc.tree[context][character]
         if event_probability <= threshhold_probability:
           # if the event probability is smaller than threshhold, set its
           # corresponding transition probability to zero
           vlmc.tree[context][character] = 0
-        else:
-          # else keep it
-          sum_probabilites_of_transitions_to_keep += vlmc.tree[context][character]
-          nbr_transitions_to_keep += 1
-      if nbr_transitions_to_keep == 0:
-        # if no transitions left, delete context
-        contexts_without_outgoing_transitions.append(context)
+    return vlmc
 
-      for character in vlmc.tree[context]:
-        # re-normalize the transitions probabilites that were kept
-        if vlmc.tree[context][character] > 0:
-          vlmc.tree[context][character] = vlmc.tree[context][character] / sum_probabilites_of_transitions_to_keep
 
-    for context in contexts_without_outgoing_transitions:
+  cdef _delete_contexts(self, vlmc, contexts):
+    for context in contexts:
       vlmc.tree.pop(context)
 
-    return vlmc
+
+  cdef list _get_states_with_all_zero_probability_transitions(self, vlmc):
+    return list(filter(lambda context: sum(vlmc.tree[context].values()) == 0, vlmc.tree.keys()))
+
+
+  cdef object _normalize_transition_probabilites(self, vlmc):
+    for context in vlmc.tree.keys():
+      total_weight = sum(vlmc.tree[context].values())
+      # total weight should always be a positive number since absorbing states
+      # has already been deleted
+      for character, probabilty in vlmc.tree[context].items():
+        # normalize probability
+        vlmc.tree[context][character] = vlmc.tree[context][character] / total_weight
 
 
   cdef bint equivalence_test(self, left_vlmc, right_vlmc):
@@ -123,6 +131,7 @@ cdef class StatisticalMetric(object):
     new_vlmc_tree = self.create_pst_by_estimating_probabilities(context_counters, transition_counters)
     chisq, p_value = self.perform_chi_squared_test(new_vlmc_tree, right_vlmc, context_counters)
     return 1 - p_value < self.significance_level
+
 
 
   cdef tuple perform_chi_squared_test(self, estimated_vlmc_tree, original_vlmc, context_count):
