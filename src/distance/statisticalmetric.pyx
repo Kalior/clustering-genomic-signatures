@@ -173,13 +173,13 @@ cdef class StatisticalMetric(object):
 
 
   cdef tuple initialize_counters(self, right_vlmc, start_context):
-    context_counters = {}  # Map (Context -> Int)
-    transition_counters = {}  # Map (Context -> Map (Character -> Int))
+    context_counters = {}
+    transition_counters = {}
     current_context = start_context
     # Initialize counters
     for context in right_vlmc.tree.keys():
       context_counters[context] = 0
       transition_counters[context] = {}
-      for character in ["A", "C", "G", "T"]:
+      for character in right_vlmc.alphabet:
         transition_counters[context][character] = 0
     return context_counters, transition_counters
