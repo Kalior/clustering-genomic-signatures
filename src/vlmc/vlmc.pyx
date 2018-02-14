@@ -200,24 +200,25 @@ cdef class VLMC(object):
     stationary distribution of this vlmc """
     transition_matrix = self._get_transition_matrix()
     if transition_matrix.size == 0:
+      # Happens if the vlmc has no states whatsoever
       return None
     matrix = np.transpose(transition_matrix)
 
-    # for debugging
-    # np.set_printoptions(threshold=np.NaN)
-
     try:
-      # Get the eigen vector with eigen value 1 if it exist
-      values, vectors = scipy.sparse.linalg.eigs(matrix, k=1, sigma=1)
+      # Get the eigen vector(s) with eigen value 1 if it exist
+      values, eigen_vectors = scipy.sparse.linalg.eigs(matrix, k=1, sigma=1)
     except scipy.sparse.linalg.eigen.arpack.ArpackNoConvergence:
       print("Calculation of eigenvector did not converge, using estimated stationary distribution.")
       return self._estimated_context_distribution(50000)
 
-    eigen_vector = vectors[:, 0]
+    eigen_vector = eigen_vectors[:, 0] # will only contain one vector
+    return self._create_stationary_distribution_dict(eigen_vector)
 
+
+  cpdef dict _create_stationary_distribution_dict(self, eigen_vector):
     # normalize the probabilites, so they sum to 1:
     probability_weight = np.sum(eigen_vector)
-    normalized_eigen_vector = (np.real(eigen_vector) / probability_weight)
+    normalized_eigen_vector = np.real(eigen_vector) / probability_weight
 
     # fill distribution dictionary
     stationary_distibution = {}
