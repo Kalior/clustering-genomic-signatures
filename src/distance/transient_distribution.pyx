@@ -9,13 +9,17 @@ cdef class TransientDistribution(object):
   """
 
   cdef list alphabet
+  cdef int window_size
+  cdef int window_step
 
-  def __init__(self):
+  def __init__(self, window_size=500, window_step=50):
     # Assume this is the alphabet, only relevant case for us.
     self.alphabet = ['A', 'C', 'G', 'T']
+    self.window_size = window_size
+    self.window_step = window_step
 
   cpdef double distance(self, left_vlmc, right_vlmc):
-    self._find_transient_distriubutions(left_vlmc)
+    # self._find_transient_distriubutions(left_vlmc)
     self._find_transient_distriubutions(right_vlmc)
 
     # cdef double distance = sum([abs(left_stationary_prob[char_] - right_stationary_prob[char_])
@@ -26,21 +30,36 @@ cdef class TransientDistribution(object):
 
   cdef _find_transient_distriubutions(self, vlmc):
     sequence_length = 50000
-    window_size = 5000
-    window_step = 500
-
-    windows = round((sequence_length - window_size) / window_step)
 
     state_list = self._get_state_sequence(vlmc, sequence_length)
+    char_distributions, state_distributions = self._calculate_sliding_window_distibution(vlmc, state_list)
+    self._plot_sliding_window(vlmc, char_distributions, state_distributions)
+
+    char_averages = self._calculate_average(char_distributions, self.alphabet)
+    state_averages = self._calculate_average(state_distributions, vlmc.tree.keys())
+
+    char_deviations = self._calculate_deviation(char_distributions, char_averages, self.alphabet)
+    state_deviations = self._calculate_deviation(state_distributions, state_averages, vlmc.tree.keys())
+
+    self._print_average_and_deviation(char_averages, char_deviations, self.alphabet)
+    self._print_average_and_deviation(state_averages, state_deviations, vlmc.tree.keys())
+
+
+  cdef tuple _calculate_sliding_window_distibution(self, vlmc, state_list):
+    windows = round((len(state_list) - self.window_size) / self.window_step)
+
     distributions = np.empty(windows, dtype=object)
     state_distributions = np.empty(windows, dtype=object)
     for i in range(windows):
-      start = i * window_step
-      end = start + window_size
+      start = i * self.window_step
+      end = start + self.window_size
       char_distribution, state_distribution = self._get_distribution(vlmc, state_list[start:end])
       distributions[i] = char_distribution
       state_distributions[i] = state_distribution
 
+    return distributions, state_distributions
+
+  cdef _plot_sliding_window(self, vlmc, char_distributions, state_distributions):
     fig, ax = plt.subplots(round(len(vlmc.tree.keys()) / 6) + 1, 6)
     for i, k in enumerate(vlmc.tree.keys()):
       col = i % ((len(vlmc.tree.keys()) / 6) + 1)
@@ -49,9 +68,31 @@ cdef class TransientDistribution(object):
       ax[col, row].plot([d[k] for d in state_distributions if k in d])
 
     fig, ax = plt.subplots(4)
-    for i, k in enumerate(['A', 'C', 'G', 'T']):
+    for i, k in enumerate(self.alphabet):
       ax[i].set_title(k)
-      ax[i].plot([d[k] for d in distributions])
+      ax[i].plot([d[k] for d in char_distributions])
+
+  cdef dict _calculate_average(self, distributions, keys):
+    averages = {}
+
+    for k in keys:
+      averages[k] = sum([d[k] for d in distributions if k in d]) / len(distributions)
+
+    return averages
+
+  cdef dict _calculate_deviation(self, distributions, averages, keys):
+    deviations = {}
+
+    for k in keys:
+      deviations[k] = np.sqrt(sum([np.power((d[k] - averages[k]), 2) for d in distributions if k in d]) / len(distributions))
+
+    return deviations
+
+  cdef _print_average_and_deviation(self, averages, deviations, keys):
+    for k in keys:
+      print("{:3}: average: {:.5f}  deviation: {:.5f}".format(k, averages[k], deviations[k]))
+
+    print("")
 
   cdef tuple _get_distribution(self, vlmc, state_list):
     char_probabilities = {}
