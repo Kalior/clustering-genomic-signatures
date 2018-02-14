@@ -75,6 +75,9 @@ cdef class VLMC(object):
     cdef double log_likelihood = 0.0
     for s in sequence_left:
       prob = self._probability_of_char_given_sequence(s, sequence_so_far[-self.order:])
+      if prob == 0:
+        # means the vlmc could not possibly have generated the sequence
+        return 0
       log_likelihood += math.log(prob)
       sequence_so_far += s
     return log_likelihood
