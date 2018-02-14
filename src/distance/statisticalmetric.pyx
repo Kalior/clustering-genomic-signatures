@@ -128,7 +128,7 @@ cdef class StatisticalMetric(object):
         # exit with no equivalence for this starting context
         return False
 
-    new_vlmc_tree = self.create_pst_by_estimating_probabilities(context_counters, transition_counters)
+    new_vlmc_tree = self.create_pst_by_estimating_probabilities(context_counters, transition_counters, right_vlmc.alphabet)
     chisq, p_value = self.perform_chi_squared_test(new_vlmc_tree, right_vlmc, context_counters)
     return 1 - p_value < self.significance_level
 
@@ -140,15 +140,12 @@ cdef class StatisticalMetric(object):
     for context in original_vlmc.tree.keys():
       times_visited_node = context_count[context]
       if times_visited_node > 0:
-        alphabet = ["A", "C", "G", "T"]
-        transition_probabilitites = list(map(lambda x: (x, original_vlmc.tree[context][x]), alphabet ))
+        transition_probabilitites = list(map(lambda x: (x, original_vlmc.tree[context][x]), original_vlmc.alphabet ))
 
         # find probabilites that are greater than zero
-        probs_without_zeros = [item for item in transition_probabilitites if item[1] > 0]
+        probs_without_zeros = [(char_, prob) for (char_, prob) in transition_probabilitites if prob > 0]
         # loop through all of these exept one (last)
-        for character_probability_tuple in probs_without_zeros[:-1]:
-          character = character_probability_tuple[0]
-          probability_original_vlmc = character_probability_tuple[1]
+        for character, probability_original_vlmc in probs_without_zeros[:-1]:
           probability_estimation = estimated_vlmc_tree[context][character]
 
           expected_frequency = times_visited_node * probability_original_vlmc
@@ -159,11 +156,11 @@ cdef class StatisticalMetric(object):
     return chisq, p_value
 
 
-  cdef dict create_pst_by_estimating_probabilities(self, context_counters, transition_probabilities):
+  cdef dict create_pst_by_estimating_probabilities(self, context_counters, transition_probabilities, alphabet):
     tree = {}
     for context, count in context_counters.items():
       tree[context] = {}
-      for character in ["A", "C", "G", "T"]:
+      for character in alphabet:
         if count > 0:
           tree[context][character] = transition_probabilities[context][character] / count
         else:
