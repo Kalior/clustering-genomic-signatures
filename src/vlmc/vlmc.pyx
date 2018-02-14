@@ -5,6 +5,7 @@ import os
 import random
 import numpy as np
 import scipy
+from absorbing_state_exception import AbsorbingStateException
 
 
 cdef class VLMC(object):
@@ -94,8 +95,9 @@ cdef class VLMC(object):
     if len(seq) == self.order and seq in self.tree:
       # early return if possible. will be often if the model is a full Markov chain
       return self.tree[seq][character]
-
     cdef str context = self.get_context(seq)
+    if context == None:
+      return 0
     return self.tree[context][character]
 
 
@@ -109,7 +111,7 @@ cdef class VLMC(object):
         maybe_context = ""
       if maybe_context in self.tree:
         return maybe_context
-    raise RuntimeError("get_context vlmc.pyx")
+    return None
 
 
 
@@ -122,6 +124,9 @@ cdef class VLMC(object):
       # generating the sequence from a random context.
       # TODO: The probability of getting context c should be proportional
       # the stationary distribution of c.
+      if len(self.tree) == 0:
+        # if there are no contexts, we cant generate a sequence
+        raise AbsorbingStateException
       generated_sequence += random.choice(list(self.tree.keys()))
 
     for i in range(total_length):
@@ -133,9 +138,15 @@ cdef class VLMC(object):
 
 
   cdef str _generate_next_letter(self, current_sequence):
-    probabilities = map(lambda c: self._probability_of_char_given_sequence(
-      c, current_sequence), self.alphabet)
-    return random.choices(self.alphabet, weights=probabilities)[0] # is list, take only element
+    probabilities = list(map(lambda c: self._probability_of_char_given_sequence(
+      c, current_sequence), self.alphabet))
+
+    # if none of the probabilities are larger than zero, raise exception
+    if all(map(lambda x: x == 0, probabilities)):
+      raise AbsorbingStateException("When generating a new letter")
+
+    array = random.choices(self.alphabet, weights=probabilities)
+    return array[0] # is list, take only element
 
 
   def _calculate_order(self, tree):
@@ -214,7 +225,11 @@ cdef class VLMC(object):
 
 
   cpdef dict _estimated_context_distribution(self, sequence_length):
-    sequence = self.generate_sequence(sequence_length, 500)
+    sequence = ""
+    try:
+      sequence = self.generate_sequence(sequence_length, 500)
+    except AbsorbingStateException:
+      return {}
     context_counters = self._count_state_occourances(sequence)
     context_distribution = {}
 
@@ -234,6 +249,7 @@ cdef class VLMC(object):
       if matching_state in state_count:
         state_count[matching_state] += 1
       else:
+        # give initial value of 1
         state_count[matching_state] = 1
 
     return state_count
