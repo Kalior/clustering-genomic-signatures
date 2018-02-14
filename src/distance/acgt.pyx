@@ -4,13 +4,15 @@ cdef class ACGTContent(object):
     (Should be stored as transitions from the root node).
   """
 
-  def __init__(self):
-    return
+  cdef list characters
+
+  def __init__(self, characters=['A', 'C', 'G', 'T']):
+    self.characters = characters
+
 
   cpdef double distance(self, left_vlmc, right_vlmc):
     # Assume this is the alphabet, only relevant case for us.
     cdef dict left_tree = left_vlmc.tree, right_tree = right_vlmc.tree
-    alphabet = ['A', 'C', 'G', 'T']
 
-    cdef double distance = sum([abs(left_tree[""][char_] - right_tree[""][char_]) for char_ in alphabet])
+    cdef double distance = sum([abs(left_tree[""][char_] - right_tree[""][char_]) for char_ in self.characters])
     return distance
