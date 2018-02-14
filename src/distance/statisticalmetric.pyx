@@ -1,6 +1,6 @@
 import scipy.stats as stats
 import numpy as np
-from vlmc import VLMC
+from vlmc import VLMC, AbsorbingStateException
 
 
 cdef class StatisticalMetric(object):
@@ -94,7 +94,11 @@ cdef class StatisticalMetric(object):
 
   cdef bint equivalence_test(self, left_vlmc, right_vlmc):
     pre_sample_length = 500
-    cdef str sequence = left_vlmc.generate_sequence(self.sequence_length, pre_sample_length)
+    cdef str sequence = ""
+    try:
+      sequence = left_vlmc.generate_sequence(self.sequence_length, pre_sample_length)
+    except AbsorbingStateException:
+      return False
     # For every starting state,
     possible_contexts = right_vlmc.tree.keys()
     for start_context in possible_contexts:
