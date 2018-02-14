@@ -51,16 +51,19 @@ def test_output(vlmc, vlmcs, distances, elapsed_time, metadata):
   sorted_results = sorted(zip(distances, vlmcs),
                           key=lambda t: (t[0], metadata[t[1].name]['genus']))
 
-  result_list = [output_line(metadata, vlmc, dist, v) for (dist, v) in sorted_results]
+  extra_distance = ACGTContent(['C', 'G'])
+  result_list = [output_line(metadata, vlmc, dist, v, extra_distance)
+                 for (dist, v) in sorted_results]
 
   print('\n'.join(result_list) + '\n\n')
 
 
-def output_line(metadata, vlmc, dist, v):
-  return "{:>55}  {:20} {:20}  distance: {:10.5f}  {}".format(
+def output_line(metadata, vlmc, dist, v, d):
+  return "{:>55}  {:20} {:20} GC-distance: {:7.5f}   distance: {:10.5f}  {}".format(
       metadata[v.name]['species'],
       metadata[v.name]['genus'],
       metadata[v.name]['family'],
+      d.distance(vlmc, v),
       dist,
       same_genus_or_family_string(metadata, vlmc, v))
 
