@@ -113,7 +113,7 @@ cdef class StatisticalMetric(object):
     for character in sequence:
       context_counters[current_context] += 1
       transition_counters[current_context][character] += 1
-      current_context = self.get_relvant_context(current_context, character, right_vlmc)
+      current_context = right_vlmc.get_context(current_context + character)
 
       if current_context == None:
         # this means that the vlmc could not have produced the next character given its context
@@ -161,26 +161,6 @@ cdef class StatisticalMetric(object):
           tree[context][character] = 0
 
     return tree
-
-
-  cdef str get_relvant_context(self, context_before, next_char, vlmc_to_approximate):
-    order = vlmc_to_approximate.order
-    possible_contexts = vlmc_to_approximate.tree.keys()
-    tmp_context = context_before + next_char
-    # truncate to _order_ nbr of characters
-    new_context = tmp_context[-order:]
-    # Loop through to find the longest possible context applicable
-    # TODO, extract this into to vlmc model
-    for i in range(order+1):
-      if not i == order:
-        maybe_context = new_context[-(order-i):]
-      else:
-        maybe_context = ""
-      if maybe_context in possible_contexts:
-        return maybe_context
-    # returns None if the approximated vlmc does not have any context
-    # that fits the sequence
-    return None
 
 
   cdef tuple initialize_counters(self, right_vlmc, start_context):
