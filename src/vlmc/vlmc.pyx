@@ -166,9 +166,8 @@ cdef class VLMC(object):
 
     """
     nbr_of_states = len(self.tree.keys())
-    rows = []
-    for from_context in self.tree.keys():
-      row = []
+    rows = np.zeros((nbr_of_states, nbr_of_states), np.float32)
+    for row, from_context in enumerate(self.tree.keys()):
       reachable_contexts = []
       for character in self.alphabet:
         probability_of_char = self.tree[from_context][character]
@@ -179,14 +178,14 @@ cdef class VLMC(object):
             if to_context in self.tree:
               reachable_contexts.append((to_context, probability_of_char))
               break
-      for right in self.tree.keys():
+      for column, to_context in enumerate(self.tree.keys()):
         prob = 0
-        for x in reachable_contexts:
-          if x[0] == right:
-            prob = x[1]
-        row.append(prob)
-      rows.append(row)
-    return np.array(rows)
+        for state, probability in reachable_contexts:
+          if state == to_context:
+            prob = probability
+        rows[row, column] = prob
+
+    return rows
 
 
   cpdef dict get_context_distribution(self):
