@@ -33,16 +33,17 @@ cdef class StatisticalMetric(object):
   7. Else exit with no equivalence.
   """
   cpdef double distance(self, left_vlmc, right_vlmc):
-    p_values = np.arange(0, 0.001, 0.00005) # should come from a function
+    print("Measuring distance between {}\t and {}".format(left_vlmc.name, right_vlmc.name))
+    p_values = np.arange(0, 0.001, 0.00001) # should come from a function
     for threshhold in p_values:
       left_vlmc = self._remove_unlikely_events(left_vlmc, threshhold)
       right_vlmc = self._remove_unlikely_events(right_vlmc, threshhold)
       if (not self.is_null_model(left_vlmc) and not self.is_null_model(right_vlmc)):
         # as long as none of the models were null-models, perform an equivalence test
-        print("Performing equivalence test with p-value: " + str(threshhold))
         if self.equivalence_test(left_vlmc, right_vlmc):
           print("Found equality at p_value " + str(threshhold))
           return threshhold
+    print("Fround no equality")
     return 1
 
 
