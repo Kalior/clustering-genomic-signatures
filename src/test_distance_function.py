@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#! /usr/bin/python3.6
 from vlmc import VLMC
 from distance import NegativeLogLikelihood, NaiveParameterSampling, StationaryDistribution, ACGTContent
 import parse_trees_to_json
