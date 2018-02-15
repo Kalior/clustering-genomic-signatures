@@ -72,15 +72,17 @@ cdef class GraphBasedClustering(object):
       clustering[i] = vlmc.name
 
     connections_to_make = len(self.vlmcs) - num_clusters
+    # Keep track of the currently smallest index
+    cdef int smallest_distance_index = 0
     for _ in range(connections_to_make):
       # Add an edge for the shortest distance
       # Take the smallest distance
-      [left, right, dist] = sorted_distances[0]
-      sorted_distances = np.delete(sorted_distances, 0, axis=0)
+      [left, right, dist] = sorted_distances[smallest_distance_index]
+      smallest_distance_index += 1
       # Remove distances for pairs which are in the same cluster
       while clustering[left] == clustering[right]:
-        [left, right, dist] = sorted_distances[0]
-        sorted_distances = np.delete(sorted_distances, 0, axis=0)
+        [left, right, dist] = sorted_distances[smallest_distance_index]
+        smallest_distance_index += 1
 
       G.add_edge(self.vlmcs[int(left)], self.vlmcs[int(right)], weight=dist)
 
@@ -92,7 +94,7 @@ cdef class GraphBasedClustering(object):
         if value == rename_cluster:
           clustering[key] = clustering[int(right)]
 
-      if distances.size == 0:
+      if smallest_distance_index >= len(sorted_distances):
         break
 
     cluster_time = time.time() - start_time
