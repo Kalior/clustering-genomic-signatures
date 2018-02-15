@@ -60,16 +60,16 @@ cdef class GraphBasedClustering(object):
     distance_time = time.time() - start_time
     start_time = time.time()
 
+    # Sort the array by the distances
     cdef np.ndarray[FLOATTYPE_t, ndim=2] sorted_distances = distances[distances[:,2].argsort()]
 
     sorting_time = time.time() - start_time
     start_time = time.time()
 
+    # Keep track of which cluster each vlmc is in
     clustering = {}
-    cdef FLOATTYPE_t i_t
     for i, vlmc in enumerate(self.vlmcs):
-      i_t = i
-      clustering[i_t] = vlmc.name
+      clustering[i] = vlmc.name
 
     connections_to_make = len(self.vlmcs) - num_clusters
     for _ in range(connections_to_make):
@@ -84,12 +84,13 @@ cdef class GraphBasedClustering(object):
 
       G.add_edge(self.vlmcs[int(left)], self.vlmcs[int(right)], weight=dist)
 
-      rename = clustering[left]
+      # Save this value as it may get overwritten during the for-loop below.
+      rename_cluster = clustering[int(left)]
 
       # Point every node in the clusters to the same value.
       for key, value in clustering.items():
-        if value == rename:
-          clustering[key] = clustering[right]
+        if value == rename_cluster:
+          clustering[key] = clustering[int(right)]
 
       if distances.size == 0:
         break
