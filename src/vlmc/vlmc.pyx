@@ -50,7 +50,8 @@ cdef class VLMC(object):
     stripped_order_prefix = signature_name[3:]
     split_name = stripped_order_prefix.split("_")
     removed_start_stop_indicies = split_name[:len(split_name) - 2]
-    aid = '_'.join(removed_start_stop_indicies)
+    remove_empty_strings = [s for s in removed_start_stop_indicies if s != ""]
+    aid = '_'.join(remove_empty_strings)
     return aid
 
   def to_json(self):
