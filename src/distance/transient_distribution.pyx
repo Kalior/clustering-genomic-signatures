@@ -19,30 +19,33 @@ cdef class TransientDistribution(object):
     self.window_step = window_step
 
   cpdef double distance(self, left_vlmc, right_vlmc):
-    # self._find_transient_distriubutions(left_vlmc)
-    self._find_transient_distriubutions(right_vlmc)
+    left_state_averages = self._find_transient_distriubutions(left_vlmc)
+    right_state_averages = self._find_transient_distriubutions(right_vlmc)
 
-    # cdef double distance = sum([abs(left_stationary_prob[char_] - right_stationary_prob[char_])
-                                  # for char_ in self.alphabet])
-    plt.show()
-    return 0.0
+    cdef double distance = sum([np.power(right_state_averages[k] - left_state_averages[k], 2)
+                                   for k in left_vlmc.tree.keys()
+                                   if k in left_state_averages and k in right_state_averages])
+    # plt.show()
+    return distance
 
 
   cdef _find_transient_distriubutions(self, vlmc):
-    sequence_length = 50000
+    sequence_length = 10000
 
     state_list = self._get_state_sequence(vlmc, sequence_length)
     char_distributions, state_distributions = self._calculate_sliding_window_distibution(vlmc, state_list)
-    self._plot_sliding_window(vlmc, char_distributions, state_distributions)
+    # self._plot_sliding_window(vlmc, char_distributions, state_distributions)
 
-    char_averages = self._calculate_average(char_distributions, self.alphabet)
+    # char_averages = self._calculate_average(char_distributions, self.alphabet)
     state_averages = self._calculate_average(state_distributions, vlmc.tree.keys())
 
-    char_deviations = self._calculate_deviation(char_distributions, char_averages, self.alphabet)
+    # char_deviations = self._calculate_deviation(char_distributions, char_averages, self.alphabet)
     state_deviations = self._calculate_deviation(state_distributions, state_averages, vlmc.tree.keys())
 
-    self._print_average_and_deviation(char_averages, char_deviations, self.alphabet)
-    self._print_average_and_deviation(state_averages, state_deviations, vlmc.tree.keys())
+    # self._print_average_and_deviation(char_averages, char_deviations, self.alphabet)
+    # self._print_average_and_deviation(state_averages, state_deviations, vlmc.tree.keys())
+
+    return state_averages
 
 
   cdef tuple _calculate_sliding_window_distibution(self, vlmc, state_list):
