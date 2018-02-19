@@ -36,8 +36,8 @@ cdef class StatisticalMetric(object):
     print("Measuring distance between {}\t and {}".format(left_vlmc.name, right_vlmc.name))
     p_values = np.arange(0, 0.001, 0.00001) # should come from a function
     for threshhold in p_values:
-      left_vlmc = self._remove_unlikely_events(left_vlmc, threshhold)
-      right_vlmc = self._remove_unlikely_events(right_vlmc, threshhold)
+      left_vlmc = self._remove_unlikely_leaf_node_events(left_vlmc, threshhold)
+      right_vlmc = self._remove_unlikely_leaf_node_events(right_vlmc, threshhold)
       if (not self.is_null_model(left_vlmc) and not self.is_null_model(right_vlmc)):
         # as long as none of the models were null-models, perform an equivalence test
         if self.equivalence_test(left_vlmc, right_vlmc):
@@ -57,29 +57,39 @@ cdef class StatisticalMetric(object):
     return True
 
 
-  cdef object _remove_unlikely_events(self, vlmc, threshhold_probability):
-    vlmc = self._remove_transitions(vlmc, threshhold_probability)
-    if vlmc == None:
-      return VLMC({}, "null-model")
-    contexts_to_delete = self._get_states_with_all_zero_probability_transitions(vlmc)
-    self._delete_contexts(vlmc, contexts_to_delete)
-    self._normalize_transition_probabilites(vlmc)
+  cdef object _remove_unlikely_leaf_node_events(self, vlmc, threshhold_event_probability):
+    has_removed_transition = True
+    while has_removed_transition:
+      has_removed_transition = self._remove_leaf_node_transitions(vlmc, threshhold_event_probability)
+      contexts_to_delete = self._get_states_with_all_zero_probability_transitions(vlmc)
+      self._delete_contexts(vlmc, contexts_to_delete)
+      self._normalize_transition_probabilites(vlmc)
     return vlmc
 
 
-  cdef object _remove_transitions(self, vlmc, threshhold_probability):
+  cdef bint _remove_leaf_node_transitions(self, vlmc, threshhold_event_probability):
+    has_removed_transition = False
     stationary_distibution = vlmc.get_context_distribution()
     if stationary_distibution == None:
       # Happens if there are no contexts in the model
-      return None
+      return False
     for context in stationary_distibution.keys():
-      for character in vlmc.alphabet:
-        event_probability = stationary_distibution[context] * vlmc.tree[context][character]
-        if event_probability <= threshhold_probability:
-          # if the event probability is smaller than threshhold, set its
-          # corresponding transition probability to zero
-          vlmc.tree[context][character] = 0
-    return vlmc
+      if self._is_leaf_context(context, vlmc):
+        for character in vlmc.alphabet:
+          event_probability = stationary_distibution[context] * vlmc.tree[context][character]
+          if event_probability <= threshhold_event_probability and vlmc.tree[context][character] > 0:
+            # if the event probability is smaller than threshhold and
+            # it has not been set to zero earlier, set its
+            # corresponding transition probability to zero
+            vlmc.tree[context][character] = 0
+            has_removed_transition = True
+    return has_removed_transition
+
+
+  cdef bint _is_leaf_context(self, context, vlmc):
+    possible_leaves = list(map(lambda c: context + c, vlmc.alphabet))
+    # checks if any of the possible leaves does not exist as a key
+    return any(map(lambda leaf: not leaf in vlmc.tree, possible_leaves))
 
 
   cdef _delete_contexts(self, vlmc, contexts):
