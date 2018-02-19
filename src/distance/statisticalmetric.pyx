@@ -2,6 +2,7 @@ import scipy.stats as stats
 import numpy as np
 from vlmc import VLMC, AbsorbingStateException
 
+import copy
 
 cdef class StatisticalMetric(object):
   cdef double significance_level
@@ -32,7 +33,10 @@ cdef class StatisticalMetric(object):
      consistent. Exit with equivalence.
   7. Else exit with no equivalence.
   """
-  cpdef double distance(self, left_vlmc, right_vlmc):
+  cpdef double distance(self, left_vlmc_original, right_vlmc_original):
+    left_vlmc = copy.deepcopy(left_vlmc_original)
+    right_vlmc = copy.deepcopy(right_vlmc_original)
+
     print("Measuring distance between {}\t and {}".format(left_vlmc.name, right_vlmc.name))
     p_values = np.arange(0, 0.001, 0.00001) # should come from a function
     for threshhold in p_values:
