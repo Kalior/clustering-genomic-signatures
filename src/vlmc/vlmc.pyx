@@ -124,6 +124,19 @@ cdef class VLMC(object):
   def _calculate_order(self, tree):
     return max(map(lambda k: len(k), tree.keys()))
 
+  def mirror(self):
+    conversion_dict = {'A': 'T', 'T': 'A', 'C': 'G', 'G': 'C'}
+
+    mirror_tree = {}
+    for context, probs in self.tree.items():
+      mirror_context = "".join([conversion_dict[char_] for char_ in context])
+      mirror_probs = {}
+      for char_, prob in probs.items():
+        mirror_probs[conversion_dict[char_]] = prob
+
+      mirror_tree[mirror_context] = mirror_probs
+
+    return VLMC(mirror_tree, "mirror_" + self.name)
 
 if __name__ == "__main__":
   s = '{"":{"A":0.5,"B":0.5},"A":{"B":0.5,"A":0.5},"B":{"A":0.5,"B":0.5},"BA":{"A":0.5,"B":0.5},"AA":{"A":0.5,"B":0.5}}'
