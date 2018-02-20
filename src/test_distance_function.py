@@ -35,13 +35,15 @@ def test_distance_function(d):
 
   for vlmc in vlmcs:
     start_time = time.time()
-    distances = list(map(lambda other: d.distance(vlmc, other), vlmcs))
+    distances = list(map(lambda other: d.distance(vlmc, other.mirror()), vlmcs))
     elapsed_time = time.time() - start_time
 
-    test_output(vlmc, vlmcs, distances, elapsed_time, metadata)
+    mirror_distances = {other.name: d.distance(vlmc, other) for other in vlmcs}
+
+    test_output(vlmc, vlmcs, distances, mirror_distances, elapsed_time, metadata)
 
 
-def test_output(vlmc, vlmcs, distances, elapsed_time, metadata):
+def test_output(vlmc, vlmcs, distances, mirror_distances, elapsed_time, metadata):
   closest_vlmc_i = distances.index(min(distances))
   closest_vlmc = vlmcs[closest_vlmc_i]
 
@@ -51,20 +53,21 @@ def test_output(vlmc, vlmcs, distances, elapsed_time, metadata):
   sorted_results = sorted(zip(distances, vlmcs),
                           key=lambda t: (t[0], metadata[t[1].name]['genus']))
 
-  extra_distance = ACGTContent(['C', 'G'])
-  result_list = [output_line(metadata, vlmc, dist, v, extra_distance)
+  cg_distance = ACGTContent(['A', 'T', 'C', 'G'])
+  result_list = [output_line(metadata, vlmc, dist, v, cg_distance, mirror_distances)
                  for (dist, v) in sorted_results]
 
   print('\n'.join(result_list) + '\n\n')
 
 
-def output_line(metadata, vlmc, dist, v, d):
-  return "{:>55}  {:20} {:20} GC-distance: {:7.5f}   distance: {:10.5f}  {}".format(
+def output_line(metadata, vlmc, dist, v, cg_distance, mirror_distances):
+  return "{:>55}  {:20} {:20} GC-distance: {:7.5f}   distance: {:10.5f}  mirror: {:10.5f} {}".format(
       metadata[v.name]['species'],
       metadata[v.name]['genus'],
       metadata[v.name]['family'],
-      d.distance(vlmc, v),
+      cg_distance.distance(vlmc, v),
       dist,
+      mirror_distances[v.name],
       same_genus_or_family_string(metadata, vlmc, v))
 
 
