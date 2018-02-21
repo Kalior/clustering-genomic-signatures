@@ -60,15 +60,15 @@ cdef class VLMC(object):
     """
     return json.dumps(self.tree)
 
-  cpdef double log_likelihood_ignore_initial_bias(self, sequence):
+  cpdef double log_likelihood_ignore_initial_bias(self, sequence, threshold=0):
     # skip the first /order/ characters to ignore the bias from
     # where the sequence was cut/taken
-    return self._log_likelihood(sequence, self.order)
+    return self._log_likelihood(sequence, self.order, threshold)
 
-  cpdef double log_likelihood(self, sequence):
-    return self._log_likelihood(sequence, 0)
+  cpdef double log_likelihood(self, sequence, threshold=0):
+    return self._log_likelihood(sequence, 0, threshold)
 
-  cdef double _log_likelihood(self, sequence, nbr_skipped_letters):
+  cdef double _log_likelihood(self, sequence, nbr_skipped_letters, threshold):
     # assume we already looked at the first nbr_skipped_letters
     cdef str sequence_so_far = sequence[:nbr_skipped_letters]
     cdef str sequence_left = sequence[nbr_skipped_letters:]
@@ -79,6 +79,8 @@ cdef class VLMC(object):
         # means the vlmc could not possibly have generated the sequence
         # corresponds to prob == e^-1000
         log_likelihood -= 1000
+      elif prob < threshold:
+        log_likelihood += math.log(0.25)
       else:
         log_likelihood += math.log(prob)
       sequence_so_far += s
@@ -106,22 +108,37 @@ cdef class VLMC(object):
         return maybe_context
     raise RuntimeError("get_context vlmc.pyx")
 
-
-  cpdef str generate_sequence(self, sequence_length, pre_sample_length):
+  cpdef str generate_sequence(self, sequence_length, pre_sample_length, threshold=0):
     total_length = sequence_length + pre_sample_length
     cdef str generated_sequence = ""
     for i in range(total_length):
       # only send the last /order/ number of characters to generate next letter
-      next_letter = self._generate_next_letter(generated_sequence[-self.order:])
+      next_letter = self._generate_next_letter(generated_sequence[-self.order:], threshold)
       generated_sequence += next_letter
     # return the suffix with length sequence_length
     return generated_sequence[-sequence_length:]
 
-  cdef str _generate_next_letter(self, current_sequence):
+  cdef str _generate_next_letter(self, current_sequence, threshold):
     cdef list letters = ["A", "C", "G", "T"]
-    probabilities = map(lambda char_: self._probability_of_char_given_sequence(
-        char_, current_sequence), letters)
-    return choices(letters, weights=probabilities)[0]
+    probabilities = list(map(lambda char_: self._probability_of_char_given_sequence(
+        char_, current_sequence), letters))
+    thresholded_probabilities = self._threshold_probabilities(probabilities, threshold)
+    return choices(letters, weights=thresholded_probabilities)[0]
+
+  cdef list _threshold_probabilities(self, probabilities, threshold):
+    thresholded_probabilities = []
+    for prob in probabilities:
+      if prob < threshold:
+        thresholded_probabilities.append(0)
+      else:
+        thresholded_probabilities.append(prob)
+
+    prob_sum = sum(thresholded_probabilities)
+
+    if prob_sum == 0:
+      return [0.25] * len(probabilities)
+    else:
+      return [prob / prob_sum for prob in thresholded_probabilities]
 
   def _calculate_order(self, tree):
     return max(map(lambda k: len(k), tree.keys()))
