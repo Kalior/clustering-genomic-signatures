@@ -3,6 +3,8 @@ import numpy as np
 from vlmc import VLMC, AbsorbingStateException
 
 import copy
+import math
+import warnings
 
 cdef class StatisticalMetric(object):
   cdef double significance_level
@@ -38,17 +40,43 @@ cdef class StatisticalMetric(object):
     right_vlmc = copy.deepcopy(right_vlmc_original)
 
     print("Measuring distance between {}\t and {}".format(left_vlmc.name, right_vlmc.name))
-    p_values = np.arange(0, 0.001, 0.00001) # should come from a function
-    for threshhold in p_values:
+    leaf_event_probabilities = self._get_union_leaf_event_probabilites(left_vlmc, right_vlmc)
+    threshhold_values = leaf_event_probabilities[::20] + [0.015, 0.03, 0.07, 0.1, 0.15, 0.25, 0.5, 0.7, 0.9, 1]
+
+    for threshhold in threshhold_values:
       left_vlmc = self._remove_unlikely_leaf_node_events(left_vlmc, threshhold)
       right_vlmc = self._remove_unlikely_leaf_node_events(right_vlmc, threshhold)
-      if (not self.is_null_model(left_vlmc) and not self.is_null_model(right_vlmc)):
-        # as long as none of the models were null-models, perform an equivalence test
-        if self.equivalence_test(left_vlmc, right_vlmc):
-          print("Found equality at p_value " + str(threshhold))
-          return threshhold
+      print("Threshhold value: {}".format(threshhold))
+      if (self.is_null_model(left_vlmc) or self.is_null_model(right_vlmc)):
+        return 1
+      elif self.equivalence_test(left_vlmc, right_vlmc):
+        print("Found equality at p_value " + str(threshhold))
+        return threshhold
     print("Fround no equality")
     return 1
+
+
+  cdef list _get_union_leaf_event_probabilites(self, left_vlmc, right_vlmc):
+    set1 = self._get_leaf_event_probabilites(left_vlmc)
+    set2 = self._get_leaf_event_probabilites(left_vlmc)
+    union = set1.union(set2)
+    return sorted(union)
+
+
+  cdef set _get_leaf_event_probabilites(self, vlmc):
+    stationary_distibution = vlmc.get_context_distribution()
+    if stationary_distibution == None:
+      return set()
+    values = set()
+    for context in self._get_leaf_contexts(vlmc):
+      for character in vlmc.alphabet:
+        event_probability = stationary_distibution[context] * vlmc.tree[context][character]
+        values.add(event_probability)
+    return values
+
+
+  cdef list _get_leaf_contexts(self, vlmc):
+    return list(filter(lambda c: self._is_leaf_context(c, vlmc), list(vlmc.tree.keys())))
 
 
   cdef bint is_null_model(self, vlmc):
@@ -65,7 +93,7 @@ cdef class StatisticalMetric(object):
     has_removed_transition = True
     while has_removed_transition:
       has_removed_transition = self._remove_leaf_node_transitions(vlmc, threshhold_event_probability)
-      contexts_to_delete = self._get_states_with_all_zero_probability_transitions(vlmc)
+      contexts_to_delete = self._get_absorbing_states(vlmc)
       self._delete_contexts(vlmc, contexts_to_delete)
       self._normalize_transition_probabilites(vlmc)
     return vlmc
@@ -92,8 +120,8 @@ cdef class StatisticalMetric(object):
 
   cdef bint _is_leaf_context(self, context, vlmc):
     possible_leaves = list(map(lambda c: context + c, vlmc.alphabet))
-    # checks if any of the possible leaves does not exist as a key
-    return any(map(lambda leaf: not leaf in vlmc.tree, possible_leaves))
+    # leaf contexts are defined as having no children at all
+    return all(map(lambda leaf: not leaf in vlmc.tree, possible_leaves))
 
 
   cdef _delete_contexts(self, vlmc, contexts):
@@ -101,8 +129,34 @@ cdef class StatisticalMetric(object):
       vlmc.tree.pop(context)
 
 
-  cdef list _get_states_with_all_zero_probability_transitions(self, vlmc):
-    return list(filter(lambda context: sum(vlmc.tree[context].values()) == 0, vlmc.tree.keys()))
+  cdef set _get_absorbing_states(self, vlmc):
+    no_outgoing_transitions = self._get_leaf_states_with_all_zero_probability_transitions(vlmc)
+    only_transition_to_self = self._get_states_which_only_reach_themselves(vlmc)
+    return no_outgoing_transitions.union(only_transition_to_self)
+
+
+  cdef set _get_states_which_only_reach_themselves(self, vlmc):
+    leaf_contexts = self._get_leaf_contexts(vlmc)
+    return set(filter(lambda context: self._only_reach_itself(context, vlmc), leaf_contexts))
+
+
+  cdef bint _only_reach_itself(self, context, vlmc):
+    if context == "":
+      # we dont want to delete the root, if it is an absorbing state
+      # then it means it is the only context left in the tree
+      return False
+    can_only_reach_itself = True
+    for character, probability in vlmc.tree[context].items():
+      if probability > 0 and context != vlmc.get_context(context + character):
+        # there is a positve probability of reaching some other state
+        can_only_reach_itself = False
+        break
+    return can_only_reach_itself
+
+
+  cdef set _get_leaf_states_with_all_zero_probability_transitions(self, vlmc):
+    leaf_contexts = self._get_leaf_contexts(vlmc)
+    return set(filter(lambda context: sum(vlmc.tree[context].values()) == 0, leaf_contexts))
 
 
   cdef object _normalize_transition_probabilites(self, vlmc):
@@ -117,9 +171,14 @@ cdef class StatisticalMetric(object):
 
   cdef bint equivalence_test(self, left_vlmc, right_vlmc):
     pre_sample_length = 500
+    minimum_sample_length = 100
+    cdef int sequence_length = max(self._calculate_sequence_length_needed(left_vlmc, right_vlmc), minimum_sample_length)
+    too_large_sequence = 20000
+    if sequence_length > too_large_sequence:
+      warnings.warn("Sequence length required = {}".format(sequence_length))
     cdef str sequence = ""
     try:
-      sequence = left_vlmc.generate_sequence(self.sequence_length, pre_sample_length)
+      sequence = left_vlmc.generate_sequence(sequence_length, pre_sample_length)
     except AbsorbingStateException:
       return False
     # For every starting state,
@@ -128,6 +187,48 @@ cdef class StatisticalMetric(object):
       if self.equality_test_given_starting_context(start_context, sequence, right_vlmc):
         return True
     return False
+
+
+
+
+  cdef int _calculate_sequence_length_needed(self, left_vlmc, right_vlmc):
+    n_left = self._calculate_sequence_length(left_vlmc)
+    n_right = self._calculate_sequence_length(right_vlmc)
+    return max(n_left, n_right)
+
+
+  cdef int _calculate_sequence_length(self, vlmc):
+    leaf_contexts = self._get_leaf_contexts(vlmc)
+    stationary_distibution = vlmc.get_context_distribution()
+    context_to_ni = {}
+    for context in leaf_contexts:
+      context_to_ni[context] = self._get_n(context, vlmc)
+
+    N = 0
+    for context, n_i in context_to_ni.items():
+      if context in stationary_distibution:
+
+        s_i = stationary_distibution[context]
+        N = max(N, math.ceil( n_i / s_i ))
+    return N
+
+
+  cdef int _get_n(self, context, vlmc):
+    return max(list(map(lambda character: self._get_n_given_char(context, character, vlmc) ,vlmc.alphabet)))
+
+
+  cdef int _get_n_given_char(self, context, character, vlmc):
+    p_ij = vlmc.tree[context][character]
+
+    if p_ij == 0:
+      return 0
+    if p_ij == 1:
+      return 1
+
+    fraction_one = 4*p_ij / (1 - p_ij)
+    fraction_two = 4*(1 - p_ij) / p_ij
+    bigger_fraction = max(fraction_one, fraction_two)
+    return math.ceil(bigger_fraction)
 
 
   cdef bint equality_test_given_starting_context(self, start_context, sequence, right_vlmc):
