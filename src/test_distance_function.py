@@ -1,6 +1,6 @@
 #! /usr/bin/python3.6
 from vlmc import VLMC
-from distance import NegativeLogLikelihood, NaiveParameterSampling, StationaryDistribution, ACGTContent
+from distance import NegativeLogLikelihood, NaiveParameterSampling, StationaryDistribution, ACGTContent, StepWiseNegativeLogLikelihood
 import parse_trees_to_json
 import argparse
 import time
@@ -24,6 +24,11 @@ def test_acgt_content(tree_dir):
 
 def test_stationary_distribution(tree_dir):
   d = StationaryDistribution()
+  test_distance_function(d, tree_dir)
+
+
+def test_step_wise_negative_log_likelihood(tree_dir, sequence_length, threshold):
+  d = StepWiseNegativeLogLikelihood(sequence_length, 500, threshold)
   test_distance_function(d, tree_dir)
 
 
@@ -83,6 +88,7 @@ if __name__ == '__main__':
   parser.add_argument('--negative-log-likelihood', action='store_true')
   parser.add_argument('--acgt-content', action='store_true')
   parser.add_argument('--stationary-distribution', action='store_true')
+  parser.add_argument('--step-wise-negative-log-likelihood', action='store_true')
 
   parser.add_argument('--seqlen', type=int, default=1000,
                       help='The length of the sequences that are generated to calculate the likelihood.')
@@ -107,3 +113,8 @@ if __name__ == '__main__':
   if (args.stationary_distribution):
     print("Testing distance based on the stationary distribution")
     test_stationary_distribution(args.directory)
+
+  if (args.step_wise_negative_log_likelihood):
+    print('Testing negative log likelihood with a generated sequence of length {} and a threshold of {}'.format(
+        args.seqlen, args.threshold))
+    test_step_wise_negative_log_likelihood(args.directory, args.seqlen, args.threshold)
