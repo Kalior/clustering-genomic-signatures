@@ -29,7 +29,7 @@ def _parse_line(line):
   numbers = re.findall('-?[0-9]+', line)
   children = {}
   # Assumes we're only working with ACGT (in that order)
-  total = int(numbers[5])
+  total = sum([int(numbers[i]) for i in [1, 2, 3, 4]])
   children['A'] = int(numbers[1]) / total
   children['C'] = int(numbers[2]) / total
   children['G'] = int(numbers[3]) / total
