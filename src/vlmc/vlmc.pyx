@@ -5,6 +5,8 @@ import os
 import random
 import numpy as np
 import scipy
+import scipy.sparse.linalg
+import traceback
 from absorbing_state_exception import AbsorbingStateException
 
 
@@ -204,19 +206,29 @@ cdef class VLMC(object):
     vector v such that transpose(A)*v = v, i.e., it returns the
     stationary distribution of this vlmc """
     transition_matrix = self._get_transition_matrix()
-    if transition_matrix.size == 0:
+    if transition_matrix.shape[0] == 0:
       # Happens if the vlmc has no states whatsoever
       return None
+    if transition_matrix.shape[0] <= 2:
+      # ValueError: k must be less than ndim(A)-1, k=1
+      estimation = self._estimated_context_distribution(50000)
+      return estimation
     matrix = np.transpose(transition_matrix)
 
     try:
       # Get the eigen vector(s) with eigen value 1 if it exist
       values, eigen_vectors = scipy.sparse.linalg.eigs(matrix, k=1, sigma=1)
     except scipy.sparse.linalg.eigen.arpack.ArpackNoConvergence:
-      print("Calculation of eigenvector did not converge, using estimated stationary distribution.")
       return self._estimated_context_distribution(50000)
+    except scipy.sparse.linalg.ArpackNoConvergence:
+      return self._estimated_context_distribution(50000)
+    except ValueError:
+      # Should not happen since we check shape before calling eigs
+      traceback.print_exc()
 
     eigen_vector = eigen_vectors[:, 0] # will only contain one vector
+    if math.isnan(eigen_vector[0]):
+      return self._estimated_context_distribution(50000)
     return self._create_stationary_distribution_dict(eigen_vector)
 
 
