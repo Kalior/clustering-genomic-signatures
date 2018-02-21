@@ -27,7 +27,6 @@ def test_stationary_distribution(tree_dir):
   test_distance_function(d, tree_dir)
 
 
-
 def test_distance_function(d, tree_dir):
   parse_trees_to_json.parse_trees(tree_dir)
   vlmcs = VLMC.from_json_dir(tree_dir)
@@ -88,7 +87,6 @@ if __name__ == '__main__':
   parser.add_argument('--seqlen', type=int, default=1000,
                       help='The length of the sequences that are generated to calculate the likelihood.')
 
-
   parser.add_argument('--directory', type=str, default='../trees',
                       help='The directory which contains the trees to be used.')
 
@@ -109,4 +107,3 @@ if __name__ == '__main__':
   if (args.stationary_distribution):
     print("Testing distance based on the stationary distribution")
     test_stationary_distribution(args.directory)
-
