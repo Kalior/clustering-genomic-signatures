@@ -175,7 +175,12 @@ cdef class VLMC(object):
         # if to_context is reachable, set probability accordingly
         for state, probability in reachable_contexts:
           if state == to_context:
-            prob = probability
+            # The empty context, i.e. root, may appear multiple times
+            # in the list of reachable_contexts.  If only "" and "T"
+            # exists, then T will go to root for A, C, and G.  Root
+            # will go to itself for A, C, and G as well.  Hence we
+            # need to add the probabilities
+            prob += probability
         rows[row, column] = prob
 
     return rows
