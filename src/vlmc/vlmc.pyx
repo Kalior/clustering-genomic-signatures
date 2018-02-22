@@ -22,7 +22,7 @@ cdef class VLMC(object):
     return hash(self.name)
 
   def __eq__(self, other):
-    return self.name == other.name
+    return other is not None and self.name == other.name
 
   @classmethod
   def from_json(cls, s, name=""):
