@@ -27,6 +27,11 @@ cdef class VLMC(object):
   def __str__(self):
     return self.name
 
+  def __hash__(self):
+    return hash(self.name)
+
+  def __eq__(self, other):
+    return self.name == other.name
 
   @classmethod
   def from_json(cls, s, name=""):
@@ -56,7 +61,8 @@ cdef class VLMC(object):
     stripped_order_prefix = signature_name[3:]
     split_name = stripped_order_prefix.split("_")
     removed_start_stop_indicies = split_name[:len(split_name) - 2]
-    aid = '_'.join(removed_start_stop_indicies)
+    remove_empty_strings = [s for s in removed_start_stop_indicies if s != ""]
+    aid = '_'.join(remove_empty_strings)
     return aid
 
 
@@ -86,8 +92,10 @@ cdef class VLMC(object):
       prob = self._probability_of_char_given_sequence(s, sequence_so_far[-self.order:])
       if prob == 0:
         # means the vlmc could not possibly have generated the sequence
-        return 0
-      log_likelihood += math.log(prob)
+        # corresponds to prob == e^-1000
+        log_likelihood -= 1000
+      else:
+        log_likelihood += math.log(prob)
       sequence_so_far += s
     return log_likelihood
 
@@ -114,7 +122,6 @@ cdef class VLMC(object):
       if maybe_context in self.tree:
         return maybe_context
     return None
-
 
 
   cpdef str generate_sequence(self, sequence_length, pre_sample_length):
