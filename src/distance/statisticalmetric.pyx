@@ -35,26 +35,21 @@ cdef class StatisticalMetric(object):
      consistent. Exit with equivalence.
   7. Else exit with no equivalence.
   """
-  cpdef double distance(self, left_vlmc_original, right_vlmc_original):
-    left_vlmc = copy.deepcopy(left_vlmc_original)
-    right_vlmc = copy.deepcopy(right_vlmc_original)
-
-    print("Measuring distance between {}\t and {}".format(left_vlmc.name, right_vlmc.name))
-    leaf_event_probabilities = self._get_union_leaf_event_probabilites(left_vlmc, right_vlmc)
-    threshhold_values = leaf_event_probabilities[::20] + [0.015, 0.03, 0.07, 0.1, 0.15, 0.25, 0.5, 0.7, 0.9, 1]
-
-    for threshhold in threshhold_values:
-      left_vlmc = self._remove_unlikely_leaf_node_events(left_vlmc, threshhold)
-      right_vlmc = self._remove_unlikely_leaf_node_events(right_vlmc, threshhold)
-      print("Threshhold value: {}".format(threshhold))
-      if (self.is_null_model(left_vlmc) or self.is_null_model(right_vlmc)):
-        return 1
-      elif self.equivalence_test(left_vlmc, right_vlmc):
-        print("Found equality at p_value " + str(threshhold))
-        return threshhold
-    print("Fround no equality")
-    return 1
-
+  cpdef double distance(self, left_vlmc, right_vlmc):
+    # print("Measuring distance between {}\t and {}".format(left_vlmc.name, right_vlmc.name))
+    #p_values = np.arange(0, 0.001, 0.00001) # should come from a function
+    # threshhold = 0.000
+    # left_vlmc = self._remove_unlikely_events(left_vlmc, threshhold)
+    # right_vlmc = self._remove_unlikely_events(right_vlmc, threshhold)
+    return self.equivalence_test(left_vlmc, right_vlmc)
+    # for threshhold in p_values:
+    #   if (not self.is_null_model(left_vlmc) and not self.is_null_model(right_vlmc)):
+    #     # as long as none of the models were null-models, perform an equivalence test
+    #     if self.equivalence_test(left_vlmc, right_vlmc):
+    #       print("Found equality at p_value " + str(threshhold))
+    #       return threshhold
+    # print("Fround no equality")
+    # return 1
 
   cdef list _get_union_leaf_event_probabilites(self, left_vlmc, right_vlmc):
     set1 = self._get_leaf_event_probabilites(left_vlmc)
@@ -169,7 +164,7 @@ cdef class StatisticalMetric(object):
         vlmc.tree[context][character] = vlmc.tree[context][character] / total_weight
 
 
-  cdef bint equivalence_test(self, left_vlmc, right_vlmc):
+  cdef double equivalence_test(self, left_vlmc, right_vlmc):
     pre_sample_length = 500
     minimum_sample_length = 100
     cdef int sequence_length = max(self._calculate_sequence_length_needed(left_vlmc, right_vlmc), minimum_sample_length)
@@ -180,15 +175,10 @@ cdef class StatisticalMetric(object):
     try:
       sequence = left_vlmc.generate_sequence(sequence_length, pre_sample_length)
     except AbsorbingStateException:
-      return False
+      return -1
     # For every starting state,
     possible_contexts = right_vlmc.tree.keys()
-    for start_context in possible_contexts:
-      if self.equality_test_given_starting_context(start_context, sequence, right_vlmc):
-        return True
-    return False
-
-
+    return min([self.equality_test_given_starting_context(start_context, sequence, right_vlmc) for start_context in possible_contexts])
 
 
   cdef int _calculate_sequence_length_needed(self, left_vlmc, right_vlmc):
@@ -231,7 +221,7 @@ cdef class StatisticalMetric(object):
     return math.ceil(bigger_fraction)
 
 
-  cdef bint equality_test_given_starting_context(self, start_context, sequence, right_vlmc):
+  cdef double equality_test_given_starting_context(self, start_context, sequence, right_vlmc):
     current_context = start_context
     context_counters, transition_counters = self.initialize_counters(right_vlmc,                                                                        current_context)
     for character in sequence:
@@ -242,11 +232,12 @@ cdef class StatisticalMetric(object):
       if current_context == None:
         # this means that the vlmc could not have produced the next character given its context
         # exit with no equivalence for this starting context
-        return False
+        return -1
 
     new_vlmc_tree = self.create_pst_by_estimating_probabilities(context_counters, transition_counters, right_vlmc.alphabet)
     chisq, p_value = self.perform_chi_squared_test(new_vlmc_tree, right_vlmc, context_counters)
-    return 1 - p_value < self.significance_level
+    # return 1 - p_value < self.significance_level
+    return 1 - p_value
 
 
 
