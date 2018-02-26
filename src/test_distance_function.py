@@ -1,6 +1,6 @@
 #! /usr/bin/python3.6
 from vlmc import VLMC
-from distance import NegativeLogLikelihood, NaiveParameterSampling, StationaryDistribution, ACGTContent
+from distance import NegativeLogLikelihood, NaiveParameterSampling, StationaryDistribution, ACGTContent, FrobeniusNorm
 import parse_trees_to_json
 import argparse
 import time
@@ -24,6 +24,11 @@ def test_acgt_content(tree_dir):
 
 def test_stationary_distribution(tree_dir):
   d = StationaryDistribution()
+  test_distance_function(d, tree_dir)
+
+
+def test_frobenius_norm(tree_dir):
+  d = FrobeniusNorm()
   test_distance_function(d, tree_dir)
 
 
@@ -84,6 +89,7 @@ if __name__ == '__main__':
   parser.add_argument('--negative-log-likelihood', action='store_true')
   parser.add_argument('--acgt-content', action='store_true')
   parser.add_argument('--stationary-distribution', action='store_true')
+  parser.add_argument('--frobenius-norm', action='store_true')
 
   parser.add_argument('--seqlen', type=int, default=1000,
                       help='The length of the sequences that are generated to calculate the likelihood.')
@@ -110,3 +116,6 @@ if __name__ == '__main__':
     print("Testing distance based on the stationary distribution")
     test_stationary_distribution(args.directory)
 
+  if (args.frobenius_norm):
+    print("Testing distance with an estimated vlmc")
+    test_frobenius_norm(args.directory)

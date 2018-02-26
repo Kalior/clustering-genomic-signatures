@@ -3,7 +3,7 @@ from Cython.Build import cythonize
 import numpy
 
 files = ['vlmc/vlmc.pyx', 'distance/naive_parameter_sampling.pyx', 'distance/negloglikelihood.pyx',
-         'distance/stationary_distribution.pyx', 'distance/acgt.pyx',
+         'distance/stationary_distribution.pyx', 'distance/acgt.pyx', 'distance/frobenius.pyx',
          'clustering/graph_based_clustering.pyx']
 
 setup(
