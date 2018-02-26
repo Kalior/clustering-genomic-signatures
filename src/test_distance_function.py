@@ -78,7 +78,8 @@ def test_distance_function(d, tree_dir):
   total_average_distance_to_genus /= (len(vlmcs) * total_average_distance)
   total_average_distance_to_family /= (len(vlmcs) * total_average_distance)
   print("Average procent of genus in top #genus: {:5.5f} \t Average procent of family in top #family {:5.5f}\n"
-        "Average distance fraction to genus: {:5.5f} \t Average distance fraction to family {:5.5f} \t Average distance: {:5.5f}\n".format(
+        "Average distance fraction to genus: {:5.5f} \t Average distance fraction to family {:5.5f}"
+        "\t Average distance: {:5.5f}\n".format(
             average_procent_of_genus_in_top, average_procent_of_family_in_top,
             total_average_distance_to_genus, total_average_distance_to_family, 1))
 
