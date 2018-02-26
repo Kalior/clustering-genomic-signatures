@@ -4,6 +4,7 @@ import numpy
 
 files = ['vlmc/vlmc.pyx', 'distance/naive_parameter_sampling.pyx', 'distance/negloglikelihood.pyx',
          'distance/stationary_distribution.pyx', 'distance/acgt.pyx', 'distance/frobenius.pyx',
+         'distance/estimate.pyx',
          'clustering/graph_based_clustering.pyx']
 
 setup(

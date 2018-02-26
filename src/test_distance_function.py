@@ -1,6 +1,6 @@
 #! /usr/bin/python3.6
 from vlmc import VLMC
-from distance import NegativeLogLikelihood, NaiveParameterSampling, StationaryDistribution, ACGTContent, FrobeniusNorm
+from distance import NegativeLogLikelihood, NaiveParameterSampling, StationaryDistribution, ACGTContent, FrobeniusNorm, EstimateVLMC
 import parse_trees_to_json
 import argparse
 import time
@@ -31,6 +31,11 @@ def test_frobenius_norm(tree_dir):
   d = FrobeniusNorm()
   test_distance_function(d, tree_dir)
 
+
+def test_estimate_vlmc(tree_dir, sequence_length):
+  inner_d = FrobeniusNorm()
+  d = EstimateVLMC(inner_d)
+  test_distance_function(d, tree_dir)
 
 
 def test_distance_function(d, tree_dir):
@@ -90,6 +95,7 @@ if __name__ == '__main__':
   parser.add_argument('--acgt-content', action='store_true')
   parser.add_argument('--stationary-distribution', action='store_true')
   parser.add_argument('--frobenius-norm', action='store_true')
+  parser.add_argument('--estimate-vlmc', action='store_true')
 
   parser.add_argument('--seqlen', type=int, default=1000,
                       help='The length of the sequences that are generated to calculate the likelihood.')
@@ -119,3 +125,7 @@ if __name__ == '__main__':
   if (args.frobenius_norm):
     print("Testing distance with an estimated vlmc")
     test_frobenius_norm(args.directory)
+
+  if (args.estimate_vlmc):
+    print("Testing distance with an estimated vlmc")
+    test_estimate_vlmc(args.directory, args.seqlen)

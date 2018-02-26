@@ -1,6 +1,6 @@
 #! /usr/bin/python3.6
 from vlmc import VLMC
-from distance import NegativeLogLikelihood, NaiveParameterSampling, StationaryDistribution, ACGTContent
+from distance import NegativeLogLikelihood, NaiveParameterSampling, StationaryDistribution, ACGTContent, EstimateVLMC
 from clustering import GraphBasedClustering
 import parse_trees_to_json
 import argparse
@@ -28,6 +28,12 @@ def test_stationary_distribution(clusters):
   test_clustering(d, 0.2, clusters)
 
 
+def test_estimate_vlmc(sequence_length, clusters):
+  inner_d = NegativeLogLikelihood(sequence_length)
+  d = EstimateVLMC(inner_d)
+  test_clustering(d, 0.2, clusters)
+
+
 def test_clustering(d, threshold, clusters):
   tree_dir = "../trees"
   parse_trees_to_json.parse_trees(tree_dir)
@@ -43,6 +49,7 @@ if __name__ == '__main__':
   parser.add_argument('--negative-log-likelihood', action='store_true')
   parser.add_argument('--acgt-content', action='store_true')
   parser.add_argument('--stationary-distribution', action='store_true')
+  parser.add_argument('--estimate-vlmc', action='store_true')
 
   parser.add_argument('--seqlen', type=int, default=1000,
                       help='The length of the sequences that are generated to calculate the likelihood.')
@@ -67,3 +74,7 @@ if __name__ == '__main__':
   if (args.stationary_distribution):
     print("Testing distance based on the stationary distribution")
     test_stationary_distribution(args.clusters)
+
+  if (args.estimate_vlmc):
+    print("Testing distance with an estimated vlmc")
+    test_estimate_vlmc(args.seqlen, args.clusters)
