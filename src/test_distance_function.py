@@ -42,11 +42,13 @@ def test_distance_function(d, tree_dir):
   total_average_distance_to_genus = 0.0
   total_average_distance_to_family = 0.0
   total_average_distance = 0.0
+  global_time = 0
 
   for vlmc in vlmcs:
     start_time = time.time()
     distances = list(map(lambda other: d.distance(vlmc, other), vlmcs))
     elapsed_time = time.time() - start_time
+    global_time += elapsed_time
 
     sorted_results = sorted(zip(distances, vlmcs),
                             key=lambda t: (t[0], metadata[t[1].name]['genus']))
@@ -71,6 +73,8 @@ def test_distance_function(d, tree_dir):
     total_average_distance_to_genus += average_distance_to_genus
     total_average_distance_to_family += average_distance_to_family
     total_average_distance += average_distance
+
+  print("Distance calculated in: {}s {}".format(global_time))
 
   average_procent_of_genus_in_top /= len(vlmcs)
   average_procent_of_family_in_top /= len(vlmcs)
