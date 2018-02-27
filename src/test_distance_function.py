@@ -74,7 +74,7 @@ def test_distance_function(d, tree_dir):
     total_average_distance_to_family += average_distance_to_family
     total_average_distance += average_distance
 
-  print("Distance calculated in: {}s {}".format(global_time))
+  print("Distance calculated in: {}s".format(global_time))
 
   average_procent_of_genus_in_top /= len(vlmcs)
   average_procent_of_family_in_top /= len(vlmcs)
