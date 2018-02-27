@@ -43,29 +43,89 @@ def test_distance_function(d, tree_dir):
   vlmcs = VLMC.from_json_dir(tree_dir)
   metadata = get_metadata_for([vlmc.name for vlmc in vlmcs])
 
+  average_procent_of_genus_in_top = 0.0
+  average_procent_of_family_in_top = 0.0
+  total_average_distance_to_genus = 0.0
+  total_average_distance_to_family = 0.0
+  total_average_distance = 0.0
+  global_time = 0
+
   for vlmc in vlmcs:
     start_time = time.time()
     distances = list(map(lambda other: d.distance(vlmc, other), vlmcs))
     elapsed_time = time.time() - start_time
+    global_time += elapsed_time
 
-    test_output(vlmc, vlmcs, distances, elapsed_time, metadata)
+    sorted_results = sorted(zip(distances, vlmcs),
+                            key=lambda t: (t[0], metadata[t[1].name]['genus']))
+
+    procent_genus_in_top = procent_of_taxonomy_in_top(
+        vlmc, vlmcs, sorted_results, metadata, 'genus')
+    procent_family_in_top = procent_of_taxonomy_in_top(
+        vlmc, vlmcs, sorted_results, metadata, 'family')
+
+    average_distance_to_genus = average_distance_to_taxonomy(
+        vlmc, sorted_results, metadata, 'genus')
+    average_distance_to_family = average_distance_to_taxonomy(
+        vlmc, sorted_results, metadata, 'family')
+    average_distance = sum(distances) / len(distances)
+
+    # test_output(vlmc, vlmcs, sorted_results, elapsed_time, metadata,
+    #             procent_genus_in_top, procent_family_in_top,
+    #             average_distance_to_genus, average_distance_to_family, average_distance)
+
+    average_procent_of_genus_in_top += procent_genus_in_top
+    average_procent_of_family_in_top += procent_family_in_top
+    total_average_distance_to_genus += average_distance_to_genus
+    total_average_distance_to_family += average_distance_to_family
+    total_average_distance += average_distance
+
+  print("Distance calculated in: {}s".format(global_time))
+
+  average_procent_of_genus_in_top /= len(vlmcs)
+  average_procent_of_family_in_top /= len(vlmcs)
+  total_average_distance /= len(vlmcs)
+  total_average_distance_to_genus /= (len(vlmcs) * total_average_distance)
+  total_average_distance_to_family /= (len(vlmcs) * total_average_distance)
+  print("Average procent of genus in top #genus: {:5.5f} \t Average procent of family in top #family {:5.5f}\n"
+        "Average distance fraction to genus: {:5.5f} \t Average distance fraction to family {:5.5f}"
+        "\t Average distance: {:5.5f}\n".format(
+            average_procent_of_genus_in_top, average_procent_of_family_in_top,
+            total_average_distance_to_genus, total_average_distance_to_family, 1))
 
 
-def test_output(vlmc, vlmcs, distances, elapsed_time, metadata):
-  closest_vlmc_i = distances.index(min(distances))
-  closest_vlmc = vlmcs[closest_vlmc_i]
-
-  print("{} matches self: {}.\nDistance calculated in: {}s\n".format(
-      metadata[vlmc.name]['species'], vlmc == closest_vlmc, elapsed_time))
-
-  sorted_results = sorted(zip(distances, vlmcs),
-                          key=lambda t: (t[0], metadata[t[1].name]['genus']))
+def test_output(vlmc, vlmcs, sorted_results, elapsed_time, metadata, procent_genus_in_top, procent_family_in_top, distance_to_genus, distance_to_family, average_distance):
+  print("{}:".format(metadata[vlmc.name]['species']))
+  print("Procent of genus in top #genus: {:5.5f} \t Procent of family in top #family {:5.5f}\n"
+        "Average distance to genus: {:5.5f} \t Average distance to family {:5.5f} \t Average distance: {:5.5f}".format(
+            procent_genus_in_top, procent_family_in_top, distance_to_genus, distance_to_family, average_distance))
+  print("matches self: {}.\tDistance calculated in: {}s\n".format(
+      vlmc == sorted_results[0][1], elapsed_time))
 
   extra_distance = ACGTContent(['C', 'G'])
   result_list = [output_line(metadata, vlmc, dist, v, extra_distance)
                  for (dist, v) in sorted_results]
 
   print('\n'.join(result_list) + '\n\n')
+
+
+def procent_of_taxonomy_in_top(vlmc, vlmcs, sorted_results, metadata, taxonomy):
+  number_same_taxonomy = len([other for other in vlmcs
+                              if metadata[other.name][taxonomy] == metadata[vlmc.name][taxonomy]])
+
+  number_same_in_top = 0
+  for i in range(number_same_taxonomy):
+    _, v = sorted_results[i]
+    if metadata[v.name][taxonomy] == metadata[vlmc.name][taxonomy]:
+      number_same_in_top += 1
+
+  return number_same_in_top / number_same_taxonomy
+
+
+def average_distance_to_taxonomy(vlmc, sorted_results, metadata, taxonomy):
+  same_taxonomy = [dist for (dist, other) in sorted_results
+                   if metadata[other.name][taxonomy] == metadata[vlmc.name][taxonomy]]
+  return sum(same_taxonomy) / len(same_taxonomy)
 
 
 def output_line(metadata, vlmc, dist, v, d):
@@ -100,7 +160,6 @@ if __name__ == '__main__':
   parser.add_argument('--seqlen', type=int, default=1000,
                       help='The length of the sequences that are generated to calculate the likelihood.')
 
-
   parser.add_argument('--directory', type=str, default='../trees',
                       help='The directory which contains the trees to be used.')
 
@@ -119,11 +178,11 @@ if __name__ == '__main__':
     test_acgt_content(args.directory)
 
   if (args.stationary_distribution):
-    print("Testing distance based on the stationary distribution")
+    print("Testing distance based on the stationary distribution.")
     test_stationary_distribution(args.directory)
 
   if (args.frobenius_norm):
-    print("Testing distance with an estimated vlmc")
+    print("Testing distance frobenius norm.")
     test_frobenius_norm(args.directory)
 
   if (args.estimate_vlmc):

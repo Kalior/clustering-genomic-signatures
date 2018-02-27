@@ -1,7 +1,5 @@
 import networkx as nx
-import matplotlib.pyplot as plt
-from distance import ACGTContent
-from get_signature_metadata import get_metadata_for
+
 import numpy as np
 cimport numpy as np
 import time
@@ -29,7 +27,7 @@ cdef class GraphBasedClustering(object):
     self.vlmcs = vlmcs
     self.d = d
 
-  cpdef cluster(self, clusters, min_distance=True, draw_graph=False):
+  cpdef object cluster(self, clusters, min_distance=True):
     G = nx.Graph()
     G.add_nodes_from(self.vlmcs)
     if min_distance:
@@ -37,9 +35,7 @@ cdef class GraphBasedClustering(object):
     else:
       self._cluster_with_threshold(G)
 
-    if draw_graph:
-      self._draw_graph(G)
-    self._print_connected_components(G)
+    return G
 
   cdef _cluster_with_threshold(self, G):
     for vlmc in self.vlmcs:
@@ -118,25 +114,3 @@ cdef class GraphBasedClustering(object):
           distances[distances_index, 2] = dist
 
     return distances
-
-  def _draw_graph(self, G):
-    plt.subplot(121)
-    nx.draw_shell(G, with_labels=True, font_weight='bold')
-    plt.show()
-
-  def _print_connected_components(self, G):
-    metadata = get_metadata_for([vlmc.name for vlmc in self.vlmcs])
-    output = ["cluster {}:\n".format(i) + self._component_string(connected, metadata)
-              for i, connected in enumerate(nx.connected_components(G))]
-
-    print('\n\n'.join(output))
-
-  def _component_string(self, connected, metadata):
-    output = [self._output_line(metadata, vlmc) for vlmc in connected]
-    return '\n'.join(output)
-
-  def _output_line(self, metadata, vlmc):
-    return "{:>55}  {:20} {:20}".format(
-        metadata[vlmc.name]['species'],
-        metadata[vlmc.name]['genus'],
-        metadata[vlmc.name]['family'])

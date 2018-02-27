@@ -1,10 +1,13 @@
 #! /usr/bin/python3.6
+import argparse
+import time
+import matplotlib.pyplot as plt
+import networkx as nx
+
 from vlmc import VLMC
 from distance import NegativeLogLikelihood, NaiveParameterSampling, StationaryDistribution, ACGTContent, EstimateVLMC
 from clustering import GraphBasedClustering
 import parse_trees_to_json
-import argparse
-import time
 from get_signature_metadata import get_metadata_for
 
 
@@ -34,12 +37,87 @@ def test_estimate_vlmc(sequence_length, clusters):
   test_clustering(d, 0.2, clusters)
 
 
-def test_clustering(d, threshold, clusters):
+def test_clustering(d, threshold, clusters, draw_graph=False):
   tree_dir = "../trees"
   parse_trees_to_json.parse_trees(tree_dir)
   vlmcs = VLMC.from_json_dir(tree_dir)
   clustering = GraphBasedClustering(threshold, vlmcs, d)
-  clustering.cluster(clusters)
+  G = clustering.cluster(clusters)
+
+  if draw_graph:
+    draw_graph(G)
+  print_connected_components(G, vlmcs, d)
+
+
+def draw_graph(self, G):
+  plt.subplot(121)
+  nx.draw_shell(G, with_labels=True, font_weight='bold')
+  plt.show()
+
+
+def print_connected_components(G, vlmcs, d):
+  metadata = get_metadata_for([vlmc.name for vlmc in vlmcs])
+
+  connected_component_metrics = [component_metrics(
+      connected, metadata, d) for connected in nx.connected_components(G)]
+
+  output = ["cluster {}:\n".format(i) + component_string(connected, metadata, connected_component_metrics[i])
+            for i, connected in enumerate(nx.connected_components(G))]
+
+  print('\n\n'.join(output))
+
+  average_of_same_genus = sum(
+      [metrics[0] for metrics in connected_component_metrics]) / len(connected_component_metrics)
+  average_of_same_family = sum(
+      [metrics[1] for metrics in connected_component_metrics]) / len(connected_component_metrics)
+  total_average_distance = sum(
+      [metrics[2] for metrics in connected_component_metrics]) / len(connected_component_metrics)
+
+  print("Average of same genus in clusters: {:5.5f}\t"
+        "Average of same family in clusters: {:5.5f}\t"
+        "Average of distance in clusters: {:5.5f}\t".format(
+            average_of_same_genus, average_of_same_family, total_average_distance))
+
+  sorted_sizes = sorted([len(connected) for connected in nx.connected_components(G)])
+  print("Cluster sizes " + " ".join([str(i) for i in sorted_sizes]))
+
+
+def component_metrics(connected, metadata, d):
+  percent_of_same_genus = max(
+      [number_in_taxonomy(vlmc, connected, metadata, 'genus') for vlmc in connected]
+  ) / len(connected)
+
+  percent_of_same_family = max(
+      [number_in_taxonomy(vlmc, connected, metadata, 'family') for vlmc in connected]
+  ) / len(connected)
+
+  connected_distances = [d.distance(v1, v2) for v1 in connected for v2 in connected]
+  average_distance = sum(connected_distances) / len(connected_distances)
+
+  return percent_of_same_genus, percent_of_same_family, average_distance
+
+
+def component_string(connected, metadata, metrics):
+  output = [output_line(metadata, vlmc) for vlmc in connected]
+
+  metric_string = "\nPercent of same genus: {:5.5f} \t Percent of same family: {:5.5f} \t Average distance: {:5.5f}\n".format(
+      metrics[0], metrics[1], metrics[2])
+
+  return '\n'.join(output) + metric_string
+
+
+def output_line(metadata, vlmc):
+  return "{:>55}  {:20} {:20}".format(
+      metadata[vlmc.name]['species'],
+      metadata[vlmc.name]['genus'],
+      metadata[vlmc.name]['family'])
+
+
+def number_in_taxonomy(vlmc, vlmcs, metadata, taxonomy):
+  number_of_same_taxonomy = len([other for other in vlmcs
+                                 if metadata[other.name][taxonomy] == metadata[vlmc.name][taxonomy]])
+  return number_of_same_taxonomy
+
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(
