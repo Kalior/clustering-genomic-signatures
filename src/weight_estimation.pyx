@@ -31,9 +31,9 @@ cdef class GeneticAlgorithm(object):
     self.cluster_complement = cluster_complement
     self.populationSize = 50
     self.nbr_variables = nbr_variables
-    self.numberOfGenerations = 300
+    self.numberOfGenerations = 5000
     self.p_crossover = self.nbr_variables / 3
-    self.p_mutation = 2 / self.nbr_variables
+    self.p_mutation = 5 / self.nbr_variables
     self.p_creep = 6 * self.p_mutation
     self.creep_step = 1 / 32
     self.tournament_size = 5
@@ -44,12 +44,15 @@ cdef class GeneticAlgorithm(object):
 
   cpdef np.ndarray execute_genetic_algorithm(self, ):
     maximum_fitness = -1000000
+    best_chromosome = np.nd.array([])
     fitness = np.zeros(self.populationSize)
     population = self.initialise_population()
     for gen in np.arange(0, self.numberOfGenerations):
       if gen % 10 == 0:
         print("Generation {} starting".format(gen))
-
+      if gen % 100 == 0:
+        print("Best value so far: {}".format(maximum_fitness))
+        print(best_chromosome)
       # Evaluation
       for i in np.arange(0, self.populationSize):
         parameters = population[i, :]
