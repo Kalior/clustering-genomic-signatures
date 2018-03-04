@@ -4,7 +4,7 @@ import numpy
 
 files = ['vlmc/vlmc.pyx', 'distance/naive_parameter_sampling.pyx', 'distance/negloglikelihood.pyx',
          'distance/stationary_distribution.pyx', 'distance/acgt.pyx', 'distance/frobenius.pyx',
-         'clustering/graph_based_clustering.pyx']
+         'clustering/graph_based_clustering.pyx', 'weight_estimation.pyx']
 
 setup(
     name='A variable length markov chain model, with accompanying distance functions.',
