@@ -10,9 +10,11 @@ cdef class FrobeniusNorm(object):
   """
 
   cdef list alphabet
-
-  def __init__(self, alphabet=['A', 'C', 'G', 'T']):
+  cdef public np.ndarray weight_parameters
+  
+  def __init__(self, weight_parameters ,alphabet=['A', 'C', 'G', 'T']):
     self.alphabet = alphabet
+    self.weight_parameters = weight_parameters
 
 
   cpdef double distance(self, left_vlmc, right_vlmc):
@@ -30,17 +32,18 @@ cdef class FrobeniusNorm(object):
     return np.linalg.norm(frobenius_matrix, ord='fro')
 
   cdef np.ndarray[FLOATTYPE_t, ndim=2] _create_matrix(self, vlmc):
-    leaf_contexts = self._get_leaf_contexts(vlmc)
+    leaf_contexts = vlmc.tree.keys()
     cdef int rows = len(leaf_contexts)
     cdef int columns = len(self.alphabet)
     cdef np.ndarray[FLOATTYPE_t, ndim=2] matrix = np.empty((rows, columns), dtype=FLOATTYPE)
 
     cdef FLOATTYPE_t val
-
+    cdef int index = 0
     for i, context in enumerate(leaf_contexts):
       for j, character in enumerate(self.alphabet):
-        val = vlmc.tree[context][character]
+        val = vlmc.tree[context][character] * self.weight_parameters[index]
         matrix[i, j] = val
+      index += 1
 
     return matrix
 
