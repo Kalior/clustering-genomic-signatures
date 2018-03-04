@@ -44,7 +44,7 @@ cdef class GeneticAlgorithm(object):
 
   cpdef np.ndarray execute_genetic_algorithm(self, ):
     maximum_fitness = -1000000
-    best_chromosome = np.nd.array([])
+    best_chromosome = np.ndarray([])
     fitness = np.zeros(self.populationSize)
     population = self.initialise_population()
     for gen in np.arange(0, self.numberOfGenerations):
