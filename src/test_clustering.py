@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import networkx as nx
 
 from vlmc import VLMC
-from distance import NegativeLogLikelihood, NaiveParameterSampling, StationaryDistribution, ACGTContent
+from distance import NegativeLogLikelihood, NaiveParameterSampling, StationaryDistribution, ACGTContent, FrobeniusNorm
 from clustering import GraphBasedClustering
 import parse_trees_to_json
 from get_signature_metadata import get_metadata_for
@@ -28,6 +28,11 @@ def test_acgt_content(clusters):
 
 def test_stationary_distribution(clusters):
   d = StationaryDistribution()
+  test_clustering(d, 0.2, clusters)
+
+
+def test_frobenius(clusters):
+  d = FrobeniusNorm()
   test_clustering(d, 0.2, clusters)
 
 
@@ -121,6 +126,7 @@ if __name__ == '__main__':
   parser.add_argument('--negative-log-likelihood', action='store_true')
   parser.add_argument('--acgt-content', action='store_true')
   parser.add_argument('--stationary-distribution', action='store_true')
+  parser.add_argument('--frobenius-norm', action='store_true')
 
   parser.add_argument('--seqlen', type=int, default=1000,
                       help='The length of the sequences that are generated to calculate the likelihood.')
@@ -145,3 +151,7 @@ if __name__ == '__main__':
   if (args.stationary_distribution):
     print("Testing distance based on the stationary distribution")
     test_stationary_distribution(args.clusters)
+
+  if (args.frobenius_norm):
+    print("Testing clustering with distance as frobenius norm")
+    test_frobenius(args.clusters)
