@@ -108,6 +108,17 @@ cdef class VLMC(object):
         return maybe_context
     raise RuntimeError("get_context vlmc.pyx")
 
+  cpdef list get_all_contexts(self, sequence):
+    possible_contexts = []
+    for i in range(self.order+1):
+      if not i == self.order:
+        maybe_context = sequence[-(self.order-i):]
+      else:
+        maybe_context = ""
+      if maybe_context in self.tree:
+        possible_contexts.append(maybe_context)
+
+    return possible_contexts
 
   cpdef str generate_sequence(self, sequence_length, pre_sample_length):
     if len(self.sequence) == sequence_length:
