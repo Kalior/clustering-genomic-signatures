@@ -18,16 +18,23 @@ cdef class EstimateVLMC(object):
     self.d = d
 
   cpdef double distance(self, left_vlmc, right_vlmc):
-    pre_sample_length = 500
-    sequence_length = 10000
+    right_distance = self._assymmetric_distance(left_vlmc, right_vlmc)
+    left_distance = self._assymmetric_distance(right_vlmc, left_vlmc)
+    return (right_distance + left_distance) / 2
+
+  cdef double _assymmetric_distance(self, left_vlmc, right_vlmc):
+    pre_sample_length = 0
+    sequence_length = 50000
 
     left_sequence = left_vlmc.generate_sequence(sequence_length, pre_sample_length)
+    right_sequence = right_vlmc.generate_sequence(sequence_length, pre_sample_length)
 
-    context_counters, transition_counters = self._count_events(right_vlmc, left_sequence)
-    new_right_vlmc = self._create_vlmc_by_estimating_probabilities(self.alphabet, context_counters, transition_counters, right_vlmc.tree[""])
+    right_context_counters, right_transition_counters = self._count_events(right_vlmc, left_sequence)
+    new_right_vlmc = self._create_vlmc_by_estimating_probabilities(
+      self.alphabet, right_context_counters, right_transition_counters, right_vlmc.tree[""])
 
     # distance = self.d.distance(right_vlmc, new_right_vlmc)
-    distance = self._perform_stats_test(new_right_vlmc, right_vlmc, context_counters)
+    distance = self._perform_stats_test(new_right_vlmc, right_vlmc, right_context_counters)
     return distance
 
   cdef object _create_vlmc_by_estimating_probabilities(self, alphabet, context_counters, transition_counters,  acgt_content):
@@ -60,35 +67,36 @@ cdef class EstimateVLMC(object):
       for character in self.alphabet:
         transition_counters[context][character] = 0
 
-    current_context = ""
+    sequence_so_far = ""
+    current_contexts = []
     for character in sequence:
-      context_counters[current_context] += 1
-      transition_counters[current_context][character] += 1
-      current_context = right_vlmc.get_context(current_context + character)
+      for context in current_contexts:
+        context_counters[context] += 1
+        transition_counters[context][character] += 1
+
+      sequence_so_far = sequence_so_far + character
+      current_contexts = right_vlmc.get_all_contexts(sequence_so_far)
 
     return context_counters, transition_counters
 
   cdef double _perform_stats_test(self, estimated_vlmc, original_vlmc, context_count):
-    expected_values = np.array([p for i, p in enumerate(self._leaf_transitions(original_vlmc))])
-    observed_values = np.array([p for i, p in enumerate(self._leaf_transitions(estimated_vlmc))])
-    # expected_values = []
-    # observed_values = []
-    # for context in self._get_leaf_contexts(original_vlmc):
-    #   times_visited_node = context_count[context]
-    #   if times_visited_node > 0:
-    #     # transition_probabilitites = [(x, original_vlmc.tree[context][x]) for x in self.alphabet]
-    #     transition_probabilitites = self._leaf_transitions_in_context(original_vlmc, context)
+    expected_values = np.array([])
+    observed_values = np.array([])
+    for context in original_vlmc.tree.keys():
+      times_visited_node = context_count[context]
+      if times_visited_node > 0:
+        transition_probabilitites = [(x, original_vlmc.tree[context][x]) for x in self.alphabet]
 
-    #     # find probabilites that are greater than zero
-    #     probs_without_zeros = [(char_, prob) for (char_, prob) in transition_probabilitites if prob > 0]
-    #     # loop through all of these exept one (last)
-    #     for character, probability_original_vlmc in probs_without_zeros[:-1]:
-    #       probability_estimation = estimated_vlmc.tree[context][character]
+        # find probabilites that are greater than zero
+        probs_without_zeros = [(char_, prob) for (char_, prob) in transition_probabilitites if prob > 0]
+        # loop through all of these exept one (last)
+        for character, probability_original_vlmc in probs_without_zeros[:-1]:
+          probability_estimation = estimated_vlmc.tree[context][character]
 
-    #       expected_frequency = probability_original_vlmc
-    #       observed_frequency = probability_estimation
-    #       expected_values.append(expected_frequency)
-    #       observed_values.append(observed_frequency)
+          expected_frequency = probability_original_vlmc
+          observed_frequency = probability_estimation
+          expected_values = np.append(expected_values, expected_frequency)
+          observed_values = np.append(observed_values, observed_frequency)
 
     statistic, p_value = stats.power_divergence(f_obs=observed_values, f_exp=expected_values, lambda_="pearson")
     # observed_mean = observed_values.mean()
@@ -100,17 +108,3 @@ cdef class EstimateVLMC(object):
     # distance = np.linalg.norm(expected_values - observed_values)
     distance = statistic
     return distance
-
-  cdef list _leaf_transitions(self, vlmc):
-    return [p for context in vlmc.tree.keys() for (_, p) in self._leaf_transitions_in_context(vlmc, context)]
-
-  cdef list _leaf_transitions_in_context(self, vlmc, context):
-    return [(c, vlmc.tree[context][c]) for c in self.alphabet if not (context + c) in vlmc.tree]
-
-  cdef list _get_leaf_contexts(self, vlmc):
-    return [c for c in vlmc.tree.keys() if self._is_leaf_context(c, vlmc)]
-
-  cdef bint _is_leaf_context(self, context, vlmc):
-    possible_leaves = [context + c for c in self.alphabet]
-    # leaf contexts are defined as having no children at all
-    return all(not leaf in vlmc.tree for leaf in possible_leaves)
