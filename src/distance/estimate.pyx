@@ -40,9 +40,12 @@ cdef class EstimateVLMC(object):
   cdef object _create_vlmc_by_estimating_probabilities(self, alphabet, context_counters, transition_counters,  acgt_content):
     cdef dict tree = {}
     for context, count in context_counters.items():
-      tree[context] = {}
-      for character in alphabet:
-        tree[context][character] = transition_counters[context][character] / count
+      if count == 0:
+        tree[context] = {'A': 0, 'C': 0, 'G': 0, 'T': 0}
+      else:
+        tree[context] = {}
+        for character in alphabet:
+          tree[context][character] = transition_counters[context][character] / count
 
     return VLMC(tree, "estimated")
 
