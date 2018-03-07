@@ -29,11 +29,11 @@ def _parse_line(line):
   numbers = re.findall('-?[0-9]+', line)
   children = {}
   # Assumes we're only working with ACGT (in that order)
-  total = sum([int(numbers[i]) for i in [1, 2, 3, 4]])
-  children['A'] = int(numbers[1]) / total
-  children['C'] = int(numbers[2]) / total
-  children['G'] = int(numbers[3]) / total
-  children['T'] = int(numbers[4]) / total
+  total = sum([int(numbers[i]) for i in [6, 7, 8, 9]])
+  children['A'] = int(numbers[6]) / total
+  children['C'] = int(numbers[7]) / total
+  children['G'] = int(numbers[8]) / total
+  children['T'] = int(numbers[9]) / total
 
   strings = re.findall('[A-Za-z#]+', line)
   key = strings[1]
