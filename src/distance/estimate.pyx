@@ -26,18 +26,17 @@ cdef class EstimateVLMC(object):
     pre_sample_length = 0
     sequence_length = 50000
 
-    left_sequence = left_vlmc.generate_sequence(sequence_length, pre_sample_length)
     right_sequence = right_vlmc.generate_sequence(sequence_length, pre_sample_length)
 
-    right_context_counters, right_transition_counters = self._count_events(right_vlmc, left_sequence)
-    new_right_vlmc = self._create_vlmc_by_estimating_probabilities(
-      self.alphabet, right_context_counters, right_transition_counters, right_vlmc.tree[""])
+    left_context_counters, left_transition_counters = self._count_events(left_vlmc, right_sequence)
+    new_left_vlmc = self._create_vlmc_by_estimating_probabilities(
+      self.alphabet, left_context_counters, left_transition_counters)
 
-    # distance = self.d.distance(right_vlmc, new_right_vlmc)
-    distance = self._perform_stats_test(new_right_vlmc, right_vlmc, right_context_counters)
+    distance = self.d.distance(left_vlmc, new_left_vlmc)
+    # distance = self._perform_stats_test(new_left_vlmc, left_vlmc, left_context_counters)
     return distance
 
-  cdef object _create_vlmc_by_estimating_probabilities(self, alphabet, context_counters, transition_counters,  acgt_content):
+  cdef object _create_vlmc_by_estimating_probabilities(self, alphabet, context_counters, transition_counters):
     cdef dict tree = {}
     for context, count in context_counters.items():
       if count == 0:
