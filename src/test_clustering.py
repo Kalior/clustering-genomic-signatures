@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import networkx as nx
 
 from vlmc import VLMC
-from distance import NegativeLogLikelihood, NaiveParameterSampling, StationaryDistribution, ACGTContent, EstimateVLMC
+from distance import NegativeLogLikelihood, NaiveParameterSampling, StationaryDistribution, ACGTContent, FrobeniusNorm, EstimateVLMC
 from clustering import GraphBasedClustering
 import parse_trees_to_json
 from get_signature_metadata import get_metadata_for
@@ -37,6 +37,10 @@ def test_estimate_vlmc(sequence_length, clusters):
   test_clustering(d, 0.2, clusters)
 
 
+def test_frobenius(clusters):
+  d = FrobeniusNorm()
+  test_clustering(d, 0.2, clusters)
+
 
 def test_estimate_vlmc(sequence_length, clusters):
   inner_d = FrobeniusNorm()
@@ -44,8 +48,8 @@ def test_estimate_vlmc(sequence_length, clusters):
   test_clustering(d, clusters)
 
 
-def test_clustering(d, clusters, draw_graph=False):
-  tree_dir = "../trees_more"
+def test_clustering(d, threshold, clusters, draw_graph=False):
+  tree_dir = "../trees"
   parse_trees_to_json.parse_trees(tree_dir)
   vlmcs = VLMC.from_json_dir(tree_dir)
   clustering = GraphBasedClustering(vlmcs, d)
@@ -138,6 +142,7 @@ if __name__ == '__main__':
   parser.add_argument('--acgt-content', action='store_true')
   parser.add_argument('--stationary-distribution', action='store_true')
   parser.add_argument('--estimate-vlmc', action='store_true')
+  parser.add_argument('--frobenius-norm', action='store_true')
 
   parser.add_argument('--seqlen', type=int, default=1000,
                       help='The length of the sequences that are generated to calculate the likelihood.')
@@ -166,3 +171,7 @@ if __name__ == '__main__':
   if (args.estimate_vlmc):
     print("Testing distance with an estimated vlmc")
     test_estimate_vlmc(args.seqlen, args.clusters)
+
+  if (args.frobenius_norm):
+    print("Testing clustering with distance as frobenius norm")
+    test_frobenius(args.clusters)
