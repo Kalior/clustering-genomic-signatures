@@ -22,16 +22,16 @@ def print_relations(tree_dir):
 
     probs = from_tree_to_list(vlmc)
     print("Same family:")
-    print_probability_differences(metadata, same_family, vlmc)
+    print_stationary_differences(metadata, same_family, vlmc)
     print("Same genus")
-    print_probability_differences(metadata, same_genus, vlmc)
+    print_stationary_differences(metadata, same_genus, vlmc)
 
 
 def print_stationary_differences(metadata, same_taxonomy, vlmc):
-  vlmc_distribution = vlmc._estimated_context_distribution(100000)
+  vlmc_distribution = vlmc.estimated_context_distribution(100000)
   for other in same_taxonomy:
     print(metadata[other.name]['species'])
-    other_distribution = other._estimated_context_distribution(100000)
+    other_distribution = other.estimated_context_distribution(100000)
     for i, ctx in enumerate(other_distribution.keys()):
       if ctx in vlmc_distribution:
         s = abs(other_distribution[ctx] - vlmc_distribution[ctx])
