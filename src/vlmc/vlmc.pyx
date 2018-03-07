@@ -144,6 +144,31 @@ cdef class VLMC(object):
   def _calculate_order(self, tree):
     return max(map(lambda k: len(k), tree.keys()))
 
+  cpdef dict estimated_context_distribution(self, sequence_length):
+    sequence = self.generate_sequence(sequence_length, 500)
+    context_counters = self._count_state_occourances(sequence)
+    context_distribution = {}
+
+    for context, frequency in context_counters.items():
+      prob_of_state = frequency / sequence_length
+      context_distribution[context] = prob_of_state
+
+    return context_distribution
+
+
+  cdef dict _count_state_occourances(self, sequence):
+    state_count = {}
+
+    for i in range(len(sequence) - self.order):
+      current_sequence = sequence[i:i + self.order]
+      matching_state = self.get_context(current_sequence)
+      if matching_state in state_count:
+        state_count[matching_state] += 1
+      else:
+        # give initial value of 1
+        state_count[matching_state] = 1
+
+    return state_count
 
 if __name__ == "__main__":
   s = '{"":{"A":0.5,"B":0.5},"A":{"B":0.5,"A":0.5},"B":{"A":0.5,"B":0.5},"BA":{"A":0.5,"B":0.5},"AA":{"A":0.5,"B":0.5}}'
