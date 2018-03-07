@@ -9,11 +9,13 @@ cdef class VLMC(object):
   cdef public dict tree
   cdef public str name
   cdef public int order
+  cdef public str sequence
 
   def __init__(self, tree, name):
     self.tree = tree
     self.name = name
     self.order = self._calculate_order(tree)
+    self.sequence = ""
 
   def __str__(self):
     return self.name
@@ -106,8 +108,22 @@ cdef class VLMC(object):
         return maybe_context
     raise RuntimeError("get_context vlmc.pyx")
 
+  cpdef list get_all_contexts(self, sequence):
+    possible_contexts = []
+    for i in range(self.order+1):
+      if not i == self.order:
+        maybe_context = sequence[-(self.order-i):]
+      else:
+        maybe_context = ""
+      if maybe_context in self.tree:
+        possible_contexts.append(maybe_context)
+
+    return possible_contexts
 
   cpdef str generate_sequence(self, sequence_length, pre_sample_length):
+    if len(self.sequence) == sequence_length:
+      return self.sequence
+
     total_length = sequence_length + pre_sample_length
     cdef str generated_sequence = ""
     for i in range(total_length):
@@ -115,6 +131,8 @@ cdef class VLMC(object):
       next_letter = self._generate_next_letter(generated_sequence[-self.order:])
       generated_sequence += next_letter
     # return the suffix with length sequence_length
+
+    self.sequence = generated_sequence[-sequence_length:]
     return generated_sequence[-sequence_length:]
 
   cdef str _generate_next_letter(self, current_sequence):

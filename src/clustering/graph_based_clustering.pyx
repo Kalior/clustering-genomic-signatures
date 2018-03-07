@@ -12,46 +12,32 @@ ctypedef np.int_t INTTYPE_t
 cdef class GraphBasedClustering(object):
   """
     A clustering implementation which keeps the VLMCs as nodes in a graph.
-    There are several methods for creating the clusters:
-    * Add edges where the distance between two nodes is less than some user-specified threshold, with
-    one of the distance functions.
-    * Add the minimum distance for every node which isn't in the same cluster already.
+    Adds the minimum distance for every node which isn't in the same cluster already.
   """
 
-  cdef double threshold
   cdef list vlmcs
   cdef d
+  cdef str file_name
 
-  def __init__(self, threshold, vlmcs, d):
-    self.threshold = threshold
+  def __init__(self, vlmcs, d):
     self.vlmcs = vlmcs
     self.d = d
+    self.file_name = 'cluster_distances'
 
-  cpdef object cluster(self, clusters, min_distance=True):
+  cpdef tuple cluster(self, clusters):
     G = nx.Graph()
     G.add_nodes_from(self.vlmcs)
-    if min_distance:
-      self._cluster_with_min_distance(G, clusters)
-    else:
-      self._cluster_with_threshold(G)
+    cdef np.ndarray[FLOATTYPE_t, ndim=2] distances = self._cluster_with_min_distance(G, clusters)
+    distance_mean = np.mean(distances, axis=None)
 
-    return G
+    return G, distance_mean
 
-  cdef _cluster_with_threshold(self, G):
-    for vlmc in self.vlmcs:
-      self._add_edges_from(G, vlmc)
-
-  cdef _add_edges_from(self, G, vlmc):
-    nearby_vlmcs = []
-    for other in self.vlmcs:
-      dist = self.d.distance(vlmc, other)
-      if (dist < self.threshold):
-        G.add_edge(vlmc, other, weight=dist)
-
-  cdef _cluster_with_min_distance(self, G, num_clusters):
+  cdef np.ndarray[FLOATTYPE_t, ndim=2] _cluster_with_min_distance(self, G, num_clusters):
     start_time = time.time()
 
     cdef np.ndarray[FLOATTYPE_t, ndim=2] distances = self._calculate_distances()
+
+    # cdef np.ndarray[FLOATTYPE_t, ndim=2] distances = np.load(self.file_name + '.npy')
 
     distance_time = time.time() - start_time
     start_time = time.time()
@@ -95,6 +81,7 @@ cdef class GraphBasedClustering(object):
 
     cluster_time = time.time() - start_time
     print("Distance time: {} s\nSorting time: {} s\nCluster time: {} s".format(distance_time, sorting_time, cluster_time))
+    return distances
 
   cdef np.ndarray[FLOATTYPE_t, ndim=2] _calculate_distances(self):
     cdef int num_vlmcs = len(self.vlmcs)
@@ -112,5 +99,7 @@ cdef class GraphBasedClustering(object):
           distances[distances_index, 0] = left_i_t
           distances[distances_index, 1] = right_i_t
           distances[distances_index, 2] = dist
+
+    np.save(self.file_name, distances)
 
     return distances

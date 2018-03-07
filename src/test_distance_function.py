@@ -1,9 +1,11 @@
 #! /usr/bin/python3.6
-from vlmc import VLMC
-from distance import NegativeLogLikelihood, NaiveParameterSampling, StationaryDistribution, ACGTContent, FrobeniusNorm
-import parse_trees_to_json
 import argparse
+import math
 import time
+
+from vlmc import VLMC
+from distance import NegativeLogLikelihood, NaiveParameterSampling, StationaryDistribution, ACGTContent, FrobeniusNorm, EstimateVLMC
+import parse_trees_to_json
 from get_signature_metadata import get_metadata_for
 
 
@@ -29,6 +31,12 @@ def test_stationary_distribution(tree_dir):
 
 def test_frobenius_norm(tree_dir):
   d = FrobeniusNorm()
+  test_distance_function(d, tree_dir)
+
+
+def test_estimate_vlmc(tree_dir, sequence_length):
+  inner_d = FrobeniusNorm()
+  d = EstimateVLMC(inner_d)
   test_distance_function(d, tree_dir)
 
 
@@ -88,15 +96,17 @@ def test_distance_function(d, tree_dir):
             total_average_distance_to_genus, total_average_distance_to_family, 1))
 
 
-def test_output(vlmc, vlmcs, sorted_results, elapsed_time, metadata, procent_genus_in_top, procent_family_in_top, distance_to_genus, distance_to_family, average_distance):
+def test_output(vlmc, vlmcs, sorted_results, elapsed_time, metadata, procent_genus_in_top,
+                procent_family_in_top, distance_to_genus, distance_to_family, average_distance):
   print("{}:".format(metadata[vlmc.name]['species']))
   print("Procent of genus in top #genus: {:5.5f} \t Procent of family in top #family {:5.5f}\n"
         "Average distance to genus: {:5.5f} \t Average distance to family {:5.5f} \t Average distance: {:5.5f}".format(
-            procent_genus_in_top, procent_family_in_top, distance_to_genus, distance_to_family, average_distance))
+            procent_genus_in_top, procent_family_in_top, distance_to_genus,
+            distance_to_family, average_distance))
   print("matches self: {}.\tDistance calculated in: {}s\n".format(
       vlmc == sorted_results[0][1], elapsed_time))
 
-  extra_distance = ACGTContent(['C', 'G'])
+  extra_distance = ACGTContent(['A', 'C', 'G', 'T'])
   result_list = [output_line(metadata, vlmc, dist, v, extra_distance)
                  for (dist, v) in sorted_results]
 
@@ -117,7 +127,7 @@ def procent_of_taxonomy_in_top(vlmc, vlmcs, sorted_results, metadata, taxonomy):
 
 
 def average_distance_to_taxonomy(vlmc, sorted_results, metadata, taxonomy):
-  same_taxonomy = [dist for (dist, other) in sorted_results
+  same_taxonomy = [abs(dist) for (dist, other) in sorted_results
                    if metadata[other.name][taxonomy] == metadata[vlmc.name][taxonomy]]
   return sum(same_taxonomy) / len(same_taxonomy)
 
@@ -149,6 +159,7 @@ if __name__ == '__main__':
   parser.add_argument('--acgt-content', action='store_true')
   parser.add_argument('--stationary-distribution', action='store_true')
   parser.add_argument('--frobenius-norm', action='store_true')
+  parser.add_argument('--estimate-vlmc', action='store_true')
 
   parser.add_argument('--seqlen', type=int, default=1000,
                       help='The length of the sequences that are generated to calculate the likelihood.')
@@ -177,3 +188,7 @@ if __name__ == '__main__':
   if (args.frobenius_norm):
     print("Testing distance frobenius norm.")
     test_frobenius_norm(args.directory)
+
+  if (args.estimate_vlmc):
+    print("Testing distance with an estimated vlmc")
+    test_estimate_vlmc(args.directory, args.seqlen)

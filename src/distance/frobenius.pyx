@@ -30,14 +30,13 @@ cdef class FrobeniusNorm(object):
     return np.linalg.norm(frobenius_matrix, ord='fro')
 
   cdef np.ndarray[FLOATTYPE_t, ndim=2] _create_matrix(self, vlmc):
-    leaf_contexts = self._get_leaf_contexts(vlmc)
-    cdef int rows = len(leaf_contexts)
+    cdef int rows = len(vlmc.tree.keys())
     cdef int columns = len(self.alphabet)
     cdef np.ndarray[FLOATTYPE_t, ndim=2] matrix = np.empty((rows, columns), dtype=FLOATTYPE)
 
     cdef FLOATTYPE_t val
 
-    for i, context in enumerate(leaf_contexts):
+    for i, context in enumerate(vlmc.tree.keys()):
       for j, character in enumerate(self.alphabet):
         val = vlmc.tree[context][character]
         matrix[i, j] = val
@@ -51,4 +50,3 @@ cdef class FrobeniusNorm(object):
     possible_leaves = list(map(lambda c: context + c, self.alphabet))
     # leaf contexts are defined as having no children at all
     return all(map(lambda leaf: not leaf in vlmc.tree, possible_leaves))
-
