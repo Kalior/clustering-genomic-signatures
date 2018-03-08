@@ -1,1 +1,2 @@
 from .graph_based_clustering import GraphBasedClustering
+from .mst_clustering import MSTClustering
