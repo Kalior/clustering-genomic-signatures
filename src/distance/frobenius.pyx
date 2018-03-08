@@ -20,26 +20,35 @@ cdef class FrobeniusNorm(object):
     return distance
 
   cdef double _frobenius_norm(self, original_vlmc, estimated_vlmc):
-    cdef double norm = 0.0
+    # intersection:
+    cdef list shared_contexts = [context for context in original_vlmc.tree if context in estimated_vlmc.tree]
 
-    cdef np.ndarray[FLOATTYPE_t, ndim=2] original_matrix = self._create_matrix(original_vlmc)
-    cdef np.ndarray[FLOATTYPE_t, ndim=2] estimated_matrix = self._create_matrix(estimated_vlmc)
+    # union
+    # cdef set shared_contexts = set(original_vlmc.tree.keys()).union(set(estimated_vlmc.tree.keys()))
+
+      
+    cdef np.ndarray[FLOATTYPE_t, ndim=2] original_matrix = self._create_matrix(original_vlmc, shared_contexts)
+    cdef np.ndarray[FLOATTYPE_t, ndim=2] estimated_matrix = self._create_matrix(estimated_vlmc, shared_contexts)
 
     cdef np.ndarray[FLOATTYPE_t, ndim=2] frobenius_matrix = original_matrix - estimated_matrix
 
-    return np.linalg.norm(frobenius_matrix, ord='fro')
+    return np.linalg.norm(frobenius_matrix, ord='fro') / len(shared_contexts)
 
-  cdef np.ndarray[FLOATTYPE_t, ndim=2] _create_matrix(self, vlmc):
-    cdef int rows = len(vlmc.tree.keys())
+  cdef np.ndarray[FLOATTYPE_t, ndim=2] _create_matrix(self, vlmc, contexts_to_use):
+    cdef int rows = len(contexts_to_use)
     cdef int columns = len(self.alphabet)
     cdef np.ndarray[FLOATTYPE_t, ndim=2] matrix = np.empty((rows, columns), dtype=FLOATTYPE)
 
     cdef FLOATTYPE_t val
-
-    for i, context in enumerate(vlmc.tree.keys()):
+    cdef int i = 0
+    for context in contexts_to_use:
       for j, character in enumerate(self.alphabet):
-        val = vlmc.tree[context][character]
+        if context in vlmc.tree:
+          val = vlmc.tree[context][character]
+        else:
+          val = 0
         matrix[i, j] = val
+      i += 1
 
     return matrix
 
