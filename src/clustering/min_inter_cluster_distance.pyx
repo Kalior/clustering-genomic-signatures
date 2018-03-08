@@ -41,8 +41,6 @@ cdef class MinInterClusterDistance(GraphBasedClustering):
 
       clustering = self._merge_clusters(clustering, left, right)
 
-      print(clustering)
-
     cluster_time = time.time() - start_time
     print("Cluster time: {} s".format(cluster_time))
 
