@@ -19,26 +19,29 @@ cdef class EstimateVLMC(object):
 
   cpdef double distance(self, left_vlmc, right_vlmc):
     right_distance = self._assymmetric_distance(left_vlmc, right_vlmc)
-    left_distance = self._assymmetric_distance(right_vlmc, left_vlmc)
-    return (right_distance + left_distance) / 2
+    return right_distance
+    # left_distance = self._assymmetric_distance(right_vlmc, left_vlmc)
+    # return left_distance
+    # return (right_distance + left_distance) / 2
 
   cdef double _assymmetric_distance(self, left_vlmc, right_vlmc):
-    pre_sample_length = 0
-    sequence_length = 50000
+    pre_sample_length = 500
+    sequence_length = 100000
 
     right_sequence = right_vlmc.generate_sequence(sequence_length, pre_sample_length)
 
-    left_context_counters, left_transition_counters = self._count_events(left_vlmc, right_sequence)
+    left_transition_counters = self._count_events(left_vlmc, right_sequence)
     new_left_vlmc = self._create_vlmc_by_estimating_probabilities(
-      self.alphabet, left_context_counters, left_transition_counters)
+      self.alphabet, left_transition_counters)
 
-    distance = self.d.distance(left_vlmc, new_left_vlmc)
-    # distance = self._perform_stats_test(new_left_vlmc, left_vlmc, left_context_counters)
+    # distance = self.d.distance(left_vlmc, new_left_vlmc)
+    distance = self._perform_stats_test(new_left_vlmc, left_vlmc, left_transition_counters)
     return distance
 
-  cdef object _create_vlmc_by_estimating_probabilities(self, alphabet, context_counters, transition_counters):
+  cdef object _create_vlmc_by_estimating_probabilities(self, alphabet, transition_counters):
     cdef dict tree = {}
-    for context, count in context_counters.items():
+    for context, counts in transition_counters.items():
+      count = sum([c for c in counts.values()])
       if count == 0:
         tree[context] = {'A': 0, 'C': 0, 'G': 0, 'T': 0}
       else:
@@ -48,33 +51,38 @@ cdef class EstimateVLMC(object):
 
     return VLMC(tree, "estimated")
 
-  cdef tuple _count_events(self, right_vlmc, sequence):
-    cdef dict context_counters = {}
+  cdef dict _count_events(self, vlmc, sequence):
     cdef dict transition_counters = {}
     # Initialize counters
-    for context in right_vlmc.tree.keys():
-      context_counters[context] = 0
+    for context in vlmc.tree.keys():
       transition_counters[context] = {}
       for character in self.alphabet:
         transition_counters[context][character] = 0
 
     sequence_so_far = ""
-    current_contexts = []
     for character in sequence:
+      current_contexts = vlmc.get_all_contexts(sequence_so_far)
       for context in current_contexts:
-        context_counters[context] += 1
         transition_counters[context][character] += 1
 
       sequence_so_far = sequence_so_far + character
-      current_contexts = right_vlmc.get_all_contexts(sequence_so_far)
 
-    return context_counters, transition_counters
+    # return transition_counters
+    transition_counters_with_pseudo = self._add_pseudo_counts(transition_counters)
+    return transition_counters_with_pseudo
 
-  cdef double _perform_stats_test(self, estimated_vlmc, original_vlmc, context_count):
+  cdef dict _add_pseudo_counts(self, transition_counters):
+    for context, counts in transition_counters.items():
+      if sum([c for c in counts.values()]) != 0 and any(c == 0 for c in counts.values()):
+        transition_counters[context] = {t: c + 1 for t, c in transition_counters[context].items()}
+
+    return transition_counters
+
+  cdef double _perform_stats_test(self, estimated_vlmc, original_vlmc, transition_counters):
     expected_values = np.array([])
     observed_values = np.array([])
     for context in original_vlmc.tree.keys():
-      times_visited_node = context_count[context]
+      times_visited_node = sum([c for c in transition_counters[context].values()])
       if times_visited_node > 0:
         transition_probabilitites = [(x, original_vlmc.tree[context][x]) for x in self.alphabet]
 
