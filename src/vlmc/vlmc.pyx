@@ -110,9 +110,10 @@ cdef class VLMC(object):
 
   cpdef list get_all_contexts(self, sequence):
     possible_contexts = []
-    for i in range(self.order+1):
-      if not i == self.order:
-        maybe_context = sequence[-(self.order-i):]
+    max_possible_context_length = min(len(sequence), self.order)
+    for i in range(max_possible_context_length + 1):
+      if not i == max_possible_context_length:
+        maybe_context = sequence[-(max_possible_context_length-i):]
       else:
         maybe_context = ""
       if maybe_context in self.tree:
