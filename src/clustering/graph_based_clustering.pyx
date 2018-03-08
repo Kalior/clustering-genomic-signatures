@@ -6,20 +6,12 @@ import time
 
 FLOATTYPE = np.float32
 INTTYPE = np.int
-ctypedef np.float32_t FLOATTYPE_t
-ctypedef np.int_t INTTYPE_t
 
-cdef class GraphBasedClustering(object):
+cdef class GraphBasedClustering:
   """
-    A clustering implementation which keeps the VLMCs as nodes in a graph.
-    Adds the minimum distance for every node which isn't in the same cluster already.
+    Super class for every graph-based clustering method.
   """
-
-  cdef list vlmcs
-  cdef d
-  cdef str file_name
-
-  def __init__(self, vlmcs, d):
+  def __cinit__(self, vlmcs, d):
     self.vlmcs = vlmcs
     self.d = d
     self.file_name = 'cluster_distances'
@@ -27,12 +19,7 @@ cdef class GraphBasedClustering(object):
   cpdef tuple cluster(self, clusters):
     G = nx.Graph()
     G.add_nodes_from(self.vlmcs)
-    cdef np.ndarray[FLOATTYPE_t, ndim=2] distances = self._cluster_with_min_distance(G, clusters)
-    distance_mean = np.mean(distances, axis=None)
 
-    return G, distance_mean
-
-  cdef np.ndarray[FLOATTYPE_t, ndim=2] _cluster_with_min_distance(self, G, num_clusters):
     start_time = time.time()
 
     cdef np.ndarray[FLOATTYPE_t, ndim=2] distances = self._calculate_distances()
@@ -40,6 +27,14 @@ cdef class GraphBasedClustering(object):
     # cdef np.ndarray[FLOATTYPE_t, ndim=2] distances = np.load(self.file_name + '.npy')
 
     distance_time = time.time() - start_time
+    print("Distance time: {} s".format(distance_time))
+
+    self._cluster(G, clusters, distances)
+    distance_mean = np.mean(distances, axis=None)
+
+    return G, distance_mean
+
+  cdef _cluster(self, G, num_clusters, distances):
     start_time = time.time()
 
     # Sort the array by the distances
@@ -80,8 +75,8 @@ cdef class GraphBasedClustering(object):
         break
 
     cluster_time = time.time() - start_time
-    print("Distance time: {} s\nSorting time: {} s\nCluster time: {} s".format(distance_time, sorting_time, cluster_time))
-    return distances
+    print("Sorting time: {} s\nCluster time: {} s".format(sorting_time, cluster_time))
+
 
   cdef np.ndarray[FLOATTYPE_t, ndim=2] _calculate_distances(self):
     cdef int num_vlmcs = len(self.vlmcs)
