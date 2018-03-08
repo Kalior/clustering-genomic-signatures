@@ -34,12 +34,12 @@ def test_stationary_distribution(clusters):
 def test_estimate_vlmc(sequence_length, clusters):
   inner_d = NegativeLogLikelihood(sequence_length)
   d = EstimateVLMC(inner_d)
-  test_clustering(d, 0.2, clusters)
+  test_clustering(d, clusters)
 
 
 def test_frobenius(clusters):
   d = FrobeniusNorm()
-  test_clustering(d, 0.2, clusters)
+  test_clustering(d, clusters)
 
 
 def test_estimate_vlmc(sequence_length, clusters):
@@ -48,7 +48,7 @@ def test_estimate_vlmc(sequence_length, clusters):
   test_clustering(d, clusters)
 
 
-def test_clustering(d, threshold, clusters, draw_graph=False):
+def test_clustering(d, clusters, draw_graph=False):
   tree_dir = "../trees"
   parse_trees_to_json.parse_trees(tree_dir)
   vlmcs = VLMC.from_json_dir(tree_dir)
