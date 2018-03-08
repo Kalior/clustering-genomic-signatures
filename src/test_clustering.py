@@ -6,7 +6,7 @@ import networkx as nx
 
 from vlmc import VLMC
 from distance import NegativeLogLikelihood, NaiveParameterSampling, StationaryDistribution, ACGTContent, FrobeniusNorm, EstimateVLMC
-from clustering import GraphBasedClustering, MSTClustering
+from clustering import GraphBasedClustering, MSTClustering, MinInterClusterDistance
 import parse_trees_to_json
 from get_signature_metadata import get_metadata_for
 
@@ -52,7 +52,7 @@ def test_clustering(d, threshold, clusters, draw_graph=False):
   tree_dir = "../trees"
   parse_trees_to_json.parse_trees(tree_dir)
   vlmcs = VLMC.from_json_dir(tree_dir)
-  clustering = MSTClustering(vlmcs, d)
+  clustering = MinInterClusterDistance(vlmcs, d)
   G, distance_mean = clustering.cluster(clusters)
 
   if draw_graph:
