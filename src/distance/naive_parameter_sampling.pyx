@@ -29,6 +29,6 @@ cdef class NaiveParameterSampling(object):
     return s
 
   cdef double _min_value_of_same_order(self, tree, context, prob, char_):
-    cdef list probabilities = [tree[k][char_] for k in tree.keys() if len(k) == len(context)]
+    cdef list probabilities = [tree[k][char_] for k in tree.keys() if len(k) == len(context)] + [0]
     cdef double val = min(math.pow((val - prob), 2) for val in probabilities)
     return val
