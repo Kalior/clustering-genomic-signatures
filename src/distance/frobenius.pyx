@@ -5,8 +5,8 @@ ctypedef np.float32_t FLOATTYPE_t
 
 cdef class FrobeniusNorm(object):
   """
-    Distance simply based on the amount of a, c, g, t content in the strings.
-    (Should be stored as transitions from the root node).
+    Distance calculated by finding the transition matricies of the vlmcs, and
+    calculating the frobenius norm of the difference.
   """
 
   cdef list alphabet
