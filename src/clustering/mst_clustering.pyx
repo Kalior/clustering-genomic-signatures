@@ -27,36 +27,61 @@ cdef class MSTClustering(GraphBasedClustering):
     sorting_time = time.time() - start_time
     start_time = time.time()
 
+    self._create_mst(sorted_distances, G)
+
+    for _ in range(num_clusters - 1):
+      (left, right) = self._find_most_inconsistent_edge(G, sorted_distances)
+      G.remove_edge(left, right)
+
+    cluster_time = time.time() - start_time
+    print("Sorting time: {} s\nCluster time: {} s".format(sorting_time, cluster_time))
+
+  cdef _create_mst(self, sorted_distances, G):
     # Keep track of which cluster each vlmc is in
     clustering = {}
     for i, vlmc in enumerate(self.vlmcs):
       clustering[i] = vlmc.name
 
-    connections_to_make = len(self.vlmcs) - num_clusters
     # Keep track of the currently smallest index
     cdef int smallest_distance_index = 0
-    for _ in range(connections_to_make):
+    for _ in range(len(self.vlmcs) - 1):
       # Add an edge for the shortest distance
       # Take the smallest distance
-      [left, right, dist] = sorted_distances[smallest_distance_index]
-      smallest_distance_index += 1
-      # Remove distances for pairs which are in the same cluster
-      while clustering[left] == clustering[right]:
-        [left, right, dist] = sorted_distances[smallest_distance_index]
-        smallest_distance_index += 1
+      smallest_distance_index, [left, right, dist] = \
+        self._find_smallest_unconnected_edge(sorted_distances, smallest_distance_index, clustering)
 
       G.add_edge(self.vlmcs[int(left)], self.vlmcs[int(right)], weight=dist)
 
-      # Save this value as it may get overwritten during the for-loop below.
-      rename_cluster = clustering[int(left)]
-
-      # Point every node in the clusters to the same value.
-      for key, value in clustering.items():
-        if value == rename_cluster:
-          clustering[key] = clustering[int(right)]
+      clustering = self._merge_clusters(clustering, left, right)
 
       if smallest_distance_index >= len(sorted_distances):
-        break
+        return
 
-    cluster_time = time.time() - start_time
-    print("Sorting time: {} s\nCluster time: {} s".format(sorting_time, cluster_time))
+  cdef tuple _find_smallest_unconnected_edge(self, sorted_distances, smallest_distance_index, clustering):
+    [left, right, dist] = sorted_distances[smallest_distance_index]
+    smallest_distance_index += 1
+    # Remove distances for pairs which are in the same cluster
+    while clustering[left] == clustering[right]:
+      [left, right, dist] = sorted_distances[smallest_distance_index]
+      smallest_distance_index += 1
+
+    return smallest_distance_index, [left, right, dist]
+
+  cdef dict _merge_clusters(self, clustering, left, right):
+    # Save this value as it may get overwritten during the for-loop below.
+    rename_cluster = clustering[int(left)]
+
+    # Point every node in the clusters to the same value.
+    for key, value in clustering.items():
+      if value == rename_cluster:
+        clustering[key] = clustering[int(right)]
+
+    return clustering
+
+  cdef tuple _find_most_inconsistent_edge(self, G, sorted_distances):
+    edges = G.edges(data=True)
+
+    idx = np.argmax(np.array([e[2]['weight'] for e in edges]))
+    (left, right, data) = edges[idx]
+    return left, right
+
