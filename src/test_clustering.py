@@ -6,7 +6,7 @@ import networkx as nx
 
 from vlmc import VLMC
 from distance import NegativeLogLikelihood, NaiveParameterSampling, StationaryDistribution, ACGTContent, FrobeniusNorm, EstimateVLMC
-from clustering import GraphBasedClustering
+from clustering import GraphBasedClustering, MSTClustering, MinInterClusterDistance
 import parse_trees_to_json
 from get_signature_metadata import get_metadata_for
 
@@ -34,12 +34,12 @@ def test_stationary_distribution(clusters):
 def test_estimate_vlmc(sequence_length, clusters):
   inner_d = NegativeLogLikelihood(sequence_length)
   d = EstimateVLMC(inner_d)
-  test_clustering(d, 0.2, clusters)
+  test_clustering(d, clusters)
 
 
 def test_frobenius(clusters):
   d = FrobeniusNorm()
-  test_clustering(d, 0.2, clusters)
+  test_clustering(d, clusters)
 
 
 def test_estimate_vlmc(sequence_length, clusters):
@@ -48,11 +48,11 @@ def test_estimate_vlmc(sequence_length, clusters):
   test_clustering(d, clusters)
 
 
-def test_clustering(d, threshold, clusters, draw_graph=False):
+def test_clustering(d, clusters, draw_graph=False):
   tree_dir = "../trees"
   parse_trees_to_json.parse_trees(tree_dir)
   vlmcs = VLMC.from_json_dir(tree_dir)
-  clustering = GraphBasedClustering(vlmcs, d)
+  clustering = MinInterClusterDistance(vlmcs, d)
   G, distance_mean = clustering.cluster(clusters)
 
   if draw_graph:
