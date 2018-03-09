@@ -31,12 +31,6 @@ def test_stationary_distribution(clusters):
   test_clustering(d, clusters)
 
 
-def test_estimate_vlmc(sequence_length, clusters):
-  inner_d = NegativeLogLikelihood(sequence_length)
-  d = EstimateVLMC(inner_d)
-  test_clustering(d, clusters)
-
-
 def test_frobenius(clusters):
   d = FrobeniusNorm()
   test_clustering(d, clusters)
