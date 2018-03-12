@@ -1,7 +1,6 @@
 cimport numpy as np
 
 ctypedef np.float32_t FLOATTYPE_t
-ctypedef np.int_t INTTYPE_t
 
 cdef class GraphBasedClustering:
   """
