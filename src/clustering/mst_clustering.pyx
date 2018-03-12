@@ -4,12 +4,7 @@ import numpy as np
 cimport numpy as np
 
 FLOATTYPE = np.float32
-INTTYPE = np.int
-ctypedef np.float32_t FLOATTYPE_t
-ctypedef np.int_t INTTYPE_t
 
-
-from graph_based_clustering cimport GraphBasedClustering
 from graph_based_clustering import GraphBasedClustering
 
 
@@ -45,7 +40,7 @@ cdef class MSTClustering(GraphBasedClustering):
     # Keep track of the currently smallest index
     cdef int smallest_distance_index = 0
     for _ in range(len(self.vlmcs) - 1):
-      # Add an edge for the shortest distance
+      # Add an edge for the shortest distnce
       # Take the smallest distance
       smallest_distance_index, [left, right, dist] = \
         self._find_smallest_unconnected_edge(sorted_distances, smallest_distance_index, clustering)
@@ -84,4 +79,3 @@ cdef class MSTClustering(GraphBasedClustering):
     idx = np.argmax(np.array([e[2]['weight'] for e in edges]))
     (left, right, data) = edges[idx]
     return left, right
-
