@@ -2,4 +2,4 @@ pomegranate
 Cython
 numpy
 mysql-connector==2.1.6
-networkx
+networkx==2.1

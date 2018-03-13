@@ -77,5 +77,5 @@ cdef class MSTClustering(GraphBasedClustering):
     edges = G.edges(data=True)
 
     idx = np.argmax(np.array([e[2]['weight'] for e in edges]))
-    (left, right, data) = edges[idx]
+    (left, right, data) = list(edges)[idx]
     return left, right

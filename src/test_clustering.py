@@ -60,7 +60,7 @@ def test_clustering(d, clusters, cluster_class=MSTClustering, do_draw_graph=Fals
 
 def draw_graph(G):
   plt.subplot(121)
-  nx.draw_shell(G, with_labels=True, font_weight='bold')
+  nx.draw(G, with_labels=True, font_weight='bold')
   plt.show()
 
 
