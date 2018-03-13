@@ -49,7 +49,7 @@ cdef class GraphBasedClustering:
     v2_idx = self.vlmcs.index(v2)
     return self.indexed_distances[v1_idx, v2_idx]
 
-  cdef void _cluster(self, G, num_clusters, distances):
+  cdef _cluster(self, G, num_clusters, distances):
     for (left, right, dist) in distances:
       G.add_edge(self.vlmcs[int(left)], self.vlmcs[int(right)], weight=dist)
 
