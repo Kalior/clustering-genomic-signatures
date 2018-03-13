@@ -4,26 +4,19 @@ import numpy as np
 cimport numpy as np
 
 FLOATTYPE = np.float32
-INTTYPE = np.int
-ctypedef np.float32_t FLOATTYPE_t
-ctypedef np.int_t INTTYPE_t
-
 
 from graph_based_clustering cimport GraphBasedClustering
 from graph_based_clustering import GraphBasedClustering
-
-import sys
 
 cdef class MinInterClusterDistance(GraphBasedClustering):
   """
     Forms clusters by adding the edge which adds the minimum inter-cluster distence.
   """
-  cdef dict calculated_distances
 
   def __cinit__(self):
     self.calculated_distances = {}
 
-  cdef _cluster(self, G, num_clusters, distances):
+  cdef void _cluster(self, G, num_clusters, distances):
     start_time = time.time()
 
     distances_dict = {(d[0], d[1]): d[2] for d in distances}
@@ -82,7 +75,7 @@ cdef class MinInterClusterDistance(GraphBasedClustering):
 
     #   Technically this should be len(left_list) * len(right_list), but,
     # unscientifically, this seems to work better
-    final_distance = added_internal_distance / (len(left_list) + len(right_list))
+    final_distance = added_internal_distance / (len(left_list) * len(right_list))
 
     # Save the distance so we don't have to recalculate it.
     self.calculated_distances[key] = final_distance
@@ -110,4 +103,3 @@ cdef class MinInterClusterDistance(GraphBasedClustering):
     if (left, right) in distances_dict:
       return distances_dict[(left, right)]
     raise KeyError("VLMC pair has no distance calculated between them.")
-

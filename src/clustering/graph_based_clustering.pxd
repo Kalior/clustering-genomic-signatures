@@ -13,7 +13,6 @@ cdef class GraphBasedClustering:
 
   cpdef tuple cluster(self, clusters)
 
-  cdef _cluster(self, G, num_clusters, distances)
+  cdef void _cluster(self, G, num_clusters, distances)
 
   cdef np.ndarray[FLOATTYPE_t, ndim=2] _calculate_distances(self)
-
