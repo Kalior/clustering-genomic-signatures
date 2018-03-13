@@ -51,11 +51,3 @@ cdef class FrobeniusNorm(object):
         matrix[i, j] = val
 
     return matrix
-
-  cdef list _get_leaf_contexts(self, vlmc):
-    return list(filter(lambda c: self._is_leaf_context(c, vlmc), list(vlmc.tree.keys())))
-
-  cdef bint _is_leaf_context(self, context, vlmc):
-    possible_leaves = list(map(lambda c: context + c, self.alphabet))
-    # leaf contexts are defined as having no children at all
-    return all(map(lambda leaf: not leaf in vlmc.tree, possible_leaves))
