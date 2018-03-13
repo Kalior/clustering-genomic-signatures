@@ -26,7 +26,6 @@ cdef class FrobeniusNorm(object):
     # union
     # cdef set shared_contexts = set(original_vlmc.tree.keys()).union(set(estimated_vlmc.tree.keys()))
 
-      
     cdef np.ndarray[FLOATTYPE_t, ndim=2] original_matrix = self._create_matrix(original_vlmc, shared_contexts)
     cdef np.ndarray[FLOATTYPE_t, ndim=2] estimated_matrix = self._create_matrix(estimated_vlmc, shared_contexts)
 
