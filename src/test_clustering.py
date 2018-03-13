@@ -6,7 +6,7 @@ import networkx as nx
 
 from vlmc import VLMC
 from distance import NegativeLogLikelihood, NaiveParameterSampling, StationaryDistribution, ACGTContent, FrobeniusNorm, EstimateVLMC
-from clustering import GraphBasedClustering, MSTClustering, MinInterClusterDistance
+from clustering import GraphBasedClustering, MSTClustering, MinInterClusterDistance, FuzzySimilarityClustering
 import parse_trees_to_json
 from get_signature_metadata import get_metadata_for
 
