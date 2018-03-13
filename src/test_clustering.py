@@ -5,56 +5,60 @@ import matplotlib.pyplot as plt
 import networkx as nx
 
 from vlmc import VLMC
-from distance import NegativeLogLikelihood, NaiveParameterSampling, StationaryDistribution, ACGTContent, FrobeniusNorm, EstimateVLMC
-from clustering import GraphBasedClustering, MSTClustering, MinInterClusterDistance
+from distance import *
+from clustering import *
 import parse_trees_to_json
 from get_signature_metadata import get_metadata_for
 
 
-def test_negloglike(sequence_length, clusters):
+def test_negloglike(sequence_length, clusters, cluster_class):
   d = NegativeLogLikelihood(sequence_length)
-  test_clustering(d, clusters)
+  test_clustering(d, clusters, cluster_class)
 
 
-def test_parameter_sampling(clusters):
+def test_parameter_sampling(clusters, cluster_class):
   d = NaiveParameterSampling()
-  test_clustering(d, clusters)
+  test_clustering(d, clusters, cluster_class)
 
 
-def test_acgt_content(clusters):
+def test_acgt_content(clusters, cluster_class):
   d = ACGTContent()
-  test_clustering(d, clusters)
+  test_clustering(d, clusters, cluster_class)
 
 
-def test_stationary_distribution(clusters):
+def test_stationary_distribution(clusters, cluster_class):
   d = StationaryDistribution()
-  test_clustering(d, clusters)
+  test_clustering(d, clusters, cluster_class)
 
 
-def test_frobenius(clusters):
+def test_frobenius(clusters, cluster_class):
   d = FrobeniusNorm()
-  test_clustering(d, clusters)
+  test_clustering(d, clusters, cluster_class)
 
 
-def test_estimate_vlmc(sequence_length, clusters):
+def test_estimate_vlmc(sequence_length, clusters, cluster_class):
   inner_d = FrobeniusNorm()
   d = EstimateVLMC(inner_d)
-  test_clustering(d, clusters)
+  test_clustering(d, clusters, cluster_class)
 
 
-def test_clustering(d, clusters, draw_graph=False):
-  tree_dir = "../trees"
+def test_clustering(d, clusters, cluster_class=MSTClustering, do_draw_graph=False, directory=None):
+  if directory == None:
+    tree_dir = args.directory
+  else:
+    tree_dir = directory
+
   parse_trees_to_json.parse_trees(tree_dir)
   vlmcs = VLMC.from_json_dir(tree_dir)
-  clustering = MinInterClusterDistance(vlmcs, d)
+  clustering = cluster_class(vlmcs, d)
   G, distance_mean = clustering.cluster(clusters)
 
-  if draw_graph:
+  if do_draw_graph:
     draw_graph(G)
   print_connected_components(G, vlmcs, d, distance_mean)
 
 
-def draw_graph(self, G):
+def draw_graph(G):
   plt.subplot(121)
   nx.draw_shell(G, with_labels=True, font_weight='bold')
   plt.show()
@@ -108,8 +112,10 @@ def component_metrics(connected, metadata, d):
 def component_string(connected, metadata, metrics):
   output = [output_line(metadata, vlmc) for vlmc in connected]
 
-  metric_string = "\nPercent of same genus: {:5.5f} \t Percent of same family: {:5.5f} \t Average distance: {:5.5f}\n".format(
-      metrics[0], metrics[1], metrics[2])
+  metric_string = "\nPercent of same genus: {:5.5f} \t" \
+      "Percent of same family: {:5.5f} \t" \
+      "Average distance: {:5.5f}\n".format(
+          metrics[0], metrics[1], metrics[2])
 
   return '\n'.join(output) + metric_string
 
@@ -129,7 +135,7 @@ def number_in_taxonomy(vlmc, vlmcs, metadata, taxonomy):
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(
-      description='Tests the distance functions for the vlmcs in ../trees, checking which vlmc they most closely match.')
+      description='Tests the clustering/distance functions for vlmcs, checking which vlmc they most closely match.')
 
   parser.add_argument('--parameter-sampling', action='store_true')
   parser.add_argument('--negative-log-likelihood', action='store_true')
@@ -144,28 +150,44 @@ if __name__ == '__main__':
   parser.add_argument('--clusters', type=int, default=10,
                       help='The number of clusters produced.')
 
+  parser.add_argument('--directory', type=str, default='../trees',
+                      help='The directory to source the trees for the VLMCs from.')
+
+  parser.add_argument('--min-average-inter-distance', action='store_true')
+  parser.add_argument('--min-edge', action='store_true')
+
   args = parser.parse_args()
+
+  if args.min_average_inter_distance:
+    print("Clustering with min average distance between clusters")
+    cluster_class = MinInterClusterDistance
+  elif args.min_edge:
+    print("Clustering with min single linkage")
+    cluster_class = MSTClustering
+  else:
+    print("Clustering with min single linkage")
+    cluster_class = MSTClustering
 
   if (args.negative_log_likelihood):
     print('Testing negative log likelihood with a generated sequence of length {}'.format(args.seqlen))
-    test_negloglike(args.seqlen, args.clusters)
+    test_negloglike(args.seqlen, args.clusters, cluster_class)
 
   if (args.parameter_sampling):
     print('Testing the measure of estimation error distance function, the parameter based sampling.')
-    test_parameter_sampling(args.clusters)
+    test_parameter_sampling(args.clusters, cluster_class)
 
   if (args.acgt_content):
     print("Testing distance based only on acgt content.")
-    test_acgt_content(args.clusters)
+    test_acgt_content(args.clusters, cluster_class)
 
   if (args.stationary_distribution):
     print("Testing distance based on the stationary distribution")
-    test_stationary_distribution(args.clusters)
+    test_stationary_distribution(args.clusters, cluster_class)
 
   if (args.estimate_vlmc):
     print("Testing distance with an estimated vlmc")
-    test_estimate_vlmc(args.seqlen, args.clusters)
+    test_estimate_vlmc(args.seqlen, args.clusters, cluster_class)
 
   if (args.frobenius_norm):
     print("Testing clustering with distance as frobenius norm")
-    test_frobenius(args.clusters)
+    test_frobenius(args.clusters, cluster_class)
