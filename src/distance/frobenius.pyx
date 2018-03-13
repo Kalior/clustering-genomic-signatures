@@ -40,15 +40,15 @@ cdef class FrobeniusNorm(object):
     cdef np.ndarray[FLOATTYPE_t, ndim=2] matrix = np.empty((rows, columns), dtype=FLOATTYPE)
 
     cdef FLOATTYPE_t val
-    cdef int i = 0
-    for context in contexts_to_use:
+    cdef int i, j
+    for i, context in enumerate(contexts_to_use):
+      weight_factor = len(context)
       for j, character in enumerate(self.alphabet):
         if context in vlmc.tree:
-          val = vlmc.tree[context][character]
+          val = vlmc.tree[context][character] * weight_factor
         else:
-          val = 0
+          val = vlmc.tree[vlmc.get_context(context)][character] * weight_factor
         matrix[i, j] = val
-      i += 1
 
     return matrix
 
