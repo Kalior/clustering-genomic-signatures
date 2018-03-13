@@ -26,7 +26,6 @@ cdef class FrobeniusNorm(object):
     # union
     # cdef set shared_contexts = set(original_vlmc.tree.keys()).union(set(estimated_vlmc.tree.keys()))
 
-      
     cdef np.ndarray[FLOATTYPE_t, ndim=2] original_matrix = self._create_matrix(original_vlmc, shared_contexts)
     cdef np.ndarray[FLOATTYPE_t, ndim=2] estimated_matrix = self._create_matrix(estimated_vlmc, shared_contexts)
 
@@ -40,22 +39,14 @@ cdef class FrobeniusNorm(object):
     cdef np.ndarray[FLOATTYPE_t, ndim=2] matrix = np.empty((rows, columns), dtype=FLOATTYPE)
 
     cdef FLOATTYPE_t val
-    cdef int i = 0
-    for context in contexts_to_use:
+    cdef int i, j
+    for i, context in enumerate(contexts_to_use):
+      weight_factor = len(context)
       for j, character in enumerate(self.alphabet):
         if context in vlmc.tree:
-          val = vlmc.tree[context][character]
+          val = vlmc.tree[context][character] * weight_factor
         else:
-          val = 0
+          val = vlmc.tree[vlmc.get_context(context)][character] * weight_factor
         matrix[i, j] = val
-      i += 1
 
     return matrix
-
-  cdef list _get_leaf_contexts(self, vlmc):
-    return list(filter(lambda c: self._is_leaf_context(c, vlmc), list(vlmc.tree.keys())))
-
-  cdef bint _is_leaf_context(self, context, vlmc):
-    possible_leaves = list(map(lambda c: context + c, self.alphabet))
-    # leaf contexts are defined as having no children at all
-    return all(map(lambda leaf: not leaf in vlmc.tree, possible_leaves))
