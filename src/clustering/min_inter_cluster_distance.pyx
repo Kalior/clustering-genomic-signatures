@@ -27,7 +27,7 @@ cdef class MinInterClusterDistance(GraphBasedClustering):
       clustering[i] = [i]
 
     connections_to_make = len(self.vlmcs) - num_clusters
-    # Keep track of the currently smallest index
+
     for i in range(connections_to_make):
       edge_to_add = self._find_min_edge(clustering, distances, distances_dict)
       # If there are no more edges to add...
@@ -82,20 +82,20 @@ cdef class MinInterClusterDistance(GraphBasedClustering):
     return final_distance
 
   cdef dict _merge_clusters(self, clustering, left, right):
-    left_list = clustering[int(left)]
-    right_list = clustering[int(right)]
+    left_cluster = clustering[int(left)]
+    right_cluster = clustering[int(right)]
 
-    if len(left_list) < len(right_list):
-      clustering = self._merge_clusters_(clustering, right_list, left_list)
+    if len(left_cluster) < len(right_cluster):
+      clustering = self._merge_clusters_(clustering, right_cluster, left_cluster)
     else:
-      clustering = self._merge_clusters_(clustering, left_list, right_list)
+      clustering = self._merge_clusters_(clustering, left_cluster, right_cluster)
 
     return clustering
 
-  cdef dict _merge_clusters_(self, clustering, large_list, small_list):
-    large_list.extend(small_list)
-    for i in small_list:
-      clustering[i] = large_list
+  cdef dict _merge_clusters_(self, clustering, large_cluster, small_cluster):
+    large_cluster.extend(small_cluster)
+    for i in small_cluster:
+      clustering[i] = large_cluster
 
     return clustering
 
