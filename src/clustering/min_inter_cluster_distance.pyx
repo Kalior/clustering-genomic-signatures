@@ -73,7 +73,7 @@ cdef class MinInterClusterDistance(GraphBasedClustering):
 
     #   Technically this should be len(left_list) * len(right_list), but,
     # unscientifically, this seems to work better
-    final_distance = added_internal_distance / (len(left_list) * len(right_list))
+    final_distance = added_internal_distance / (len(left_list) + len(right_list))
 
     # Save the distance so we don't have to recalculate it.
     self.calculated_distances[key] = final_distance
