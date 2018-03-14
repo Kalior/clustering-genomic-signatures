@@ -60,7 +60,7 @@ cdef class FuzzySimilarityClustering(MSTClustering):
 
     return fuzzy_similarity_measures
 
-  cdef _fuzzy_similarity(self, i, j, k, r, distances):
+  cdef FLOATTYPE_t _fuzzy_similarity(self, i, j, k, r, distances):
     i_neighbours = self._k_nearest_neighbours(i, k * r, distances)
     j_neighbours = self._k_nearest_neighbours(j, k * r, distances)
     shared_neighbours_idx = np.where(np.equal(i_neighbours, j_neighbours))
@@ -70,7 +70,7 @@ cdef class FuzzySimilarityClustering(MSTClustering):
 
     return - shared_neighbours.size / denominator
 
-  cdef _k_nearest_neighbours(self, i, k, distances):
+  cdef np.ndarray _k_nearest_neighbours(self, i, k, distances):
     neighbour_idx = np.where( distances[:, 0] == i )
     neighbours = distances[neighbour_idx]
     return neighbours[0:k]
