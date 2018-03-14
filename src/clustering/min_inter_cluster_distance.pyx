@@ -26,8 +26,6 @@ cdef class MinInterClusterDistance(GraphBasedClustering):
   cdef _cluster(self, G, num_clusters, distances):
     start_time = time.time()
 
-    distances_dict = {(d[0], d[1]): d[2] for d in distances}
-
     # Keep track of which cluster each vlmc is in
     clustering = {}
     for i, vlmc in enumerate(self.vlmcs):
@@ -36,7 +34,7 @@ cdef class MinInterClusterDistance(GraphBasedClustering):
     connections_to_make = len(self.vlmcs) - num_clusters
     # Keep track of the currently smallest index
     for i in range(connections_to_make):
-      edge_to_add = self._find_min_edge(clustering, distances, distances_dict)
+      edge_to_add = self._find_min_edge(clustering, distances)
       # If there are no more edges to add...
       if edge_to_add == -1:
         break
@@ -49,22 +47,22 @@ cdef class MinInterClusterDistance(GraphBasedClustering):
     cluster_time = time.time() - start_time
     print("Cluster time: {} s".format(cluster_time))
 
-  cdef int _find_min_edge(self, clustering, distances, distances_dict):
+  cdef int _find_min_edge(self, clustering, distances):
     min_edge_distance = np.inf
     min_edge = -1
 
-    for i, distance in enumerate(distances):
-      (left, right, _) = distance
+    for i, edge in enumerate(distances):
+      (left, right, _) = edge
       if clustering[int(left)] != clustering[int(right)]:
-        added_dist = self._added_internal_distance_with_edge(distance, clustering, distances, distances_dict)
+        added_dist = self._added_internal_distance_with_edge(edge, clustering, distances)
         if added_dist < min_edge_distance:
           min_edge_distance = added_dist
           min_edge = i
 
     return min_edge
 
-  cdef double _added_internal_distance_with_edge(self, distance, clustering, distances, distances_dict):
-    (left, right, dist) = distance
+  cdef double _added_internal_distance_with_edge(self, edge, clustering, distances):
+    (left, right, dist) = edge
     added_internal_distance = dist
     left_list = clustering[int(left)]
     right_list = clustering[int(right)]
@@ -78,7 +76,7 @@ cdef class MinInterClusterDistance(GraphBasedClustering):
 
     for from_cluster in left_list:
       for to_cluster in right_list:
-        added_internal_distance += self._find_distance(distances_dict, from_cluster, to_cluster)
+        added_internal_distance += self.indexed_distances[from_cluster, to_cluster]
 
     #   Technically this should be len(left_list) * len(right_list), but,
     # unscientifically, this seems to work better
@@ -105,9 +103,3 @@ cdef class MinInterClusterDistance(GraphBasedClustering):
       clustering[i] = large_list
 
     return clustering
-
-  cdef double _find_distance(self, distances_dict, int left, int right):
-    if (left, right) in distances_dict:
-      return distances_dict[(left, right)]
-    raise KeyError("VLMC pair has no distance calculated between them.")
-
