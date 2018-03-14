@@ -42,15 +42,12 @@ cdef class KMeans:
       for character in ["A", "C", "G", "T"]:
         self.context_transition_to_array_index[context][character] = i
         i += 1
-    print("nbr of transitions {}".format(i))
 
   cdef np.ndarray _vlmc_to_vector(self, vlmc, dimension):
-    #print("vlmc to vector")
     cdef np.ndarray[FLOATTYPE_t, ndim=1] array = np.zeros(dimension, dtype=FLOATTYPE)
     for context in vlmc.tree:
       for character in ["A", "C", "G", "T"]:
         index = self.context_transition_to_array_index[context][character]
-        #print("index {} is {}".format(index, vlmc.tree[context][character]))
         array[index] = vlmc.tree[context][character]
     return array
 
@@ -67,18 +64,13 @@ cdef class KMeans:
         if new_cluster != vlmc_index_to_cluster_index[i]:
           vlmc_index_to_cluster_index[i] = new_cluster
           some_vlmc_changed_cluster = True
-      #print(vlmc_index_to_cluster_index)
 
       # Update centroids
       for i in range(nbr_clusters):
         self.update_centroid(centroids, i, vlmc_index_to_cluster_index)
-        #print("after update")
-        #print(centroids)
 
     G = self.create_graph(nbr_clusters, vlmc_index_to_cluster_index)
     cdef np.ndarray[FLOATTYPE_t, ndim=2] distances = self._calculate_distances()
-    print(centroids)
-    print(vlmc_index_to_cluster_index)
     return G, distances.mean()
 
   def create_graph(self, nbr_clusters, vlmc_index_to_cluster_index):
@@ -96,17 +88,11 @@ cdef class KMeans:
     vlmc_indecis_in_current_cluster = [j for (j, cluster_index) in enumerate(vlmc_index_to_cluster_index) if
                                        cluster_index == centroid_index]
     if len(vlmc_indecis_in_current_cluster) > 0:
-      #print("uppdatering av kluster {}".format(centroid_index))
       new_centroid = np.zeros([1, self.dimension])
       for k in vlmc_indecis_in_current_cluster:
-        #print(self.projected_vlmcs[k, :])
         new_centroid[0, :] = new_centroid[0, :] + self.projected_vlmcs[k, :]
-        #print(new_centroid)
       normalizing_factor = 1.0 / len(vlmc_indecis_in_current_cluster)
-      #print("norm factor, {}, len {}".format(normalizing_factor, len(vlmc_indecis_in_current_cluster)))
       new_centroid[0, :] = normalizing_factor * new_centroid[0, :]
-      #print("new centroid")
-      #print(new_centroid)
       centroids[centroid_index, :] = new_centroid[0, :]
 
   def find_closest_centroid(self, centroids, vlmc_index):
