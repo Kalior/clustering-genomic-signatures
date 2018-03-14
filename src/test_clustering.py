@@ -11,54 +11,43 @@ import parse_trees_to_json
 from get_signature_metadata import get_metadata_for
 
 
-def test_negloglike(sequence_length, clusters, cluster_class):
+def test_negloglike(sequence_length, clusters, cluster_class, vlmcs):
   d = NegativeLogLikelihood(sequence_length)
-  test_clustering(d, clusters, cluster_class)
+  test_clustering(d, clusters, vlmcs, cluster_class)
 
 
-def test_parameter_sampling(clusters, cluster_class):
+def test_parameter_sampling(clusters, cluster_class, vlmcs):
   d = NaiveParameterSampling()
-  test_clustering(d, clusters, cluster_class)
+  test_clustering(d, clusters, vlmcs, cluster_class)
 
 
-def test_acgt_content(clusters, cluster_class):
+def test_acgt_content(clusters, cluster_class, vlmcs):
   d = ACGTContent()
-  test_clustering(d, clusters, cluster_class)
+  test_clustering(d, clusters, vlmcs, cluster_class)
 
 
-def test_stationary_distribution(clusters, cluster_class):
+def test_stationary_distribution(clusters, cluster_class, vlmcs):
   d = StationaryDistribution()
-  test_clustering(d, clusters, cluster_class)
+  test_clustering(d, vlmcs, cluster_class, clusters)
 
 
-def test_frobenius(clusters, cluster_class):
+def test_frobenius(clusters, cluster_class, vlmcs):
   d = FrobeniusNorm()
-  test_clustering(d, clusters, cluster_class)
+  test_clustering(d, clusters, vlmcs, cluster_class)
 
 
-def test_estimate_vlmc(sequence_length, clusters, cluster_class):
+def test_estimate_vlmc(sequence_length, clusters, cluster_class, vlmcs):
   inner_d = FrobeniusNorm()
   d = EstimateVLMC(inner_d)
-  test_clustering(d, clusters, cluster_class)
+  test_clustering(d, clusters, vlmcs, cluster_class)
 
 
-def test_kmeans(k):
-  test_clustering(d=None, clusters=k, cluster_class=None)
+def test_kmeans(k, vlmcs):
+  d = Projection(vlmcs)
+  test_clustering(d, k, vlmcs, cluster_class=KMeans)
 
-
-def test_clustering(d, clusters, cluster_class=MSTClustering, do_draw_graph=False, directory=None):
-  if directory == None:
-    tree_dir = args.directory
-  else:
-    tree_dir = directory
-
-  parse_trees_to_json.parse_trees(tree_dir)
-  vlmcs = VLMC.from_json_dir(tree_dir)
-  if cluster_class is None:
-    clustering = KMeans(vlmcs)
-    d = Projection(clustering.context_transition_to_array_index, clustering.dimension)
-  else:
-    clustering = cluster_class(vlmcs, d)
+def test_clustering(d, clusters, vlmcs, cluster_class=MSTClustering, do_draw_graph=False):
+  clustering = cluster_class(vlmcs, d)
   G, distance_mean = clustering.cluster(clusters)
 
   if do_draw_graph:
@@ -166,6 +155,9 @@ if __name__ == '__main__':
   parser.add_argument('--min-edge', action='store_true')
 
   args = parser.parse_args()
+  tree_dir = args.directory
+  parse_trees_to_json.parse_trees(tree_dir)
+  vlmcs = VLMC.from_json_dir(tree_dir)
 
   if args.min_average_inter_distance:
     print("Clustering with min average distance between clusters")
@@ -179,29 +171,29 @@ if __name__ == '__main__':
 
   if (args.negative_log_likelihood):
     print('Testing negative log likelihood with a generated sequence of length {}'.format(args.seqlen))
-    test_negloglike(args.seqlen, args.clusters, cluster_class)
+    test_negloglike(args.seqlen, args.clusters, cluster_class, vlmcs)
 
   if (args.parameter_sampling):
     print('Testing the measure of estimation error distance function, the parameter based sampling.')
-    test_parameter_sampling(args.clusters, cluster_class)
+    test_parameter_sampling(args.clusters, cluster_class, vlmcs)
 
   if (args.acgt_content):
     print("Testing distance based only on acgt content.")
-    test_acgt_content(args.clusters, cluster_class)
+    test_acgt_content(args.clusters, cluster_class, vlmcs)
 
   if (args.stationary_distribution):
     print("Testing distance based on the stationary distribution")
-    test_stationary_distribution(args.clusters, cluster_class)
+    test_stationary_distribution(args.clusters, cluster_class, vlmcs)
 
   if (args.estimate_vlmc):
     print("Testing distance with an estimated vlmc")
-    test_estimate_vlmc(args.seqlen, args.clusters, cluster_class)
+    test_estimate_vlmc(args.seqlen, args.clusters, cluster_class, vlmcs)
 
   if (args.frobenius_norm):
     print("Testing clustering with distance as frobenius norm")
-    test_frobenius(args.clusters, cluster_class)
+    test_frobenius(args.clusters, cluster_class, vlmcs)
 
   if args.kmeans:
     print("Testing k means clustering with k = {}".format(args.clusters))
-    test_kmeans(args.clusters)
+    test_kmeans(args.clusters, vlmcs)
 
