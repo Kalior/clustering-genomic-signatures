@@ -18,6 +18,11 @@ cdef class MinInterClusterDistance(GraphBasedClustering):
   """
     Forms clusters by adding the edge which adds the minimum inter-cluster distence.
   """
+  cdef dict calculated_distances
+
+  def __cinit__(self):
+    self.calculated_distances = {}
+
   cdef _cluster(self, G, num_clusters, distances):
     start_time = time.time()
 
@@ -63,13 +68,25 @@ cdef class MinInterClusterDistance(GraphBasedClustering):
     added_internal_distance = dist
     left_list = clustering[int(left)]
     right_list = clustering[int(right)]
+
+    merged_list = left_list + right_list + [dist]
+    merged_list.sort()
+    key = tuple(merged_list)
+
+    if key in self.calculated_distances:
+      return self.calculated_distances[key]
+
     for from_cluster in left_list:
       for to_cluster in right_list:
         added_internal_distance += self._find_distance(distances_dict, from_cluster, to_cluster)
 
     #   Technically this should be len(left_list) * len(right_list), but,
     # unscientifically, this seems to work better
-    return added_internal_distance / (len(left_list) + len(right_list))
+    final_distance = added_internal_distance / (len(left_list) + len(right_list))
+
+    # Save the distance so we don't have to recalculate it.
+    self.calculated_distances[key] = final_distance
+    return final_distance
 
   cdef dict _merge_clusters(self, clustering, left, right):
     left_list = clustering[int(left)]

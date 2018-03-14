@@ -4,3 +4,4 @@ from .stationary_distribution import StationaryDistribution
 from .acgt import ACGTContent
 from .frobenius import FrobeniusNorm
 from .estimate import EstimateVLMC
+from .projection import Projection
