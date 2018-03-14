@@ -3,6 +3,7 @@ import networkx as nx
 import numpy as np
 cimport numpy as np
 import time
+from util import calculate_distances_within_vlmcs
 
 FLOATTYPE = np.float32
 
@@ -54,24 +55,16 @@ cdef class GraphBasedClustering:
       G.add_edge(self.vlmcs[int(left)], self.vlmcs[int(right)], weight=dist)
 
   cdef np.ndarray[FLOATTYPE_t, ndim=2] _calculate_distances(self):
-    cdef int num_vlmcs = len(self.vlmcs)
-    cdef int num_distances = num_vlmcs * (num_vlmcs - 1)
-    cdef np.ndarray[FLOATTYPE_t, ndim=2] distances = np.zeros([num_distances, 3], dtype=FLOATTYPE)
-
-    cdef FLOATTYPE_t dist, left_i_t, right_i_t
-    distances_index = 0
-    for left_i, left in enumerate(self.vlmcs):
-      for right_i, right in enumerate(self.vlmcs):
-        if right != left:
-          dist = self.d.distance(left, right)
-          left_i_t = left_i
-          right_i_t = right_i
-          distances[distances_index, 0] = left_i_t
-          distances[distances_index, 1] = right_i_t
-          distances[distances_index, 2] = dist
-          distances_index += 1
-
-          self.indexed_distances[left_i, right_i] = dist
+    cdef np.ndarray[FLOATTYPE_t, ndim=2] distances = calculate_distances_within_vlmcs(self.vlmcs, self.d)
+    cdef int left_i = -1
+    cdef int right_i = -1
+    cdef FLOATTYPE_t dist = -1.0
+  
+    for column in distances:
+      left_i = column[0]
+      right_i = column[1]
+      dist = column[2]
+      self.indexed_distances[left_i, right_i] = dist
 
     np.save(self.file_name, distances)
 
