@@ -4,26 +4,19 @@ import numpy as np
 cimport numpy as np
 
 FLOATTYPE = np.float32
-INTTYPE = np.int
-ctypedef np.float32_t FLOATTYPE_t
-ctypedef np.int_t INTTYPE_t
-
 
 from graph_based_clustering cimport GraphBasedClustering
 from graph_based_clustering import GraphBasedClustering
-
-import sys
 
 cdef class MinInterClusterDistance(GraphBasedClustering):
   """
     Forms clusters by adding the edge which adds the minimum inter-cluster distence.
   """
-  cdef dict calculated_distances
 
   def __cinit__(self):
     self.calculated_distances = {}
 
-  cdef _cluster(self, G, num_clusters, distances):
+  cdef void _cluster(self, G, num_clusters, distances):
     start_time = time.time()
 
     # Keep track of which cluster each vlmc is in
@@ -32,7 +25,7 @@ cdef class MinInterClusterDistance(GraphBasedClustering):
       clustering[i] = [i]
 
     connections_to_make = len(self.vlmcs) - num_clusters
-    # Keep track of the currently smallest index
+
     for i in range(connections_to_make):
       edge_to_add = self._find_min_edge(clustering, distances)
       # If there are no more edges to add...
@@ -87,19 +80,19 @@ cdef class MinInterClusterDistance(GraphBasedClustering):
     return final_distance
 
   cdef dict _merge_clusters(self, clustering, left, right):
-    left_list = clustering[int(left)]
-    right_list = clustering[int(right)]
+    left_cluster = clustering[int(left)]
+    right_cluster = clustering[int(right)]
 
-    if len(left_list) < len(right_list):
-      clustering = self._merge_clusters_(clustering, right_list, left_list)
+    if len(left_cluster) < len(right_cluster):
+      clustering = self._merge_clusters_(clustering, right_cluster, left_cluster)
     else:
-      clustering = self._merge_clusters_(clustering, left_list, right_list)
+      clustering = self._merge_clusters_(clustering, left_cluster, right_cluster)
 
     return clustering
 
-  cdef dict _merge_clusters_(self, clustering, large_list, small_list):
-    large_list.extend(small_list)
-    for i in small_list:
-      clustering[i] = large_list
+  cdef dict _merge_clusters_(self, clustering, large_cluster, small_cluster):
+    large_cluster.extend(small_cluster)
+    for i in small_cluster:
+      clustering[i] = large_cluster
 
     return clustering
