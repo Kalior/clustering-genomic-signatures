@@ -140,7 +140,6 @@ if __name__ == '__main__':
   parser.add_argument('--stationary-distribution', action='store_true')
   parser.add_argument('--estimate-vlmc', action='store_true')
   parser.add_argument('--frobenius-norm', action='store_true')
-  parser.add_argument('--kmeans', action='store_true')
 
   parser.add_argument('--seqlen', type=int, default=1000,
                       help='The length of the sequences that are generated to calculate the likelihood.')
@@ -154,6 +153,7 @@ if __name__ == '__main__':
   parser.add_argument('--min-average-inter-distance', action='store_true')
   parser.add_argument('--min-edge', action='store_true')
   parser.add_argument('--fuzzy-similarity-clustering', action='store_true')
+  parser.add_argument('--kmeans', action='store_true')
 
   args = parser.parse_args()
   tree_dir = args.directory
