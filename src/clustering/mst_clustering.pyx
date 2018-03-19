@@ -13,7 +13,7 @@ cdef class MSTClustering(GraphBasedClustering):
     A clustering implementation which keeps the VLMCs as nodes in a graph.
     Adds the minimum distance for every node which isn't in the same cluster already.
   """
-  cdef _cluster(self, G, num_clusters, distances):
+  cdef void _cluster(self, G, num_clusters, distances):
     start_time = time.time()
 
     # Sort the array by the distances
@@ -31,7 +31,7 @@ cdef class MSTClustering(GraphBasedClustering):
     cluster_time = time.time() - start_time
     print("Sorting time: {} s\nCluster time: {} s".format(sorting_time, cluster_time))
 
-  cdef _create_mst(self, sorted_distances, G):
+  cdef void _create_mst(self, sorted_distances, G):
     # Keep track of which cluster each vlmc is in
     clustering = {}
     for i, vlmc in enumerate(self.vlmcs):

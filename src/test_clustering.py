@@ -153,6 +153,7 @@ if __name__ == '__main__':
 
   parser.add_argument('--min-average-inter-distance', action='store_true')
   parser.add_argument('--min-edge', action='store_true')
+  parser.add_argument('--fuzzy-similarity-clustering', action='store_true')
 
   args = parser.parse_args()
   tree_dir = args.directory
@@ -165,6 +166,9 @@ if __name__ == '__main__':
   elif args.min_edge:
     print("Clustering with min single linkage")
     cluster_class = MSTClustering
+  elif args.fuzzy_similarity_clustering:
+    print("Clustering with the fuzzy similarity measure")
+    cluster_class = FuzzySimilarityClustering
   else:
     print("Clustering with min single linkage")
     cluster_class = MSTClustering
