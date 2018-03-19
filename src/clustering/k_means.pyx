@@ -57,20 +57,20 @@ cdef class KMeans:
     G.add_nodes_from(self.vlmcs)
     for i in range(nbr_clusters):
       # Add each cluster to the graph
-      vlmc_indecis_in_current_cluster = [vlmc for vlmc, index in self.vlmc_to_array_index.items() if
+      vlmc_indices_in_current_cluster = [vlmc for vlmc, index in self.vlmc_to_array_index.items() if
                                          vlmc_index_to_cluster_index[index] == i]
-      for x, y in product(vlmc_indecis_in_current_cluster, vlmc_indecis_in_current_cluster):
+      for x, y in product(vlmc_indices_in_current_cluster, vlmc_indices_in_current_cluster):
         G.add_edge(x, y)
     return G
 
   cdef update_centroid(self, centroids, centroid_index, vlmc_index_to_cluster_index):
-    vlmc_indecis_in_current_cluster = [j for (j, cluster_index) in enumerate(vlmc_index_to_cluster_index) if
+    vlmc_indices_in_current_cluster = [j for (j, cluster_index) in enumerate(vlmc_index_to_cluster_index) if
                                        cluster_index == centroid_index]
-    if len(vlmc_indecis_in_current_cluster) > 0:
+    if len(vlmc_indices_in_current_cluster) > 0:
       new_centroid = np.zeros([1, self.distance_function.dimension])
-      for k in vlmc_indecis_in_current_cluster:
+      for k in vlmc_indices_in_current_cluster:
         new_centroid[0, :] = new_centroid[0, :] + self.projected_vlmcs[k, :]
-      normalizing_factor = 1.0 / len(vlmc_indecis_in_current_cluster)
+      normalizing_factor = 1.0 / len(vlmc_indices_in_current_cluster)
       new_centroid[0, :] = normalizing_factor * new_centroid[0, :]
       centroids[centroid_index, :] = new_centroid[0, :]
 
