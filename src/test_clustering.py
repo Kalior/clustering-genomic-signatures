@@ -93,7 +93,7 @@ def draw_graph(G, metadata):
   legend_markers = [Line2D([0],
                            [0],
                            marker='o',
-                           markersize=16,
+                           markersize=20,
                            markeredgewidth=6,
                            markerfacecolor=genera_colormap_mappable.to_rgba(genera.index(genus)),
                            markeredgecolor=family_colormap_mappable.to_rgba(
