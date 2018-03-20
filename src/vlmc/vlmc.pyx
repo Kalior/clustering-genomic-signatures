@@ -3,6 +3,9 @@ import json
 from queue import Queue
 import os
 from random import choices
+import networkx as nx
+from networkx.drawing.nx_agraph import graphviz_layout
+import matplotlib.pyplot as plt
 
 
 cdef class VLMC(object):
@@ -172,6 +175,28 @@ cdef class VLMC(object):
         state_count[matching_state] = 1
 
     return state_count
+
+  def draw(self, metadata):
+    G = nx.DiGraph()
+    if self.name in metadata:
+      root_name = metadata[self.name]['species']
+    else:
+      root_name = self.name
+    G.add_node(root_name)
+    self._add_children(G, "", root_name)
+    pos = graphviz_layout(G, prog='dot')
+    nx.draw(G, pos, with_labels=True, arrows=True, node_size=1000, node_color='w', edge_color='#ff7f00')
+
+  def _add_children(self, G, context, root_name):
+    for c in self.alphabet:
+      child = context + c
+      parent_label = context
+      if parent_label == "":
+        parent_label = root_name
+      if child in self.tree:
+        G.add_node(child)
+        G.add_edge(parent_label, child, label=c)
+        self._add_children(G, child, root_name)
 
 if __name__ == "__main__":
   s = '{"":{"A":0.5,"B":0.5},"A":{"B":0.5,"A":0.5},"B":{"A":0.5,"B":0.5},"BA":{"A":0.5,"B":0.5},"AA":{"A":0.5,"B":0.5}}'
