@@ -64,8 +64,8 @@ def test_clustering(d, clusters, vlmcs, cluster_class=MSTClustering, do_draw_gra
 
 
 def draw_graph(G, metadata):
-  families = list(set([m['family'] for m in metadata.values()]))
-  genera = list(set([m['genus'] for m in metadata.values()]))
+  families = sorted(list(set([m['family'] for m in metadata.values()])))
+  genera = sorted(list(set([m['genus'] for m in metadata.values()])))
 
   genera_colors = [genera.index(metadata[v.name]['genus']) for v in G.nodes()]
   family_colors = [families.index(metadata[v.name]['family']) for v in G.nodes()]
