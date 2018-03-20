@@ -25,4 +25,5 @@ def save(tree_dir, out_dir):
 
 if __name__ == '__main__':
   tree_dir = '../trees_pst_better'
-  save(tree_dir, tree_dir)
+  image_dir = '../images'
+  save(tree_dir, image_dir)
