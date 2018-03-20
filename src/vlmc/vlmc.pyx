@@ -189,7 +189,7 @@ cdef class VLMC(object):
 
   def _add_children(self, G, context, root_name):
     for c in self.alphabet:
-      child = context + c
+      child = c + context
       parent_label = context
       if parent_label == "":
         parent_label = root_name
