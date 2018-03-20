@@ -114,7 +114,8 @@ def test_distance_function(d, tree_dir):
             average_procent_of_genus_in_top, average_procent_of_family_in_top,
             total_average_distance_to_genus, total_average_distance_to_family, 1))
 
-  plt.show()
+  out_file = os.path.join('../images', 'distance.pdf')
+  plt.savefig(out_file, dpi='figure', format='pdf')
 
 
 def draw_graph(distances, ax, title):

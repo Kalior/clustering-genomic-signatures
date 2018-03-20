@@ -19,8 +19,8 @@ def save(tree_dir, out_dir):
   for vlmc in vlmcs:
     plt.figure(figsize=(30, 20), dpi=80)
     vlmc.draw(metadata)
-    out_file = os.path.join(out_dir, vlmc.name + '.svg')
-    plt.savefig(out_file, dpi='figure', format='svg')
+    out_file = os.path.join(out_dir, vlmc.name + '.pdf')
+    plt.savefig(out_file, dpi='figure', format='pdf')
     plt.close()
 
 if __name__ == '__main__':

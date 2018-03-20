@@ -1,6 +1,7 @@
 #! /usr/bin/python3.6
 import argparse
 import time
+import os
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 import matplotlib.colors as colors
@@ -103,6 +104,8 @@ def draw_graph(G, metadata):
   l = plt.legend(handles=legend_markers, fontsize=20)
   l.draggable()
 
+  out_file = os.path.join('../images', 'clustering.pdf')
+  plt.savefig(out_file, dpi='figure', format='pdf')
   plt.show()
 
 
