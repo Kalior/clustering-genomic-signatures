@@ -2,6 +2,7 @@
 import argparse
 import math
 import time
+import os
 
 from vlmc import VLMC
 from distance import NegativeLogLikelihood, NaiveParameterSampling, StationaryDistribution, ACGTContent, FrobeniusNorm, EstimateVLMC
@@ -45,6 +46,13 @@ def test_distance_function(d, tree_dir):
   vlmcs = VLMC.from_json_dir(tree_dir)
   metadata = get_metadata_for([vlmc.name for vlmc in vlmcs])
 
+  test_dir = tree_dir + "_test"
+  if os.path.isdir(test_dir):
+    parse_trees_to_json.parse_trees(test_dir)
+    test_vlmcs = VLMC.from_json_dir(test_dir)
+  else:
+    test_vlmcs = vlmcs
+
   average_procent_of_genus_in_top = 0.0
   average_procent_of_family_in_top = 0.0
   total_average_distance_to_genus = 0.0
@@ -54,7 +62,7 @@ def test_distance_function(d, tree_dir):
 
   for vlmc in vlmcs:
     start_time = time.time()
-    distances = list(map(lambda other: d.distance(vlmc, other), vlmcs))
+    distances = list(map(lambda other: d.distance(vlmc, other), test_vlmcs))
     elapsed_time = time.time() - start_time
     global_time += elapsed_time
 
@@ -106,7 +114,7 @@ def test_output(vlmc, vlmcs, sorted_results, elapsed_time, metadata, procent_gen
   print("matches self: {}.\tDistance calculated in: {}s\n".format(
       vlmc == sorted_results[0][1], elapsed_time))
 
-  extra_distance = ACGTContent(['A', 'C', 'G', 'T'])
+  extra_distance = ACGTContent(['C', 'G'])
   result_list = [output_line(metadata, vlmc, dist, v, extra_distance)
                  for (dist, v) in sorted_results]
 
