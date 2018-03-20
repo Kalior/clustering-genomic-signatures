@@ -3,6 +3,7 @@ import argparse
 import math
 import time
 import os
+import matplotlib.pyplot as plt
 
 from vlmc import VLMC
 from distance import NegativeLogLikelihood, NaiveParameterSampling, StationaryDistribution, ACGTContent, FrobeniusNorm, EstimateVLMC
@@ -60,6 +61,11 @@ def test_distance_function(d, tree_dir):
   total_average_distance = 0.0
   global_time = 0
 
+  gc_distance_function = ACGTContent(['C', 'G'])
+  fig, [distance_ax, gc_ax] = plt.subplots(2, sharex='col')
+  distance_ax.set_xlim(0, len(vlmcs) - 1)
+  gc_ax.set_xlim(0, len(vlmcs) - 1)
+
   for vlmc in vlmcs:
     start_time = time.time()
     distances = list(map(lambda other: d.distance(vlmc, other), test_vlmcs))
@@ -80,9 +86,14 @@ def test_distance_function(d, tree_dir):
         vlmc, sorted_results, metadata, 'family')
     average_distance = sum(distances) / len(distances)
 
-    # test_output(vlmc, vlmcs, sorted_results, elapsed_time, metadata,
-    #             procent_genus_in_top, procent_family_in_top,
-    #             average_distance_to_genus, average_distance_to_family, average_distance)
+    gc_distances = [(gc_distance_function.distance(vlmc, v), v) for _, v in sorted_results]
+
+    draw_graph(sorted_results, distance_ax, "Distance")
+    draw_graph(gc_distances, gc_ax, "GC-difference")
+
+    test_output(vlmc, vlmcs, sorted_results, elapsed_time, metadata,
+                procent_genus_in_top, procent_family_in_top,
+                average_distance_to_genus, average_distance_to_family, average_distance)
 
     average_procent_of_genus_in_top += procent_genus_in_top
     average_procent_of_family_in_top += procent_family_in_top
@@ -102,6 +113,14 @@ def test_distance_function(d, tree_dir):
         "\t Average distance: {:5.5f}\n".format(
             average_procent_of_genus_in_top, average_procent_of_family_in_top,
             total_average_distance_to_genus, total_average_distance_to_family, 1))
+
+  plt.show()
+
+
+def draw_graph(distances, ax, title):
+  ax.set_title(title)
+  distances = [d for d, _ in distances]
+  ax.plot(distances)
 
 
 def test_output(vlmc, vlmcs, sorted_results, elapsed_time, metadata, procent_genus_in_top,
