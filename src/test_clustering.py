@@ -2,7 +2,11 @@
 import argparse
 import time
 import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
+import matplotlib.colors as colors
+import matplotlib.cm as cmx
 import networkx as nx
+from networkx.drawing.nx_agraph import graphviz_layout
 
 from vlmc import VLMC
 from distance import *
@@ -46,24 +50,63 @@ def test_kmeans(k, vlmcs):
   d = Projection(vlmcs)
   test_clustering(d, k, vlmcs, cluster_class=KMeans)
 
-def test_clustering(d, clusters, vlmcs, cluster_class=MSTClustering, do_draw_graph=False):
+
+def test_clustering(d, clusters, vlmcs, cluster_class=MSTClustering, do_draw_graph=True):
   clustering = cluster_class(vlmcs, d)
   G, distance_mean = clustering.cluster(clusters)
 
+  metadata = get_metadata_for([vlmc.name for vlmc in vlmcs])
+
   if do_draw_graph:
-    draw_graph(G)
-  print_connected_components(G, vlmcs, d, distance_mean)
+    draw_graph(G, metadata)
+  print_connected_components(G, d, distance_mean, metadata)
 
 
-def draw_graph(G):
-  plt.subplot(121)
-  nx.draw(G, with_labels=True, font_weight='bold')
+def draw_graph(G, metadata):
+  families = list(set([m['family'] for m in metadata.values()]))
+  genera = list(set([m['genus'] for m in metadata.values()]))
+
+  genera_colors = [genera.index(metadata[v.name]['genus']) for v in G.nodes()]
+  family_colors = [families.index(metadata[v.name]['family']) for v in G.nodes()]
+  labels = {v: metadata[v.name]['species'] for v in G.nodes()}
+
+  genera_colormap = plt.cm.Set1
+  family_colormap = plt.cm.Set2
+
+  plt.figure(figsize=(30, 20), dpi=80)
+  pos = graphviz_layout(G, prog='sfdp')
+  nx.draw(G, pos, with_labels=True, labels=labels,
+          font_size=16, node_color='w', edge_color='#ff7f00')
+  nx.draw_networkx_nodes(G, pos, node_size=2000, node_color=family_colors, cmap=family_colormap)
+  nx.draw_networkx_nodes(G, pos, node_size=600, node_color=genera_colors, cmap=genera_colormap)
+
+  family_genus_combinations = sorted(
+      set([(metadata[v.name]['family'], metadata[v.name]['genus']) for v in G.nodes()]))
+
+  genera_norm = colors.Normalize(vmin=min(genera_colors), vmax=max(genera_colors))
+  genera_colormap_mappable = cmx.ScalarMappable(norm=genera_norm, cmap=genera_colormap)
+
+  family_norm = colors.Normalize(vmin=min(family_colors), vmax=max(family_colors))
+  family_colormap_mappable = cmx.ScalarMappable(norm=family_norm, cmap=family_colormap)
+
+  legend_markers = [Line2D([0],
+                           [0],
+                           marker='o',
+                           markersize=16,
+                           markeredgewidth=6,
+                           markerfacecolor=genera_colormap_mappable.to_rgba(genera.index(genus)),
+                           markeredgecolor=family_colormap_mappable.to_rgba(
+      families.index(family)),
+      label="Family: {:20} Genus: {:20}".format(family, genus)
+  ) for family, genus in family_genus_combinations]
+
+  l = plt.legend(handles=legend_markers, fontsize=20)
+  l.draggable()
+
   plt.show()
 
 
-def print_connected_components(G, vlmcs, d, distance_mean):
-  metadata = get_metadata_for([vlmc.name for vlmc in vlmcs])
-
+def print_connected_components(G, d, distance_mean, metadata):
   connected_component_metrics = [component_metrics(
       connected, metadata, d) for connected in nx.connected_components(G)]
 
@@ -109,10 +152,8 @@ def component_metrics(connected, metadata, d):
 def component_string(connected, metadata, metrics):
   output = [output_line(metadata, vlmc) for vlmc in connected]
 
-  metric_string = "\nPercent of same genus: {:5.5f} \t" \
-      "Percent of same family: {:5.5f} \t" \
-      "Average distance: {:5.5f}\n".format(
-          metrics[0], metrics[1], metrics[2])
+  metric_string = "\nPercent of same genus: {:5.5f} \t Percent of same family: {:5.5f} \t Average distance: {:5.5f}\n".format(
+      metrics[0], metrics[1], metrics[2])
 
   return '\n'.join(output) + metric_string
 
@@ -200,4 +241,3 @@ if __name__ == '__main__':
   if args.kmeans:
     print("Testing k means clustering with k = {}".format(args.clusters))
     test_kmeans(args.clusters, vlmcs)
-
