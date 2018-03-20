@@ -10,12 +10,14 @@ cdef class VLMC(object):
   cdef public str name
   cdef public int order
   cdef public str sequence
+  cdef public list alphabet
 
   def __init__(self, tree, name):
     self.tree = tree
     self.name = name
     self.order = self._calculate_order(tree)
     self.sequence = ""
+    self.alphabet = ['A', 'C', 'G', 'T']
 
   def __str__(self):
     return self.name
