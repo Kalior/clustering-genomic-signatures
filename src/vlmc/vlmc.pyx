@@ -185,7 +185,13 @@ cdef class VLMC(object):
     G.add_node(root_name)
     self._add_children(G, "", root_name)
     pos = graphviz_layout(G, prog='dot')
-    nx.draw(G, pos, with_labels=True, arrows=True, node_size=1000, node_color='w', edge_color='#ff7f00')
+    nx.draw(G, pos, with_labels=True, arrows=True, node_size=1000, node_color='w',
+      edge_color='#ff7f00', font_size=16, width=2)
+
+    edge_symbols = nx.get_edge_attributes(G, 'symbol')
+    edge_probs = nx.get_edge_attributes(G, 'prob')
+    nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_symbols, font_size=16)
+    nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_probs, font_size=16, label_pos=0.3)
 
   def _add_children(self, G, context, root_name):
     for c in self.alphabet:
@@ -195,7 +201,7 @@ cdef class VLMC(object):
         parent_label = root_name
       if child in self.tree:
         G.add_node(child)
-        G.add_edge(parent_label, child, label=c)
+        G.add_edge(parent_label, child, symbol=c, prob="{:.2f}".format(self.tree[context][c]))
         self._add_children(G, child, root_name)
 
 if __name__ == "__main__":

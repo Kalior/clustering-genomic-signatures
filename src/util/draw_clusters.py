@@ -43,13 +43,13 @@ def draw_graph(G, metadata):
 
   legend_markers = [Line2D([0],
                            [0],
+                           label="Family: {:20}{:1}".format(family, genus),
                            marker='o',
                            markersize=20,
                            markeredgewidth=6,
                            markerfacecolor=genera_colormap_mappable.to_rgba(genera.index(genus)),
                            markeredgecolor=family_colormap_mappable.to_rgba(
-      families.index(family)),
-      label="Family: {:20} Genus: {:20}".format(family, genus)
+      families.index(family))
   ) for family, genus in family_genus_combinations]
 
   l = plt.legend(handles=legend_markers, fontsize=20)
