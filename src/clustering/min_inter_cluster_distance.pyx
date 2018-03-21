@@ -56,24 +56,25 @@ cdef class MinInterClusterDistance(GraphBasedClustering):
 
   cdef double _added_internal_distance_with_edge(self, edge, clustering, distances):
     (left, right, dist) = edge
-    added_internal_distance = dist
-    left_list = clustering[int(left)]
-    right_list = clustering[int(right)]
+    left_cluster = clustering[int(left)]
+    right_cluster = clustering[int(right)]
 
-    merged_list = left_list + right_list + [dist]
+    merged_list = left_cluster + right_cluster
     merged_list.sort()
     key = tuple(merged_list)
 
     if key in self.calculated_distances:
       return self.calculated_distances[key]
 
-    for from_cluster in left_list:
-      for to_cluster in right_list:
+    added_internal_distance = 0
+
+    for from_cluster in left_cluster:
+      for to_cluster in right_cluster:
         added_internal_distance += self.indexed_distances[from_cluster, to_cluster]
 
-    #   Technically this should be len(left_list) * len(right_list), but,
+    #   Technically this should be len(left_cluster) * len(right_cluster), but,
     # unscientifically, this seems to work better
-    final_distance = added_internal_distance / (len(left_list) + len(right_list))
+    final_distance = added_internal_distance / (len(left_cluster) + len(right_cluster))
 
     # Save the distance so we don't have to recalculate it.
     self.calculated_distances[key] = final_distance
