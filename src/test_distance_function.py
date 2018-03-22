@@ -4,6 +4,7 @@ import math
 import time
 import os
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 
 from vlmc import VLMC
 from distance import NegativeLogLikelihood, NaiveParameterSampling, StationaryDistribution, ACGTContent, FrobeniusNorm, EstimateVLMC
@@ -12,6 +13,10 @@ from get_signature_metadata import get_metadata_for
 from util.print_distance import print_metrics, print_distance_output
 from util.distance_metrics import update_metrics, normalise_metrics
 from util.draw_distance import draw_gc_plot, plot_distance
+
+label_size = 20
+mpl.rcParams['xtick.labelsize'] = label_size
+mpl.rcParams['ytick.labelsize'] = label_size
 
 
 def test_negloglike(tree_dir, sequence_length):
@@ -70,8 +75,9 @@ def test_distance_function(d, tree_dir):
 
   gc_distance_function = ACGTContent(['C', 'G'])
   fig, [distance_ax, gc_ax] = plt.subplots(2, sharex='col', figsize=(30, 20), dpi=80)
-  distance_ax.set_xlim(0, len(vlmcs) - 1)
-  gc_ax.set_xlim(0, len(vlmcs) - 1)
+  distance_ax.set_xlim(-1, len(vlmcs))
+  gc_ax.set_xlim(-1, len(vlmcs))
+  plt.xticks(range(len(vlmcs)))
   gc_ax.grid(color='#cccccc', linestyle='--', linewidth=1)
   distance_ax.grid(color='#cccccc', linestyle='--', linewidth=1)
 

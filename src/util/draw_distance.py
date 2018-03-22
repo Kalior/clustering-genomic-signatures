@@ -19,20 +19,20 @@ def draw_graph(distances, ax, title):
 
 def plot_distance(sorted_results, vlmc, gc_distance_function, metadata, out_dir):
   fig, ax = plt.subplots(1, sharex='col', figsize=(30, 20), dpi=80)
-  ax.set_title(metadata[vlmc.name]['species'], fontsize=24)
-  ax.set_xlim(0, len(sorted_results) - 1)
+  ax.set_title(metadata[vlmc.name]['species'], fontsize=30)
+  ax.set_xlim(-1, len(sorted_results))
   species_names = ["{}".format(metadata[v.name]['species']) for _, v in sorted_results]
 
-  legend_markers = [Line2D([0], [0], marker='o', markersize=16,
+  legend_markers = [Line2D([0], [0], marker='o', markersize=16, markeredgecolor='#ff7f00',
                            markerfacecolor='#ff7f00', label='Same family'),
-                    Line2D([0], [0], marker='o', markersize=16,
+                    Line2D([0], [0], marker='o', markersize=16, markeredgecolor='#007fff',
                            markerfacecolor='#007fff', label='Same genus'),
                     Line2D([0], [0], marker='.', markersize=16, linestyle='dashed',
                            markerfacecolor='#999999', color='#999999', label='GC-difference'),
                     Line2D([0], [0], marker='.', markersize=16,
                            markerfacecolor='#000000', color='#000000', label='Distance')
                     ]
-  ax.legend(handles=legend_markers, fontsize=16)
+  ax.legend(handles=legend_markers, fontsize=24)
 
   plot_distance_(ax, sorted_results, vlmc, metadata, '#000000', 'solid')
 
@@ -40,7 +40,9 @@ def plot_distance(sorted_results, vlmc, gc_distance_function, metadata, out_dir)
   plot_distance_(ax, gc_distances, vlmc, metadata, '#999999', 'dashed')
 
   ax.set_xticklabels(species_names, ha="right")
-  plt.xticks(np.arange(len(sorted_results)), rotation=30)
+  plt.xticks(np.arange(len(sorted_results)), rotation=30, fontsize=16)
+
+  # plt.xticks(np.arange(len(sorted_results)), fontsize=20)
   ax.grid(color='#cccccc', linestyle='--', linewidth=1)
 
   out_file = os.path.join(out_dir, vlmc.name + "-distance.pdf")
