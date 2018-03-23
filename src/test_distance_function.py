@@ -17,6 +17,7 @@ from util.draw_distance import draw_gc_plot, plot_distance
 label_size = 20
 mpl.rcParams['xtick.labelsize'] = label_size
 mpl.rcParams['ytick.labelsize'] = label_size
+mpl.rcParams['axes.axisbelow'] = True
 
 
 def test_negloglike(tree_dir, sequence_length):

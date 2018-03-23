@@ -21,6 +21,8 @@ def plot_distance(sorted_results, vlmc, gc_distance_function, metadata, out_dir)
   fig, ax = plt.subplots(1, sharex='col', figsize=(30, 20), dpi=80)
   ax.set_title(metadata[vlmc.name]['species'], fontsize=30)
   ax.set_xlim(-1, len(sorted_results))
+  ax.grid(color='#cccccc', linestyle='--', linewidth=1)
+
   species_names = ["{}".format(metadata[v.name]['species']) for _, v in sorted_results]
 
   legend_markers = [Line2D([0], [0], marker='o', markersize=16, markeredgecolor='#ff7f00',
@@ -43,7 +45,6 @@ def plot_distance(sorted_results, vlmc, gc_distance_function, metadata, out_dir)
   plt.xticks(np.arange(len(sorted_results)), rotation=30, fontsize=16)
 
   # plt.xticks(np.arange(len(sorted_results)), fontsize=20)
-  ax.grid(color='#cccccc', linestyle='--', linewidth=1)
 
   out_file = os.path.join(out_dir, vlmc.name + "-distance.pdf")
   fig.savefig(out_file, dpi='figure', format='pdf')

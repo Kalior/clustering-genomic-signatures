@@ -182,16 +182,32 @@ cdef class VLMC(object):
       root_name = metadata[self.name]['species']
     else:
       root_name = self.name
-    G.add_node(root_name)
+    G.add_node(root_name, inner=True)
     self._add_children(G, "", root_name)
-    pos = graphviz_layout(G, prog='dot')
-    nx.draw(G, pos, with_labels=True, arrows=True, node_size=1000, node_color='w',
-      edge_color='#ff7f00', font_size=16, width=2)
 
-    edge_symbols = nx.get_edge_attributes(G, 'symbol')
-    edge_probs = nx.get_edge_attributes(G, 'prob')
-    nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_symbols, font_size=16)
-    nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_probs, font_size=16, label_pos=0.3)
+    edges = G.edges(data='inner')
+    inner_edges = [e for e in edges if e[2]]
+    outer_edges = [e for e in edges if not e[2]]
+
+    nodes = G.nodes(data='inner')
+    inner_nodes = {n[0]: n[0] for n in nodes if n[1]}
+
+    pos = graphviz_layout(G, prog='dot')
+
+    nx.draw_networkx_nodes(G, pos, node_size=10, node_color='w')
+    nx.draw_networkx_labels(G, pos, font_size=16, labels=inner_nodes)
+
+    nx.draw_networkx_edges(G, pos, edgelist=inner_edges, arrows=True, edge_color='#ff7f00',
+      width=2, style='solid')
+
+    nx.draw_networkx_edges(G, pos, edgelist=outer_edges, arrows=False, edge_color='#007fff',
+      width=1, style='dashed')
+
+    edge_attributes=['symbol', 'prob']
+    attributes = [nx.get_edge_attributes(G, attr) for attr in edge_attributes]
+    keys = set([k for attrs in attributes for k in attrs.keys()])
+    labels = {k: " ".join([attrs[k] for attrs in attributes if k in attrs]) for k in keys}
+    nx.draw_networkx_edge_labels(G, pos, edge_labels=labels, font_size=16)
 
   def _add_children(self, G, context, root_name):
     for c in self.alphabet:
@@ -200,9 +216,12 @@ cdef class VLMC(object):
       if parent_label == "":
         parent_label = root_name
       if child in self.tree:
-        G.add_node(child)
-        G.add_edge(parent_label, child, symbol=c, prob="{:.2f}".format(self.tree[context][c]))
+        G.add_node(child, inner=True)
+        G.add_edge(parent_label, child, symbol=c, prob="{:.2f}".format(self.tree[context][c]), inner=True)
         self._add_children(G, child, root_name)
+      else:
+        G.add_node(child, inner=False)
+        G.add_edge(parent_label, child, symbol=c, prob="{:.2f}".format(self.tree[context][c]), inner=False)
 
 if __name__ == "__main__":
   s = '{"":{"A":0.5,"B":0.5},"A":{"B":0.5,"A":0.5},"B":{"A":0.5,"B":0.5},"BA":{"A":0.5,"B":0.5},"AA":{"A":0.5,"B":0.5}}'
