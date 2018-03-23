@@ -11,8 +11,8 @@ ctypedef np.float32_t FLOATTYPE_t
 
 from mst_clustering import MSTClustering
 from mst_clustering cimport MSTClustering
-from min_inter_cluster_distance import MinInterClusterDistance
-from min_inter_cluster_distance cimport MinInterClusterDistance
+from average_link_clustering import AverageLinkClustering
+from average_link_clustering cimport AverageLinkClustering
 
 from graph_based_clustering cimport GraphBasedClustering
 

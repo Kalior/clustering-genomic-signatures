@@ -5,7 +5,7 @@ ctypedef np.float32_t FLOATTYPE_t
 from graph_based_clustering cimport GraphBasedClustering
 
 
-cdef class MinInterClusterDistance(GraphBasedClustering):
+cdef class AverageLinkClustering(GraphBasedClustering):
   cdef dict calculated_distances
 
   cdef int _find_min_edge(self, clustering, distances)

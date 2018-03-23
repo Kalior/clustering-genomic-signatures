@@ -78,8 +78,8 @@ if __name__ == '__main__':
   parser.add_argument('--directory', type=str, default='../trees',
                       help='The directory to source the trees for the VLMCs from.')
 
-  parser.add_argument('--min-average-inter-distance', action='store_true')
-  parser.add_argument('--min-edge', action='store_true')
+  parser.add_argument('--average-link-clustering', action='store_true')
+  parser.add_argument('--single-link-clustering', action='store_true')
   parser.add_argument('--fuzzy-similarity-clustering', action='store_true')
   parser.add_argument('--kmeans', action='store_true')
 
@@ -88,10 +88,10 @@ if __name__ == '__main__':
   parse_trees_to_json.parse_trees(tree_dir)
   vlmcs = VLMC.from_json_dir(tree_dir)
 
-  if args.min_average_inter_distance:
+  if args.average_link_clustering:
     print("Clustering with min average distance between clusters")
-    cluster_class = MinInterClusterDistance
-  elif args.min_edge:
+    cluster_class = AverageLinkClustering
+  elif args.single_link_clustering:
     print("Clustering with min single linkage")
     cluster_class = MSTClustering
   elif args.fuzzy_similarity_clustering:

@@ -8,7 +8,7 @@ FLOATTYPE = np.float32
 from graph_based_clustering cimport GraphBasedClustering
 from graph_based_clustering import GraphBasedClustering
 
-cdef class MinInterClusterDistance(GraphBasedClustering):
+cdef class AverageLinkClustering(GraphBasedClustering):
   """
     Forms clusters by adding the edge which adds the minimum inter-cluster distence.
   """
