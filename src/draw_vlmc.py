@@ -22,8 +22,8 @@ class Part(Enum):
   NONE = 4
 
 
-def save(tree_dir, out_dir):
-  parse_trees(tree_dir)
+def save(tree_dir, out_dir, deltas=False):
+  parse_trees(tree_dir, deltas)
   vlmcs = VLMC.from_json_dir(tree_dir)
   metadata = get_metadata_for([vlmc.name for vlmc in vlmcs])
 
