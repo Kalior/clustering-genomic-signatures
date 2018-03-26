@@ -1,6 +1,6 @@
 #! /usr/bin/python3.6
 import argparse
-import math
+import numpy as np
 import time
 import os
 import matplotlib.pyplot as plt
@@ -12,12 +12,13 @@ import parse_trees_to_json
 from get_signature_metadata import get_metadata_for
 from util.print_distance import print_metrics, print_distance_output
 from util.distance_metrics import update_metrics, normalise_metrics
-from util.draw_distance import draw_gc_plot, plot_distance
+from util.draw_distance import draw_gc_plot, plot_distance, update_box_plot_data, draw_box_plot
 
 label_size = 20
 mpl.rcParams['xtick.labelsize'] = label_size
 mpl.rcParams['ytick.labelsize'] = label_size
 mpl.rcParams['axes.axisbelow'] = True
+mpl.rcParams['font.size'] = 24
 
 
 def test_negloglike(tree_dir, sequence_length):
@@ -82,7 +83,11 @@ def test_distance_function(d, tree_dir):
   gc_ax.grid(color='#cccccc', linestyle='--', linewidth=1)
   distance_ax.grid(color='#cccccc', linestyle='--', linewidth=1)
 
-  for vlmc in vlmcs:
+  all_gc_differences = np.empty((len(vlmcs), len(vlmcs)))
+  all_family_orders = np.empty((len(vlmcs), len(vlmcs)))
+  all_genus_orders = np.empty((len(vlmcs), len(vlmcs)))
+
+  for i, vlmc in enumerate(vlmcs):
     start_time = time.time()
     distances = list(map(lambda other: d.distance(vlmc, other), vlmcs))
     elapsed_time = time.time() - start_time
@@ -91,11 +96,15 @@ def test_distance_function(d, tree_dir):
                             key=lambda t: (t[0], metadata[t[1].name]['genus']))
 
     metrics = update_metrics(vlmc, vlmcs, sorted_results, metadata, elapsed_time, metrics)
+    update_box_plot_data(vlmc, i, sorted_results, all_gc_differences,
+                         all_family_orders, all_genus_orders, gc_distance_function, metadata)
 
     print_distance_output(vlmc, vlmcs, sorted_results, elapsed_time, metadata, metrics)
     draw_gc_plot(sorted_results, vlmc, gc_distance_function, distance_ax, gc_ax)
     plot_distance(sorted_results, vlmc, gc_distance_function, metadata, image_dir)
 
+  number_of_bins = len(vlmcs) / 10
+  draw_box_plot(all_gc_differences, all_family_orders, all_genus_orders, number_of_bins, image_dir)
   metrics = normalise_metrics(metrics, vlmcs)
   print_metrics(metrics)
 

@@ -81,3 +81,50 @@ def scatter_tuple_list(ax, tuple_list, c, marker):
   xs = [x for x, _ in tuple_list]
   ys = [y for _, y in tuple_list]
   ax.scatter(xs, ys, s=600, c=c, marker=marker)
+
+
+def update_box_plot_data(vlmc, index, sorted_results, all_gc_differences,
+                         all_family_orders, all_genus_orders, gc_distance_function, metadata):
+  gc_distances = [gc_distance_function.distance(vlmc, v) for _, v in sorted_results]
+  for i, gc_distance in enumerate(gc_distances):
+    all_gc_differences[index, i] = gc_distance
+
+  for i, (_, other) in enumerate(sorted_results):
+    if metadata[other.name]['family'] == metadata[vlmc.name]['family']:
+      all_family_orders[index, i] = 1
+    else:
+      all_family_orders[index, i] = 0
+
+  for i, (_, other) in enumerate(sorted_results):
+    if metadata[other.name]['genus'] == metadata[vlmc.name]['genus']:
+      all_genus_orders[index, i] = 1
+    else:
+      all_genus_orders[index, i] = 0
+
+
+def draw_box_plot(all_gc_differences, all_family_orders, all_genus_orders, number_of_bins, out_dir):
+  gc_binned = all_gc_differences.T.reshape(-1)
+  gc_binned = np.array_split(gc_binned, number_of_bins, axis=0)
+
+  family_average = all_family_orders.mean(axis=0)
+  family_binned = np.array_split(family_average, number_of_bins, axis=0)
+
+  genus_average = all_genus_orders.mean(axis=0)
+  genus_binned = np.array_split(genus_average, number_of_bins, axis=0)
+
+  fig, [gc_ax, family_ax, genus_ax] = plt.subplots(3, figsize=(30, 20), dpi=80)
+
+  gc_ax.set_title("GC-difference")
+  gc_ax.boxplot(gc_binned)
+  gc_ax.grid(color='#cccccc', linestyle='--', linewidth=1)
+
+  family_ax.set_title("Percent of family")
+  family_ax.boxplot(family_binned)
+  family_ax.grid(color='#cccccc', linestyle='--', linewidth=1)
+
+  genus_ax.set_title("Percent of genus")
+  genus_ax.boxplot(genus_binned)
+  genus_ax.grid(color='#cccccc', linestyle='--', linewidth=1)
+
+  out_file = os.path.join(out_dir, "box.pdf")
+  fig.savefig(out_file, dpi='figure', format='pdf')
