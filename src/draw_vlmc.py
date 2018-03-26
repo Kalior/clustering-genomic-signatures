@@ -1,5 +1,6 @@
 #! /usr/bin/python3.6
 
+import argparse
 import networkx as nx
 from networkx.drawing.nx_agraph import graphviz_layout
 import matplotlib.pyplot as plt
@@ -22,16 +23,7 @@ class Part(Enum):
   NONE = 4
 
 
-def save(tree_dir, out_dir, deltas=False):
-  parse_trees(tree_dir, deltas)
-  vlmcs = VLMC.from_json_dir(tree_dir)
-  metadata = get_metadata_for([vlmc.name for vlmc in vlmcs])
-
-  try:
-    os.stat(out_dir)
-  except:
-    os.mkdir(out_dir)
-
+def save(vlmcs, metadata, out_dir, deltas=False):
   for vlmc in vlmcs:
     plt.figure(figsize=(150, 30), dpi=80)
     draw_with_probabilities(vlmc, metadata, deltas)
@@ -100,24 +92,14 @@ def add_children(vlmc, G, context, root_name, deltas):
           vlmc.tree[context][c]), inner=False)
 
 
-def save_intersection(tree_dir, out_dir):
-  parse_trees(tree_dir)
-  vlmcs = VLMC.from_json_dir(tree_dir)
-  metadata = get_metadata_for([vlmc.name for vlmc in vlmcs])
-
-  try:
-    os.stat(out_dir)
-  except:
-    os.mkdir(out_dir)
-
+def save_intersection(vlmcs, metadata, out_dir):
   for vlmc_left, vlmc_right in combinations(vlmcs, 2):
     plt.figure(figsize=(90, 30), dpi=20)
     draw_intersection(vlmc_left, vlmc_right, metadata)
     out_file = os.path.join(out_dir, vlmc_left.name + '_' + vlmc_right.name + '.pdf')
-    plt.title(metadata[vlmc_left.name]['species'] +
-              " and " + metadata[vlmc_right.name]['species'])
+    plt.title(metadata[vlmc_left.name]['species'] + " and " + metadata[vlmc_right.name]['species'])
+    # plt.title(vlmc_left.name + " and " + vlmc_right.name)
     plt.axis('off')
-    # plt.show()
     plt.savefig(out_file, dpi='figure', format='pdf', bbox_inches='tight')
     plt.close()
 
@@ -174,9 +156,28 @@ def add_children_intersection(vlmc_left, vlmc_right, G, context, root_name):
 
 
 if __name__ == '__main__':
-  # tree_dir = '../original_test_trees'
-  # image_dir = '../vlmc_illustrations'
-  # save_intersection(tree_dir, image_dir)
-  tree_dir = '../trees_pst_better'
-  image_dir = '../images'
-  save(tree_dir, image_dir, False)
+  parser = argparse.ArgumentParser(
+      description='Prints vlmcs models, or the intersection of such.')
+  parser.add_argument('--deltas', action='store_true')
+  parser.add_argument('--intersection', action='store_true')
+
+  parser.add_argument('--directory', type=str, default='../trees_pst_better',
+                      help='The directory which contains the vlmcs to be printed.')
+  parser.add_argument('--out-directory', type=str, default='../images',
+                      help='The directory to where the images should be written.')
+
+  args = parser.parse_args()
+
+  try:
+    os.stat(args.out_directory)
+  except:
+    os.mkdir(args.out_directory)
+
+  parse_trees(args.directory, args.deltas)
+  vlmcs = VLMC.from_json_dir(args.directory)
+  metadata = get_metadata_for([vlmc.name for vlmc in vlmcs])
+
+  if args.intersection:
+    save_intersection(vlmcs, metadata, args.out_directory)
+  else:
+    save(vlmcs, metadata, args.out_directory, args.deltas)
