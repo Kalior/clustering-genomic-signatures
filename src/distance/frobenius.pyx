@@ -19,15 +19,15 @@ cdef class FrobeniusNorm(object):
     distance = self._frobenius_norm(left_vlmc, right_vlmc)
     return distance
 
-  cdef double _frobenius_norm(self, original_vlmc, estimated_vlmc):
+  cdef double _frobenius_norm(self, left_vlmc, right_vlmc):
     # intersection:
-    cdef list shared_contexts = [context for context in original_vlmc.tree if context in estimated_vlmc.tree]
+    cdef list shared_contexts = [context for context in left_vlmc.tree if context in right_vlmc.tree]
 
     # union
-    # cdef set shared_contexts = set(original_vlmc.tree.keys()).union(set(estimated_vlmc.tree.keys()))
+    # cdef set shared_contexts = set(left_vlmc.tree.keys()).union(set(right_vlmc.tree.keys()))
 
-    cdef np.ndarray[FLOATTYPE_t, ndim=2] original_matrix = self._create_matrix(original_vlmc, shared_contexts)
-    cdef np.ndarray[FLOATTYPE_t, ndim=2] estimated_matrix = self._create_matrix(estimated_vlmc, shared_contexts)
+    cdef np.ndarray[FLOATTYPE_t, ndim=2] original_matrix = self._create_matrix(left_vlmc, shared_contexts)
+    cdef np.ndarray[FLOATTYPE_t, ndim=2] estimated_matrix = self._create_matrix(right_vlmc, shared_contexts)
 
     cdef np.ndarray[FLOATTYPE_t, ndim=2] frobenius_matrix = original_matrix - estimated_matrix
 
