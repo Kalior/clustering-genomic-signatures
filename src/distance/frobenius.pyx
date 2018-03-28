@@ -26,10 +26,10 @@ cdef class FrobeniusNorm(object):
     # union
     # cdef set shared_contexts = set(left_vlmc.tree.keys()).union(set(right_vlmc.tree.keys()))
 
-    cdef np.ndarray[FLOATTYPE_t, ndim=2] original_matrix = self._create_matrix(left_vlmc, shared_contexts)
-    cdef np.ndarray[FLOATTYPE_t, ndim=2] estimated_matrix = self._create_matrix(right_vlmc, shared_contexts)
+    cdef np.ndarray[FLOATTYPE_t, ndim=2] left_matrix = self._create_matrix(left_vlmc, shared_contexts)
+    cdef np.ndarray[FLOATTYPE_t, ndim=2] right_matrix = self._create_matrix(right_vlmc, shared_contexts)
 
-    cdef np.ndarray[FLOATTYPE_t, ndim=2] frobenius_matrix = original_matrix - estimated_matrix
+    cdef np.ndarray[FLOATTYPE_t, ndim=2] frobenius_matrix = left_matrix - right_matrix
 
     return np.linalg.norm(frobenius_matrix, ord='fro') / len(shared_contexts)
 
@@ -41,7 +41,7 @@ cdef class FrobeniusNorm(object):
     cdef FLOATTYPE_t val
     cdef int i, j
     for i, context in enumerate(contexts_to_use):
-      weight_factor = len(context)
+      weight_factor = 1# len(context)
       for j, character in enumerate(self.alphabet):
         if context in vlmc.tree:
           val = vlmc.tree[context][character] * weight_factor
