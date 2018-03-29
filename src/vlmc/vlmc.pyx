@@ -35,6 +35,12 @@ cdef class VLMC(object):
       '{"":{"A":0.5,"B":0.5},"A":{"B":0.5,"A":0.5},"B":{"A":0.5,"B":0.5},"BA":{"A":0.5,"B":0.5},"AA":{"A":0.5,"B":0.5}}'
     """
     tree = json.loads(s)
+    if "count" in tree[""]:
+      total_count = tree[""]['count']
+
+      for k, v in tree.items():
+        tree[k]['prob'] = v['count'] / total_count
+
     return VLMC(tree, name)
 
   @classmethod
@@ -44,8 +50,8 @@ cdef class VLMC(object):
       name, _ = os.path.splitext(file)
       name_without_parameter = VLMC.strip_parameters_from_name(name)
       with open(os.path.join(directory, file)) as f:
-        tree = json.load(f)
-        all_vlmcs.append(VLMC(tree, name_without_parameter))
+        vlmc = VLMC.from_json(f.read(), name_without_parameter)
+        all_vlmcs.append(vlmc)
 
     return all_vlmcs
 
