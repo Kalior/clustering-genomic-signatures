@@ -20,7 +20,8 @@ def _parse_file(file, deltas):
   with open(file) as f:
     for line in f:
       if line[0:5] == "Node:":
-        key, children = _parse_line(line, deltas)
+        key, children, count = _parse_line(line, deltas)
+        children['count'] = count
         graph[key] = children
   return json.dumps(graph)
 
@@ -28,6 +29,7 @@ def _parse_file(file, deltas):
 def _parse_line(line, deltas):
   numbers = re.findall('-?[0-9]+\.?[0-9]*', line)
   children = {}
+  count = int(numbers[5])
   # Assumes we're only working with ACGT (in that order)
   if deltas:
     children['A'] = float(numbers[14])
@@ -45,7 +47,7 @@ def _parse_line(line, deltas):
   key = strings[1]
   if key == '#':
     key = ''
-  return key, children
+  return key, children, count
 
 
 if __name__ == '__main__':
