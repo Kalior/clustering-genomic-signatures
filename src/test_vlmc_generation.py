@@ -42,8 +42,10 @@ def add_underlines(directory):
     os.rename(orignal_name, new_name)
 
 
-def generate(vlmcs, sequence_length, list_path, out_directory):
+def generate(vlmcs, sequence_length, out_directory):
   os.system("rm {}/*".format(out_directory))
+  list_path = os.path.join(out_directory, "list.txt")
+
   sequences = [(vlmc.generate_sequence(sequence_length, 500), vlmc) for vlmc in vlmcs]
 
   for seq in sequences:
@@ -71,8 +73,7 @@ def generate_vlmcs(vlmcs, parameters, list_path, out_directory):
   )
 
   args = ("../lib/classifier " + standard_args + " " + parameter_args).split()
-  # ./classifier -pseudo -crr -f_f list.txt -ipf .fa -ipwd test -opwd profiles -osf PST_ -m 1 -frac 0 -revcomp -npar 768 -minc 40 -kmax 9 | tee -a $OUTPUT
-  # args = "bin/bar -c somefile.xml -d text.txt -r aString -f anotherString".split()
+
   popen = subprocess.Popen(args, stdout=subprocess.PIPE)
   popen.wait()
   output = popen.stdout.read()
@@ -92,35 +93,43 @@ def pair_vlmcs(vlmcs, new_vlmcs):
   pairs = [(v1, v2) for v1 in vlmcs for v2 in new_vlmcs if v1.name in v2.name]
   return pairs
 
-if __name__ == "__main__":
-  out_directory = "../test"
-  in_directory = "../trees_128"
-  image_directory = "../images"
-  list_path = os.path.join(out_directory, "list.txt")
 
+def calculate_distances_for_lengths(vlmcs, lengths, out_directory):
   d = FrobeniusNorm()
 
-  fig, ax = plt.subplots(1, figsize=(150, 30), dpi=80)
-  ax.grid(color='#cccccc', linestyle='--', linewidth=1)
+  distances = np.empty((len(lengths), len(vlmcs)))
 
-  parse_trees_to_json.parse_trees(in_directory)
-  vlmcs = VLMC.from_json_dir(in_directory)
-  lengths = np.concatenate((np.arange(1000, 500000, 10000), np.array([100000, 500000, 1000000])))
-
-  results = np.empty((len(lengths), len(vlmcs)))
   for i, length in enumerate(lengths):
-    generate(vlmcs, length, list_path, out_directory)
+    generate(vlmcs, length, out_directory)
     parse_trees_to_json.parse_trees(out_directory)
     new_vlmcs = VLMC.from_json_dir(out_directory)
-    distance_calculation(vlmcs, new_vlmcs, d, results, i)
+    distance_calculation(vlmcs, new_vlmcs, d, distances, i)
 
+  return distances
+
+
+def plot_results(results, image_directory):
+  fig, ax = plt.subplots(1, figsize=(150, 30), dpi=80)
+
+  ax.grid(color='#cccccc', linestyle='--', linewidth=1)
   ax.set_xticklabels(lengths)
-  plt.xticks(np.arange(len(lengths)))
+  plt.xticks(np.arange(len(lengths), 5))
+
   handles = ax.plot(results, markersize=5, marker='o')
+
   labels = [v.name for v in vlmcs]
   ax.legend(handles=handles, labels=labels, loc='upper right')
 
   out_file = os.path.join(image_directory, 'distance-regeneration.pdf')
   plt.savefig(out_file, dpi='figure', format='pdf', bbox_inches='tight')
 
-  plt.show()
+if __name__ == "__main__":
+  out_directory = "../test"
+  in_directory = "../trees_128"
+  image_directory = "../images"
+
+  parse_trees_to_json.parse_trees(in_directory)
+  vlmcs = VLMC.from_json_dir(in_directory)
+  lengths = np.concatenate((np.arange(1000, 50000, 2000), np.array([100000, 500000, 1000000])))
+  distances = calculate_distances_for_lengths(vlmcs, lengths, out_directory)
+  plot_results(distances, image_directory)
