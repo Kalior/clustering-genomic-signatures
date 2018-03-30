@@ -137,11 +137,12 @@ def plot_results(results, image_directory):
 
 if __name__ == "__main__":
   out_directory = "../test"
-  in_directory = "../trees_128"
+  in_directory = "../test_trees"
   image_directory = "../images"
 
   parse_trees_to_json.parse_trees(in_directory)
   vlmcs = VLMC.from_json_dir(in_directory)
-  lengths = np.concatenate((np.arange(1000, 50000, 2000), np.array([100000, 500000, 1000000])))
-  distances = calculate_distances_for_lengths(vlmcs, lengths, out_directory)
+
+  lengths = np.concatenate((np.arange(5000, 50000, 5000), np.array([100000, 500000, 1000000])))
+  distances = calculate_distances_for_lengths(vlmcs, lengths, out_directory, image_directory)
   plot_results(distances, image_directory)
