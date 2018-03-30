@@ -1,6 +1,6 @@
 from vlmc import VLMC
 import parse_trees_to_json
-from draw_vlmc import save
+from draw_vlmc import save, save_intersection
 from test_distance_function import calculate_distances
 from distance import FrobeniusNorm
 
@@ -82,8 +82,7 @@ def generate_vlmcs(vlmcs, parameters, list_path, out_directory):
   add_underlines(out_directory)
 
 
-def distance_calculation(vlmcs, new_vlmcs, d, results, i):
-  pairs = pair_vlmcs(vlmcs, new_vlmcs)
+def distance_calculation(pairs, d, results, i):
   pair_distances = [d.distance(*p) for p in pairs]
   for j, distance in enumerate(pair_distances):
     results[i, j] = distance
@@ -94,7 +93,7 @@ def pair_vlmcs(vlmcs, new_vlmcs):
   return pairs
 
 
-def calculate_distances_for_lengths(vlmcs, lengths, out_directory):
+def calculate_distances_for_lengths(vlmcs, lengths, out_directory, image_directory):
   d = FrobeniusNorm()
 
   distances = np.empty((len(lengths), len(vlmcs)))
@@ -103,9 +102,22 @@ def calculate_distances_for_lengths(vlmcs, lengths, out_directory):
     generate(vlmcs, length, out_directory)
     parse_trees_to_json.parse_trees(out_directory)
     new_vlmcs = VLMC.from_json_dir(out_directory)
-    distance_calculation(vlmcs, new_vlmcs, d, distances, i)
+    pairs = pair_vlmcs(vlmcs, new_vlmcs)
+    plot_vlmcs(pairs, image_directory + "/" + str(i))
+    distance_calculation(pairs, d, distances, i)
 
   return distances
+
+
+def plot_vlmcs(pairs, image_directory):
+  try:
+    os.stat(image_directory)
+  except:
+    os.mkdir(image_directory)
+
+  metadata = {v.name: {'species': v.name} for p in pairs for v in [*p]}
+  for p in pairs:
+    save_intersection([*p], metadata, image_directory)
 
 
 def plot_results(results, image_directory):
