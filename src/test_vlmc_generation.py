@@ -118,7 +118,7 @@ def plot_results(results, image_directory):
   handles = ax.plot(results, markersize=5, marker='o')
 
   labels = [v.name for v in vlmcs]
-  ax.legend(handles=handles, labels=labels, loc='upper right')
+  plt.legend(handles=handles, labels=labels, bbox_to_anchor=(1, 1), loc=2, borderaxespad=0.)
 
   out_file = os.path.join(image_directory, 'distance-regeneration.pdf')
   plt.savefig(out_file, dpi='figure', format='pdf', bbox_inches='tight')
