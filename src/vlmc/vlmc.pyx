@@ -173,6 +173,9 @@ cdef class VLMC(object):
 
     return state_count
 
+  cpdef void reset_sequence(self):
+    self.sequence = ""
+
 if __name__ == "__main__":
   s = '{"":{"A":0.5,"B":0.5},"A":{"B":0.5,"A":0.5},"B":{"A":0.5,"B":0.5},"BA":{"A":0.5,"B":0.5},"AA":{"A":0.5,"B":0.5}}'
 

@@ -42,11 +42,17 @@ def add_underlines(directory):
     os.rename(orignal_name, new_name)
 
 
+def generate_sequence(vlmc, sequence_length):
+  vlmc.reset_sequence()
+  sequence = vlmc.generate_sequence(sequence_length, 500)
+  return sequence, vlmc
+
+
 def generate(vlmcs, sequence_length, out_directory):
   os.system("rm {}/*".format(out_directory))
   list_path = os.path.join(out_directory, "list.txt")
 
-  sequences = [(vlmc.generate_sequence(sequence_length, 500), vlmc) for vlmc in vlmcs]
+  sequences = [generate_sequence(vlmc, sequence_length) for vlmc in vlmcs]
 
   for seq in sequences:
     write_sequence_as_fasta(seq, out_directory, list_path)
