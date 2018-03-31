@@ -1,3 +1,4 @@
+#! /usr/bin/python3.6
 from vlmc import VLMC
 import parse_trees_to_json
 from draw_vlmc import save, save_intersection
