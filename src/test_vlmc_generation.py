@@ -136,11 +136,11 @@ def plot_vlmcs(pairs, image_directory):
 
 
 def plot_results(results, image_directory):
-  fig, ax = plt.subplots(1, figsize=(150, 30), dpi=80)
+  fig, ax = plt.subplots(1, figsize=(50, 30), dpi=80)
 
   ax.grid(color='#cccccc', linestyle='--', linewidth=1)
   ax.set_xticklabels(lengths)
-  plt.xticks(np.arange(len(lengths), 5))
+  plt.xticks(np.arange(len(lengths)))
 
   handles = ax.plot(results, markersize=5, marker='o')
 
@@ -148,16 +148,17 @@ def plot_results(results, image_directory):
   plt.legend(handles=handles, labels=labels, bbox_to_anchor=(1, 1), loc=2, borderaxespad=0.)
 
   out_file = os.path.join(image_directory, 'distance-regeneration.pdf')
-  plt.savefig(out_file, dpi='figure', format='pdf', bbox_inches='tight')
+  plt.savefig(out_file, dpi='figure', format='pdf')
 
 if __name__ == "__main__":
-  out_directory = "../test"
-  in_directory = "../test_trees"
-  image_directory = "../images"
+  out_directory = "../test_128"
+  in_directory = "../test_trees_128"
+  image_directory = "../images/128"
 
   parse_trees_to_json.parse_trees(in_directory)
   vlmcs = VLMC.from_json_dir(in_directory)
 
-  lengths = np.concatenate((np.arange(5000, 50000, 5000), np.array([100000, 500000, 1000000])))
+  lengths = [int(l) for l in np.logspace(2, 6, 10)]
+  print(lengths)
   distances = calculate_distances_for_lengths(vlmcs, lengths, out_directory, image_directory)
   plot_results(distances, image_directory)
