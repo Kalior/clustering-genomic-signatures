@@ -88,10 +88,10 @@ def generate_vlmcs(vlmcs, parameters, list_path, out_directory):
   add_underlines(out_directory)
 
 
-def distance_calculation(pairs, d, results, i):
+def distance_calculation(pairs, d, results, i, repetitions):
   pair_distances = [d.distance(*p) for p in pairs]
   for j, distance in enumerate(pair_distances):
-    results[i, j] = distance
+    results[i, j] += distance / repetitions
 
 
 def pair_vlmcs(vlmcs, new_vlmcs):
@@ -102,17 +102,26 @@ def pair_vlmcs(vlmcs, new_vlmcs):
 def calculate_distances_for_lengths(vlmcs, lengths, out_directory, image_directory):
   d = FrobeniusNorm()
 
-  distances = np.empty((len(lengths), len(vlmcs)))
+  distances = np.zeros((len(lengths), len(vlmcs)))
 
+  repetitions = 50
+  futures = []
   for i, length in enumerate(lengths):
-    generate(vlmcs, length, out_directory)
-    parse_trees_to_json.parse_trees(out_directory)
-    new_vlmcs = VLMC.from_json_dir(out_directory)
-    pairs = pair_vlmcs(vlmcs, new_vlmcs)
-    plot_vlmcs(pairs, image_directory + "/" + str(i))
-    distance_calculation(pairs, d, distances, i)
+    print(length)
+    for _ in range(repetitions):
+      distance_repetitions(vlmcs, length, out_directory,
+                           image_directory, distances, d, i, repetitions)
 
   return distances
+
+
+def distance_repetitions(vlmcs, length, out_directory, image_directory, distances, d, i, repetitions):
+  generate(vlmcs, length, out_directory)
+  parse_trees_to_json.parse_trees(out_directory)
+  new_vlmcs = VLMC.from_json_dir(out_directory)
+  pairs = pair_vlmcs(vlmcs, new_vlmcs)
+  plot_vlmcs(pairs, image_directory + "/" + str(i))
+  distance_calculation(pairs, d, distances, i, repetitions)
 
 
 def plot_vlmcs(pairs, image_directory):
