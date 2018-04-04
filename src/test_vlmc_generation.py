@@ -10,6 +10,7 @@ import subprocess
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+import multiprocessing
 
 label_size = 20
 mpl.rcParams['xtick.labelsize'] = label_size
@@ -46,10 +47,9 @@ def add_underlines(directory):
 
 
 def generate(vlmcs, sequence_length, out_directory, number_of_parameters=128):
-  os.system("rm {}/*".format(out_directory))
+  os.system("rm -rf {}/*".format(out_directory))
 
-  for vlmc in vlmcs:
-    write_sequence_as_fasta(vlmc, sequence_length, out_directory)
+  [write_sequence_as_fasta(vlmc, sequence_length, out_directory) for vlmc in vlmcs]
 
   list_path = os.path.join(out_directory, "list.txt")
   with open(list_path, 'a') as f:
@@ -86,45 +86,57 @@ def generate_vlmcs(vlmcs, parameters, list_path, out_directory):
   add_underlines(out_directory)
 
 
-def distance_calculation(pairs, d, results, i, repetitions):
-  pair_distances = [d.distance(*p) for p in pairs]
-  for j, distance in enumerate(pair_distances):
-    results[i, j] += distance / repetitions
+def calculate_distances_for_lengths(vlmcs, lengths, out_directory, image_directory, pool):
+  d = FrobeniusNorm()
+
+  results = [pool.apply_async(pooled_distance_calculation,
+                              (length, vlmcs, out_directory, image_directory, d))
+             for length in lengths]
+
+  distances = np.stack([res.get() for res in results])
+
+  return distances
+
+
+def pooled_distance_calculation(length, vlmcs, out_directory, image_directory, d):
+  thread_out_directory = os.path.join(out_directory, str(length))
+  thread_image_directory = os.path.join(image_directory, str(length))
+  for dir_ in [thread_out_directory, thread_image_directory]:
+    try:
+      os.stat(dir_)
+    except:
+      os.mkdir(dir_)
+  distances = distance_for_length(length, vlmcs, thread_out_directory, thread_image_directory, d)
+  return distances
+
+
+def distance_for_length(length, vlmcs, out_directory, image_directory, d):
+  print(length)
+  repetitions = 5
+  distances = np.zeros(len(vlmcs))
+  for _ in range(repetitions):
+    generate(vlmcs, length, out_directory)
+
+    parse_trees_to_json.parse_trees(out_directory)
+    new_vlmcs = VLMC.from_json_dir(out_directory)
+
+    pairs = pair_vlmcs(vlmcs, new_vlmcs)
+
+    # plot_vlmcs(pairs, image_directory)
+    rep_distance = distance_calculation(pairs, d)
+    distances += rep_distance / repetitions
+
+  return distances
+
+
+def distance_calculation(pairs, d):
+  distances = np.array([d.distance(*p) for p in pairs])
+  return distances
 
 
 def pair_vlmcs(vlmcs, new_vlmcs):
   pairs = [(v1, v2) for v1 in vlmcs for v2 in new_vlmcs if v1.name == v2.name[2:]]
   return pairs
-
-
-def calculate_distances_for_lengths(vlmcs, lengths, out_directory, image_directory):
-  d = FrobeniusNorm()
-
-  distances = np.zeros((len(lengths), len(vlmcs)))
-
-  repetitions = 5
-  for i, length in enumerate(lengths):
-    print(length)
-    for _ in range(repetitions):
-      distance_repetitions(vlmcs, length, out_directory,
-                           image_directory, distances, d, i, repetitions)
-
-  return distances
-
-
-def distance_repetitions_kl(vlmcs, length, out_directory, image_directory, distances, d, i, repetitions):
-  pairs = [(v1, v2) for v1 in vlmcs for v2 in vlmcs if v1 != v2]
-  plot_vlmcs(pairs, image_directory + "/" + str(i))
-  distance_calculation(pairs, d, distances, i, repetitions)
-
-
-def distance_repetitions(vlmcs, length, out_directory, image_directory, distances, d, i, repetitions):
-  generate(vlmcs, length, out_directory)
-  parse_trees_to_json.parse_trees(out_directory)
-  new_vlmcs = VLMC.from_json_dir(out_directory)
-  pairs = pair_vlmcs(vlmcs, new_vlmcs)
-  plot_vlmcs(pairs, image_directory + "/" + str(length))
-  distance_calculation(pairs, d, distances, i, repetitions)
 
 
 def plot_vlmcs(pairs, image_directory):
@@ -144,6 +156,7 @@ def plot_results(results, image_directory):
   ax.grid(color='#cccccc', linestyle='--', linewidth=1)
   ax.set_xticklabels(lengths)
   plt.xticks(np.arange(len(lengths)))
+  ax.set_title('Regeneration distance')
 
   handles = ax.plot(results, markersize=5, marker='o')
 
@@ -158,10 +171,15 @@ if __name__ == "__main__":
   in_directory = "../test_trees_128"
   image_directory = "../images/128"
 
-  parse_trees_to_json.parse_trees(in_directory)
-  vlmcs = VLMC.from_json_dir(in_directory)
+  with multiprocessing.Pool(processes=4) as pool:
+    parse_trees_to_json.parse_trees(in_directory)
+    vlmcs = VLMC.from_json_dir(in_directory)
 
-  lengths = [int(l) for l in np.logspace(2, 6, 10)]
-  print(lengths)
-  distances = calculate_distances_for_lengths(vlmcs, lengths, out_directory, image_directory)
-  plot_results(distances, image_directory)
+    lengths = [int(l) for l in np.logspace(2, 6, 10)]
+    print(lengths)
+    start_time = time()
+    distances = calculate_distances_for_lengths(
+        vlmcs, lengths, out_directory, image_directory, pool)
+    print(time() - start_time)
+
+    plot_results(distances, image_directory)
