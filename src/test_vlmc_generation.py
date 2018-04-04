@@ -93,7 +93,7 @@ def distance_calculation(pairs, d, results, i, repetitions):
 
 
 def pair_vlmcs(vlmcs, new_vlmcs):
-  pairs = [(v1, v2) for v1 in vlmcs for v2 in new_vlmcs if v1.name in v2.name]
+  pairs = [(v1, v2) for v1 in vlmcs for v2 in new_vlmcs if v1.name == v2.name[2:]]
   return pairs
 
 
