@@ -18,21 +18,23 @@ mpl.rcParams['axes.axisbelow'] = True
 mpl.rcParams['font.size'] = 24
 
 
-def chunks(l, n):
-  """Yield successive n-sized chunks from l."""
-  for i in range(0, len(l), n):
-    yield l[i:i + n]
+def write_sequence_as_fasta(vlmc, sequence_length, out_directory):
+  vlmc.reset_sequence()
+  size_of_line = 990
+  context = vlmc.generate_sequence(50, 500)[-vlmc.order:]
 
-
-def write_sequence_as_fasta(vlmc_tuple, out_directory, list_path):
-  (seq, vlmc) = vlmc_tuple
   file_name = vlmc.name + ".fa"
   with open(os.path.join(out_directory, file_name), 'w') as f:
     f.write("> {}\n".format(vlmc.name))
-    f.write('\n'.join(list(chunks(seq, 990))))
+    # Iteratively generate lines from a sequence of correct length
+    for _ in range(sequence_length // size_of_line):
+      sequence = vlmc.generate_sequence_from(size_of_line, context)
+      f.write("{}\n".format(sequence))
+      context = sequence[-vlmc.order]
 
-  with open(list_path, 'a') as f:
-    f.write(vlmc.name + "\n")
+    length_left = sequence_length % size_of_line
+    sequence = vlmc.generate_sequence_from(length_left, context)
+    f.write("{}\n".format(sequence))
 
 
 def add_underlines(directory):
@@ -43,27 +45,22 @@ def add_underlines(directory):
     os.rename(orignal_name, new_name)
 
 
-def generate_sequence(vlmc, sequence_length):
-  vlmc.reset_sequence()
-  sequence = vlmc.generate_sequence(sequence_length, 500)
-  return sequence, vlmc
-
-
-def generate(vlmcs, sequence_length, out_directory):
+def generate(vlmcs, sequence_length, out_directory, number_of_parameters=128):
   os.system("rm {}/*".format(out_directory))
+
+  for vlmc in vlmcs:
+    write_sequence_as_fasta(vlmc, sequence_length, out_directory)
+
   list_path = os.path.join(out_directory, "list.txt")
-
-  sequences = [generate_sequence(vlmc, sequence_length) for vlmc in vlmcs]
-
-  for seq in sequences:
-    write_sequence_as_fasta(seq, out_directory, list_path)
+  with open(list_path, 'a') as f:
+    f.write('\n'.join([vlmc.name for vlmc in vlmcs]))
 
   parameters = {
       'use_constant_cutoff': "false",
       'cutoff_value': "3.9075",
-      'number_of_parameters': 48,
+      'number_of_parameters': number_of_parameters,
       'min_count': 4,
-      'max_depth': 10
+      'max_depth': 15
   }
   generate_vlmcs(vlmcs, parameters, list_path, out_directory)
 
@@ -105,8 +102,7 @@ def calculate_distances_for_lengths(vlmcs, lengths, out_directory, image_directo
 
   distances = np.zeros((len(lengths), len(vlmcs)))
 
-  repetitions = 50
-  futures = []
+  repetitions = 5
   for i, length in enumerate(lengths):
     print(length)
     for _ in range(repetitions):
@@ -116,12 +112,18 @@ def calculate_distances_for_lengths(vlmcs, lengths, out_directory, image_directo
   return distances
 
 
+def distance_repetitions_kl(vlmcs, length, out_directory, image_directory, distances, d, i, repetitions):
+  pairs = [(v1, v2) for v1 in vlmcs for v2 in vlmcs if v1 != v2]
+  plot_vlmcs(pairs, image_directory + "/" + str(i))
+  distance_calculation(pairs, d, distances, i, repetitions)
+
+
 def distance_repetitions(vlmcs, length, out_directory, image_directory, distances, d, i, repetitions):
   generate(vlmcs, length, out_directory)
   parse_trees_to_json.parse_trees(out_directory)
   new_vlmcs = VLMC.from_json_dir(out_directory)
   pairs = pair_vlmcs(vlmcs, new_vlmcs)
-  plot_vlmcs(pairs, image_directory + "/" + str(i))
+  plot_vlmcs(pairs, image_directory + "/" + str(length))
   distance_calculation(pairs, d, distances, i, repetitions)
 
 

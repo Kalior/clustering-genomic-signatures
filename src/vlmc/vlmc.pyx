@@ -128,15 +128,18 @@ cdef class VLMC(object):
       return self.sequence
 
     total_length = sequence_length + pre_sample_length
-    cdef str generated_sequence = ""
-    for i in range(total_length):
+    cdef str generated_sequence = self.generate_sequence_from(total_length, "")
+    self.sequence = generated_sequence[-sequence_length:]
+    return generated_sequence[-sequence_length:]
+
+  cpdef str generate_sequence_from(self, sequence_length, context):
+    generated_sequence = context
+    for i in range(sequence_length):
       # only send the last /order/ number of characters to generate next letter
       next_letter = self._generate_next_letter(generated_sequence[-self.order:])
       generated_sequence += next_letter
     # return the suffix with length sequence_length
-
-    self.sequence = generated_sequence[-sequence_length:]
-    return generated_sequence[-sequence_length:]
+    return generated_sequence[len(context):]
 
   cdef str _generate_next_letter(self, current_sequence):
     cdef list letters = ["A", "C", "G", "T"]
