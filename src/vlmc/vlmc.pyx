@@ -139,10 +139,9 @@ cdef class VLMC(object):
     return generated_sequence[-sequence_length:]
 
   cdef str _generate_next_letter(self, current_sequence):
-    cdef list letters = ["A", "C", "G", "T"]
     probabilities = map(lambda char_: self._probability_of_char_given_sequence(
-        char_, current_sequence), letters)
-    return choices(letters, weights=probabilities)[0]
+        char_, current_sequence), self.alphabet)
+    return choices(self.alphabet, weights=probabilities)[0]
 
   def _calculate_order(self, tree):
     return max(map(lambda k: len(k), tree.keys()))

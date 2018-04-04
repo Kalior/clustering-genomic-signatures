@@ -9,12 +9,6 @@ cdef class FrobeniusNorm(object):
     calculating the frobenius norm of the difference.
   """
 
-  cdef list alphabet
-
-  def __init__(self, alphabet=['A', 'C', 'G', 'T']):
-    self.alphabet = alphabet
-
-
   cpdef double distance(self, left_vlmc, right_vlmc):
     distance = self._frobenius_norm(left_vlmc, right_vlmc)
     return distance
@@ -35,13 +29,13 @@ cdef class FrobeniusNorm(object):
 
   cdef np.ndarray[FLOATTYPE_t, ndim=2] _create_matrix(self, vlmc, contexts_to_use):
     cdef int rows = len(contexts_to_use)
-    cdef int columns = len(self.alphabet)
+    cdef int columns = len(vlmc.alphabet)
     cdef np.ndarray[FLOATTYPE_t, ndim=2] matrix = np.empty((rows, columns), dtype=FLOATTYPE)
 
     cdef FLOATTYPE_t val
     cdef int i, j
     for i, context in enumerate(contexts_to_use):
-      for j, character in enumerate(self.alphabet):
+      for j, character in enumerate(vlmc.alphabet):
         if context in vlmc.tree:
           val = vlmc.tree[context][character]
         else:

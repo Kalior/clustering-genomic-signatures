@@ -12,7 +12,7 @@ cdef class NaiveParameterSampling(object):
 
   cpdef double distance(self, left_vlmc, right_vlmc):
     # Assume this is the alphabet, only relevant case for us.
-    cdef list alphabet = ['A', 'C', 'G', 'T']
+    cdef list alphabet = left_vlmc.alphabet
     cdef dict left_tree = left_vlmc.tree, right_tree = right_vlmc.tree
 
     cdef double symmetric_distance = (self._assymmetric_distance(left_tree, right_tree, alphabet)
