@@ -177,9 +177,7 @@ if __name__ == "__main__":
 
     lengths = [int(l) for l in np.logspace(2, 6, 10)]
     print(lengths)
-    start_time = time()
     distances = calculate_distances_for_lengths(
         vlmcs, lengths, out_directory, image_directory, pool)
-    print(time() - start_time)
 
     plot_results(distances, image_directory)
