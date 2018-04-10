@@ -84,7 +84,7 @@ def plot_vlmcs(pairs, image_directory):
     save_intersection([*p], metadata, image_directory)
 
 
-def plot_results(results, image_directory):
+def plot_results(vlmcs, results, lengths, image_directory):
   fig, ax = plt.subplots(1, figsize=(50, 30), dpi=80)
 
   ax.grid(color='#cccccc', linestyle='--', linewidth=1)
@@ -100,7 +100,8 @@ def plot_results(results, image_directory):
   out_file = os.path.join(image_directory, 'distance-regeneration.pdf')
   plt.savefig(out_file, dpi='figure', format='pdf')
 
-if __name__ == "__main__":
+
+def test():
   out_directory = "../test_128"
   in_directory = "../test_trees_128"
   image_directory = "../images/128"
@@ -114,4 +115,7 @@ if __name__ == "__main__":
     distances = calculate_distances_for_lengths(
         vlmcs, lengths, out_directory, image_directory, pool)
 
-    plot_results(distances, image_directory)
+    plot_results(vlmcs, distances, lengths, image_directory)
+
+if __name__ == "__main__":
+  test()
