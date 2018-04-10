@@ -62,10 +62,10 @@ def generate(vlmcs, sequence_length, out_directory, number_of_parameters=128):
       'min_count': 4,
       'max_depth': 15
   }
-  generate_vlmcs(vlmcs, parameters, list_path, out_directory)
+  generate_vlmcs(parameters, list_path, out_directory)
 
 
-def generate_vlmcs(vlmcs, parameters, list_path, out_directory):
+def generate_vlmcs(parameters, list_path, out_directory):
   standard_args = "-pseudo -crr -f_f {} -ipf .fa -ipwd {} -opwd {} -osf TEST_ -m 1 -frac 0 -revcomp".format(
       list_path, out_directory, out_directory)
   parameter_args = "-c_c {} -nc {} -npar {} -minc {} -kmax {}".format(
