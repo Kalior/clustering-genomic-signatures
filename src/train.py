@@ -8,7 +8,7 @@ def train(vlmcs, sequence_length, out_directory, number_of_parameters=128):
   [write_sequence_as_fasta(vlmc, sequence_length, out_directory) for vlmc in vlmcs]
 
   list_path = os.path.join(out_directory, "list.txt")
-  with open(list_path, 'a') as f:
+  with open(list_path, 'w') as f:
     f.write('\n'.join([vlmc.name for vlmc in vlmcs]))
 
   parameters = {
@@ -16,7 +16,8 @@ def train(vlmcs, sequence_length, out_directory, number_of_parameters=128):
       'cutoff_value': "3.9075",
       'number_of_parameters': number_of_parameters,
       'min_count': 4,
-      'max_depth': 15
+      'max_depth': 15,
+      'count_free_parameters_individually': 'false'
   }
   train_vlmcs(parameters, list_path, out_directory)
 
@@ -40,15 +41,19 @@ def write_sequence_as_fasta(vlmc, sequence_length, out_directory):
     f.write("{}\n".format(sequence))
 
 
-def train_vlmcs(parameters, list_path, out_directory):
+def train_vlmcs(parameters, list_path, out_directory, input_directory=None, add_underlines_=True):
+  if input_directory is None:
+    input_directory = out_directory
+
   standard_args = "-pseudo -crr -f_f {} -ipf .fa -ipwd {} -opwd {} -osf TEST_ -m 1 -frac 0 -revcomp".format(
-      list_path, out_directory, out_directory)
-  parameter_args = "-c_c {} -nc {} -npar {} -minc {} -kmax {}".format(
+      list_path, input_directory, out_directory)
+  parameter_args = "-c_c {} -nc {} -npar {} -minc {} -kmax {} -free {}".format(
       parameters['use_constant_cutoff'],
       parameters['cutoff_value'],
       parameters['number_of_parameters'],
       parameters['min_count'],
-      parameters['max_depth']
+      parameters['max_depth'],
+      parameters['count_free_parameters_individually']
   )
 
   args = ("../lib/classifier " + standard_args + " " + parameter_args).split()
@@ -57,8 +62,9 @@ def train_vlmcs(parameters, list_path, out_directory):
   popen.wait()
   output = popen.stdout.read()
   # print(output.decode("utf-8"))
-  # Needed for the parsing (since we expect them to be there...)
-  add_underlines(out_directory)
+  if add_underlines_:
+    # Needed for the parsing (since we expect them to be there...)
+    add_underlines(out_directory)
 
 
 def add_underlines(directory):
