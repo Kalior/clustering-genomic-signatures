@@ -68,8 +68,8 @@ def train_vlmcs(parameters, list_path, out_directory, input_directory=None, add_
 
 
 def add_underlines(directory):
-  for file in [f for f in os.listdir(directory) if f.endswith(".tree")]:
-    name, end = os.path.splitext(file)
-    orignal_name = os.path.join(directory, file)
+  for file_ in [f for f in os.listdir(directory) if f.endswith(".tree")]:
+    name, end = os.path.splitext(file_)
+    orignal_name = os.path.join(directory, file_)
     new_name = os.path.join(directory, name + "__" + end)
     os.rename(orignal_name, new_name)
