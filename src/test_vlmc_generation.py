@@ -45,7 +45,6 @@ def pooled_distance_calculation(length, vlmcs, out_directory, image_directory, d
 
 
 def distance_for_length(length, vlmcs, out_directory, image_directory, d):
-  print(length)
   repetitions = 5
   distances = np.zeros(len(vlmcs))
   for _ in range(repetitions):
@@ -60,6 +59,7 @@ def distance_for_length(length, vlmcs, out_directory, image_directory, d):
     rep_distance = distance_calculation(pairs, d)
     distances += rep_distance / repetitions
 
+  print(length + " done")
   return distances
 
 

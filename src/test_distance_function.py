@@ -90,11 +90,11 @@ def test_distance_function(d, tree_dir):
     update_box_plot_data(vlmc, i, sorted_results, all_gc_differences,
                          all_family_orders, all_genus_orders, gc_distance_function, metadata)
 
-    print_distance_output(vlmc, vlmcs, sorted_results, elapsed_time, metadata, metrics)
+    # print_distance_output(vlmc, vlmcs, sorted_results, elapsed_time, metadata, metrics)
     draw_gc_plot(sorted_results, vlmc, gc_distance_function, distance_ax, gc_ax)
     plot_distance(sorted_results, vlmc, gc_distance_function, metadata, out_dir)
 
-  number_of_bins = 10  # len(vlmcs) / bin_size
+  number_of_bins = len(vlmcs) / 10
   draw_box_plot(all_gc_differences, all_family_orders, all_genus_orders, number_of_bins, out_dir)
   metrics = normalise_metrics(metrics, vlmcs)
   print_metrics(metrics)
