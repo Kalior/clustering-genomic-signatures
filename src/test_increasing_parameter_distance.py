@@ -19,7 +19,7 @@ from train import train_vlmcs
 from parse_trees_to_json import parse_trees
 
 
-def test():
+def test(args):
   virus_aids = [
       "JQ596859.1",
       "KF487736.1",
@@ -33,12 +33,17 @@ def test():
   out_directory = "../test_increasing"
   image_directory = os.path.join(out_directory, "images")
 
-  write_fasta_files(virus_aids)
-  write_list(list_path, virus_aids)
-  free_parameters = np.arange(24, 192, 10)
-  # train_with_free_parameters(free_parameters, list_path, out_directory)
-  # distances = distances_between_parameters(free_parameters, out_directory, len(virus_aids))
-  distances = distances_to(free_parameters, out_directory, len(virus_aids), 128)
+  free_parameters = np.arange(args.start, args.end, args.step_size)
+  if not args.use_existing_models:
+    write_fasta_files(virus_aids)
+    write_list(list_path, virus_aids)
+    train_with_free_parameters(free_parameters, list_path, out_directory)
+
+  if args.iterative_comparison:
+    distances = distances_between_parameters(free_parameters, out_directory, len(virus_aids))
+  elif args.fixed_comparison:
+    distances = distances_to(free_parameters, out_directory, len(virus_aids), args.compare_to)
+
   plot_distances(distances, virus_aids, free_parameters, image_directory)
 
 
@@ -121,7 +126,6 @@ def distance_calculation(fixed_vlmcs, out_directory, number_of_parameters, d):
 
   pairs = pair(fixed_vlmcs, vlmcs)
   results = np.array([d.distance(*p) for p in pairs])
-  # distances[i, :] = results
   return results
 
 
@@ -158,4 +162,25 @@ def plot_distances(distances, virus_aids, free_parameters, image_directory):
 
 
 if __name__ == '__main__':
-  test()
+  parser = argparse.ArgumentParser(
+      description='Tests models with different number of parameters to each other.')
+  parser.add_argument('--fixed-comparison', action='store_true',
+                      help='Compare every other model to a fixed number of parmeters.')
+  parser.add_argument('--compare-to', type=int, default=48,
+                      help='The number of parameters to compare each model to. Needed for fixed comparison.')
+
+  parser.add_argument('--iterative-comparison', action='store_true',
+                      help='Compare every model to every next model (#steps more parameters).')
+
+  parser.add_argument('--start', type=int, default=24,
+                      help='The number of parameters for the first model.')
+  parser.add_argument('--end', type=int, default=192,
+                      help='The number of parameters for the last model.')
+  parser.add_argument('--step-size', type=int, default=1,
+                      help='The step size between each subsequent pair of models.')
+
+  parser.add_argument('--use-existing-models', action='store_true',
+                      help='Does not retrain the models, assuming they already exist, saves some time.')
+
+  args = parser.parse_args()
+  test(args)
