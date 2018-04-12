@@ -33,6 +33,12 @@ def test(args):
   out_directory = "../test_increasing"
   image_directory = os.path.join(out_directory, "images")
 
+  for d in [out_directory, image_directory]:
+    try:
+      os.stat(d)
+    except:
+      os.mkdir(d)
+
   free_parameters = np.arange(args.start, args.end, args.step_size)
   if not args.use_existing_models:
     write_fasta_files(virus_aids)
@@ -157,8 +163,7 @@ def plot_distances(distances, virus_aids, free_parameters, image_directory):
   ax.legend(handles=handles, labels=virus_aids, bbox_to_anchor=(1, 1), loc=2, borderaxespad=0.)
 
   out_file = os.path.join(image_directory, 'increasing-parameters-distance.pdf')
-  # plt.savefig(out_file, dpi='figure', format='pdf')
-  plt.show()
+  plt.savefig(out_file, dpi='figure', format='pdf')
 
 
 if __name__ == '__main__':
