@@ -7,7 +7,6 @@ from distance import FrobeniusNorm
 from train import train
 
 import os
-import subprocess
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
@@ -59,7 +58,7 @@ def distance_for_length(length, vlmcs, out_directory, image_directory, d):
     rep_distance = distance_calculation(pairs, d)
     distances += rep_distance / repetitions
 
-  print(length + " done")
+  print("{} done".format(length))
   return distances
 
 
