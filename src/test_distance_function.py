@@ -21,40 +21,41 @@ mpl.rcParams['axes.axisbelow'] = True
 mpl.rcParams['font.size'] = 24
 
 
-def test_negloglike(tree_dir, sequence_length):
+def test_negloglike(tree_dir, out_dir, sequence_length):
   d = NegativeLogLikelihood(sequence_length)
-  test_distance_function(d, tree_dir)
+  test_distance_function(d, tree_dir, out_dir)
 
 
-def test_parameter_sampling(tree_dir):
+def test_parameter_sampling(tree_dir, out_dir):
   d = NaiveParameterSampling()
-  test_distance_function(d, tree_dir)
+  test_distance_function(d, tree_dir, out_dir)
 
 
-def test_acgt_content(tree_dir):
+def test_acgt_content(tree_dir, out_dir):
   d = ACGTContent()
-  test_distance_function(d, tree_dir)
+  test_distance_function(d, tree_dir, out_dir)
 
 
-def test_stationary_distribution(tree_dir):
+def test_stationary_distribution(tree_dir, out_dir):
   d = StationaryDistribution()
-  test_distance_function(d, tree_dir)
+  test_distance_function(d, tree_dir, out_dir)
 
 
-def test_frobenius_norm(tree_dir):
+def test_frobenius_norm(tree_dir, out_dir):
   d = FrobeniusNorm()
-  test_distance_function(d, tree_dir)
+  test_distance_function(d, tree_dir, out_dir)
 
 
-def test_estimate_vlmc(tree_dir, sequence_length):
+def test_estimate_vlmc(tree_dir, out_dir, sequence_length):
   inner_d = FrobeniusNorm()
   d = EstimateVLMC(inner_d)
-  test_distance_function(d, tree_dir)
+  test_distance_function(d, tree_dir, out_dir, out_dir)
 
 
-def test_distance_function(d, tree_dir):
+def test_distance_function(d, tree_dir, out_dir):
   parse_trees_to_json.parse_trees(tree_dir)
   vlmcs = VLMC.from_json_dir(tree_dir)
+
   metadata = get_metadata_for([vlmc.name for vlmc in vlmcs])
 
   test_dir = tree_dir + "_test"
@@ -64,8 +65,15 @@ def test_distance_function(d, tree_dir):
   else:
     test_vlmcs = vlmcs
 
-  image_dir = '../images'
+  try:
+    os.stat(out_dir)
+  except:
+    os.mkdir(out_dir)
 
+  test_distance_function_(d, vlmcs, test_vlmcs, metadata, out_dir)
+
+
+def test_distance_function_(d, vlmcs, test_vlmcs, metadata, out_dir):
   metrics = {
       "average_procent_of_genus_in_top": 0.0,
       "average_procent_of_family_in_top": 0.0,
@@ -140,29 +148,31 @@ if __name__ == '__main__':
 
   parser.add_argument('--directory', type=str, default='../trees',
                       help='The directory which contains the trees to be used.')
+  parser.add_argument('--out-directory', type=str, default='../images',
+                      help='The directory to where images are written.')
 
   args = parser.parse_args()
 
   if (args.negative_log_likelihood):
     print('Testing negative log likelihood with a generated sequence of length {}'.format(args.seqlen))
-    test_negloglike(args.directory, args.seqlen)
+    test_negloglike(args.directory, args.out_directory, args.seqlen)
 
   if (args.parameter_sampling):
     print('Testing the measure of estimation error distance function, the parameter based sampling.')
-    test_parameter_sampling(args.directory)
+    test_parameter_sampling(args.directory, args.out_directory)
 
   if (args.acgt_content):
     print("Testing distance based only on acgt content.")
-    test_acgt_content(args.directory)
+    test_acgt_content(args.directory, args.out_directory)
 
   if (args.stationary_distribution):
     print("Testing distance based on the stationary distribution.")
-    test_stationary_distribution(args.directory)
+    test_stationary_distribution(args.directory, args.out_directory)
 
   if (args.frobenius_norm):
     print("Testing distance frobenius norm.")
-    test_frobenius_norm(args.directory)
+    test_frobenius_norm(args.directory, args.out_directory)
 
   if (args.estimate_vlmc):
     print("Testing distance with an estimated vlmc")
-    test_estimate_vlmc(args.directory, args.seqlen)
+    test_estimate_vlmc(args.directory, args.out_directory, args.seqlen)
