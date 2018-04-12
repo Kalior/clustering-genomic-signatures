@@ -76,40 +76,52 @@ def test_distance_function(d, tree_dir):
   }
 
   gc_distance_function = ACGTContent(['C', 'G'])
-  fig, [distance_ax, gc_ax] = plt.subplots(2, sharex='col', figsize=(30, 20), dpi=80)
-  distance_ax.set_xlim(-1, len(vlmcs))
-  gc_ax.set_xlim(-1, len(vlmcs))
-  plt.xticks(range(len(vlmcs)))
-  gc_ax.grid(color='#cccccc', linestyle='--', linewidth=1)
-  distance_ax.grid(color='#cccccc', linestyle='--', linewidth=1)
 
   all_gc_differences = np.empty((len(vlmcs), len(vlmcs)))
   all_family_orders = np.empty((len(vlmcs), len(vlmcs)))
   all_genus_orders = np.empty((len(vlmcs), len(vlmcs)))
 
-  for i, vlmc in enumerate(vlmcs):
-    start_time = time.time()
-    distances = list(map(lambda other: d.distance(vlmc, other), vlmcs))
-    elapsed_time = time.time() - start_time
+  fig, distance_ax, gc_ax = create_fig(len(vlmcs))
 
-    sorted_results = sorted(zip(distances, vlmcs),
-                            key=lambda t: (t[0], metadata[t[1].name]['genus']))
+  for i, vlmc in enumerate(vlmcs):
+    sorted_results, elapsed_time = calculate_distances(d, vlmc, vlmcs)
 
     metrics = update_metrics(vlmc, vlmcs, sorted_results, metadata, elapsed_time, metrics)
     update_box_plot_data(vlmc, i, sorted_results, all_gc_differences,
                          all_family_orders, all_genus_orders, gc_distance_function, metadata)
 
-    print_distance_output(vlmc, vlmcs, sorted_results, elapsed_time, metadata, metrics)
+    # print_distance_output(vlmc, vlmcs, sorted_results, elapsed_time, metadata, metrics)
     draw_gc_plot(sorted_results, vlmc, gc_distance_function, distance_ax, gc_ax)
-    plot_distance(sorted_results, vlmc, gc_distance_function, metadata, image_dir)
+    plot_distance(sorted_results, vlmc, gc_distance_function, metadata, out_dir)
 
   number_of_bins = len(vlmcs) / 10
-  draw_box_plot(all_gc_differences, all_family_orders, all_genus_orders, number_of_bins, image_dir)
+  draw_box_plot(all_gc_differences, all_family_orders, all_genus_orders, number_of_bins, out_dir)
   metrics = normalise_metrics(metrics, vlmcs)
   print_metrics(metrics)
 
-  out_file = os.path.join(image_dir, 'distance.pdf')
+  out_file = os.path.join(out_dir, 'distance.pdf')
   fig.savefig(out_file, dpi='figure', format='pdf')
+
+
+def create_fig(size):
+  fig, [distance_ax, gc_ax] = plt.subplots(2, sharex='col', figsize=(30, 20), dpi=80)
+  distance_ax.set_xlim(-1, size)
+  gc_ax.set_xlim(-1, size)
+  plt.xticks(range(size))
+  gc_ax.grid(color='#cccccc', linestyle='--', linewidth=1)
+  distance_ax.grid(color='#cccccc', linestyle='--', linewidth=1)
+
+  return fig, distance_ax, gc_ax
+
+
+def calculate_distances(d, vlmc, other_vlmcs):
+  start_time = time.time()
+  distances = list(map(lambda other: d.distance(vlmc, other), other_vlmcs))
+  elapsed_time = time.time() - start_time
+
+  sorted_results = sorted(zip(distances, other_vlmcs), key=lambda t: t[0])
+
+  return sorted_results, elapsed_time
 
 
 if __name__ == '__main__':
