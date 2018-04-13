@@ -6,6 +6,7 @@ import matplotlib.colors as colors
 import matplotlib.cm as cmx
 import networkx as nx
 from networkx.drawing.nx_agraph import graphviz_layout
+import random
 
 
 def draw_graph(G, metadata):
@@ -57,3 +58,30 @@ def draw_graph(G, metadata):
 
   out_file = os.path.join('../images', 'clustering.pdf')
   plt.savefig(out_file, dpi='figure', format='pdf')
+
+
+def draw_silhouette(clustering_metrics):
+  # TODO would like to show which bars belong to which cluster in the other graph
+  G = clustering_metrics.G
+  metadata = clustering_metrics.metadata
+  silhouette = clustering_metrics.silhouette_metric()
+  bar_heights = []
+  bar_labels = []
+  cluster_colors = []
+  cm = plt.get_cmap('gist_rainbow')
+  connected_components = list(nx.connected_components(G))
+  color_indecis = list(range(len(connected_components)))
+  # Each clusters gets a random color.  If they are not random,
+  # clusters that are next to each other are hard to distinguish
+  random.shuffle(color_indecis)
+
+  for i, cluster in enumerate(connected_components):
+    for species in cluster:
+      bar_heights.append(silhouette[species.name])
+      bar_labels.append(metadata[species.name]['species'])
+      cluster_colors.append(cm(color_indecis[i] / len(connected_components)))
+      
+  plt.figure(figsize=(30, 20), dpi=80)
+  plt.bar(x=range(len(silhouette)), height=bar_heights, tick_label=bar_labels, color=cluster_colors)
+  plt.xticks(range(len(bar_heights)), rotation=30, ha="right")
+  plt.show()
