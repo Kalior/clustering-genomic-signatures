@@ -7,7 +7,7 @@ from distance import *
 from clustering import *
 import parse_trees_to_json
 from get_signature_metadata import get_metadata_for
-from util.draw_clusters import draw_graph, draw_silhouette
+from util.draw_clusters import draw_graph
 from util.print_clusters import print_connected_components
 
 
@@ -54,8 +54,7 @@ def test_clustering(d, clusters, vlmcs, cluster_class=MSTClustering, do_draw_gra
   clustering_metrics.metadata = metadata
 
   if do_draw_graph:
-    draw_graph(clustering_metrics.G, metadata)
-    draw_silhouette(clustering_metrics)
+    draw_graph(clustering_metrics)
   print_connected_components(clustering_metrics)
 
 
