@@ -12,7 +12,6 @@ cdef class EstimateVLMC(object):
     the second model, using a distance function.
   """
   cdef d
-  alphabet = ['A', 'C', 'G', 'T']
 
   def __init__(self, d=NegativeLogLikelihood(1000)):
     self.d = d
@@ -32,7 +31,7 @@ cdef class EstimateVLMC(object):
 
     left_transition_counters = self._count_events(left_vlmc, right_sequence)
     new_left_vlmc = self._create_vlmc_by_estimating_probabilities(
-      self.alphabet, left_transition_counters)
+      left_vlmc.alphabet, left_transition_counters)
 
     # distance = self.d.distance(left_vlmc, new_left_vlmc)
     distance = self._perform_stats_test(new_left_vlmc, left_vlmc, left_transition_counters)
@@ -56,7 +55,7 @@ cdef class EstimateVLMC(object):
     # Initialize counters
     for context in vlmc.tree.keys():
       transition_counters[context] = {}
-      for character in self.alphabet:
+      for character in vlmc.alphabet:
         transition_counters[context][character] = 0
 
     sequence_so_far = ""
@@ -84,7 +83,7 @@ cdef class EstimateVLMC(object):
     for context in original_vlmc.tree.keys():
       times_visited_node = sum([c for c in transition_counters[context].values()])
       if times_visited_node > 0:
-        transition_probabilitites = [(x, original_vlmc.tree[context][x]) for x in self.alphabet]
+        transition_probabilitites = [(x, original_vlmc.tree[context][x]) for x in original_vlmc.alphabet]
 
         # find probabilites that are greater than zero
         probs_without_zeros = [(char_, prob) for (char_, prob) in transition_probabilitites if prob > 0]

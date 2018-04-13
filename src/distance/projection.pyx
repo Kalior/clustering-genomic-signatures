@@ -15,9 +15,10 @@ cdef class Projection:
     for vlmc in self.vlmcs:
       contexts_to_use.update(vlmc.tree.keys())
     cdef int i = 0
+    alphabet = self.vlmcs[0].alphabet
     for context in contexts_to_use:
       self.context_transition_to_array_index[context] = {}
-      for character in ["A", "C", "G", "T"]:
+      for character in alphabet:
         self.context_transition_to_array_index[context][character] = i
         i += 1
     
@@ -29,7 +30,7 @@ cdef class Projection:
   cdef np.ndarray vlmc_to_vector(self, vlmc):
     cdef np.ndarray[FLOATTYPE_t, ndim=1] array = np.zeros(self.dimension, dtype=FLOATTYPE)
     for context in vlmc.tree:
-      for character in ["A", "C", "G", "T"]:
+      for character in vlmc.alphabet:
         index = self.context_transition_to_array_index[context][character]
         array[index] = vlmc.tree[context][character]
     return array

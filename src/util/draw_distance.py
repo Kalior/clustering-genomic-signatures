@@ -117,7 +117,6 @@ def draw_box_plot(all_gc_differences, all_family_orders, all_genus_orders, numbe
 
   out_file = os.path.join(out_dir, "box.pdf")
   fig.savefig(out_file, dpi='figure', format='pdf')
-  plt.show()
 
 
 def boxplot(ax, data, title, ylim=None):
