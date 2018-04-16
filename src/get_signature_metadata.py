@@ -1,15 +1,9 @@
 import mysql.connector
-
-config = {
-    'user': 'virus',
-    'password': 'virus',
-    'host': 'localhost',
-    'database': 'virus',
-    'raise_on_warnings': True,
-}
+import json
 
 
 def get_metadata_for(signatures):
+  config = json.load(open('db_config.json'))
   cnx = mysql.connector.connect(**config)
   cursor = cnx.cursor()
 
