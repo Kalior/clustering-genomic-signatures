@@ -8,11 +8,7 @@ import json
 import numpy as np
 
 
-def print_relations(tree_dir):
-  parse_trees_to_json.parse_trees(tree_dir)
-  vlmcs = VLMC.from_json_dir(tree_dir)
-  metadata = get_metadata_for([vlmc.name for vlmc in vlmcs])
-
+def print_relations(vlmcs, metadata):
   for i, vlmc in enumerate(vlmcs[8:9]):
     print(i, metadata[vlmc.name]['species'])
     same_family = [other for other in vlmcs if metadata[
@@ -30,7 +26,7 @@ def print_relations(tree_dir):
 def print_stationary_differences(metadata, same_taxonomy, vlmc):
   vlmc_distribution = vlmc.estimated_context_distribution(100000)
   for other in same_taxonomy:
-    print(metadata[other.name]['species'])
+    print(metadata[other.name]['species'], other.name)
     other_distribution = other.estimated_context_distribution(100000)
     for i, ctx in enumerate(other_distribution.keys()):
       if ctx in vlmc_distribution:
@@ -59,4 +55,8 @@ def from_tree_to_list(vlmc):
 
 
 if __name__ == '__main__':
-  print_relations("../trees_pst_better")
+  tree_dir = '../trees_pst_better'
+  parse_trees_to_json.parse_trees(tree_dir)
+  vlmcs = VLMC.from_json_dir(tree_dir)
+  metadata = get_metadata_for([vlmc.name for vlmc in vlmcs])
+  print_relations(vlmcs, metadata)

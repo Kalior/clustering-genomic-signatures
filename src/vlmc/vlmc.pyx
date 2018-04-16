@@ -146,21 +146,23 @@ cdef class VLMC(object):
       return self.sequence
 
     total_length = sequence_length + pre_sample_length
-    cdef str generated_sequence = ""
-    for i in range(total_length):
+    cdef str generated_sequence = self.generate_sequence_from(total_length, "")
+    self.sequence = generated_sequence[-sequence_length:]
+    return generated_sequence[-sequence_length:]
+
+  cpdef str generate_sequence_from(self, sequence_length, context):
+    generated_sequence = context
+    for i in range(sequence_length):
       # only send the last /order/ number of characters to generate next letter
       next_letter = self._generate_next_letter(generated_sequence[-self.order:])
       generated_sequence += next_letter
     # return the suffix with length sequence_length
-
-    self.sequence = generated_sequence[-sequence_length:]
-    return generated_sequence[-sequence_length:]
+    return generated_sequence[len(context):]
 
   cdef str _generate_next_letter(self, current_sequence):
-    cdef list letters = ["A", "C", "G", "T"]
     probabilities = map(lambda char_: self._probability_of_char_given_sequence(
-        char_, current_sequence), letters)
-    return choices(letters, weights=probabilities)[0]
+        char_, current_sequence), self.alphabet)
+    return choices(self.alphabet, weights=probabilities)[0]
 
   def _calculate_order(self, tree):
     return max(map(lambda k: len(k), tree.keys()))
@@ -190,6 +192,9 @@ cdef class VLMC(object):
         state_count[matching_state] = 1
 
     return state_count
+
+  cpdef void reset_sequence(self):
+    self.sequence = ""
 
 if __name__ == "__main__":
   s = '{"":{"A":0.5,"B":0.5},"A":{"B":0.5,"A":0.5},"B":{"A":0.5,"B":0.5},"BA":{"A":0.5,"B":0.5},"AA":{"A":0.5,"B":0.5}}'

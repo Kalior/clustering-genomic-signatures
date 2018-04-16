@@ -106,25 +106,33 @@ def draw_box_plot(all_gc_differences, all_family_orders, all_genus_orders, numbe
   gc_binned = all_gc_differences.T.reshape(-1)
   gc_binned = np.array_split(gc_binned, number_of_bins, axis=0)
 
-  family_average = all_family_orders.mean(axis=0)
-  family_binned = np.array_split(family_average, number_of_bins, axis=0)
-
-  genus_average = all_genus_orders.mean(axis=0)
-  genus_binned = np.array_split(genus_average, number_of_bins, axis=0)
+  family_binned = bin_cummulative(all_family_orders, number_of_bins)
+  genus_binned = bin_cummulative(all_genus_orders, number_of_bins)
 
   fig, [gc_ax, family_ax, genus_ax] = plt.subplots(3, figsize=(30, 20), dpi=80)
 
-  gc_ax.set_title("GC-difference")
-  gc_ax.boxplot(gc_binned)
-  gc_ax.grid(color='#cccccc', linestyle='--', linewidth=1)
-
-  family_ax.set_title("Percent of family")
-  family_ax.boxplot(family_binned)
-  family_ax.grid(color='#cccccc', linestyle='--', linewidth=1)
-
-  genus_ax.set_title("Percent of genus")
-  genus_ax.boxplot(genus_binned)
-  genus_ax.grid(color='#cccccc', linestyle='--', linewidth=1)
+  boxplot(gc_ax, gc_binned, "GC-difference")
+  boxplot(family_ax, family_binned, "Cummulative percent of family captured", (0, 1.1))
+  boxplot(genus_ax, genus_binned, "Cummulative percent of genus captured", (0, 1.1))
 
   out_file = os.path.join(out_dir, "box.pdf")
   fig.savefig(out_file, dpi='figure', format='pdf')
+
+
+def boxplot(ax, data, title, ylim=None):
+  ax.set_title(title)
+  ax.boxplot(data)
+  ax.grid(color='#cccccc', linestyle='--', linewidth=1)
+  if not ylim is None:
+    ax.set_ylim(ylim)
+
+
+def bin_cummulative(input, number_of_bins):
+  cumulative = np.cumsum(input, axis=1)
+  last_column = cumulative[:, -1].reshape(cumulative.shape[0], 1)
+  cumulative_distribution = cumulative / last_column
+
+  cumlative_transpose = cumulative_distribution.T
+  binned = np.array_split(cumlative_transpose, number_of_bins, axis=0)
+  max_of_each_vlmc_binned = [np.max(bin_, axis=0) for bin_ in binned]
+  return max_of_each_vlmc_binned

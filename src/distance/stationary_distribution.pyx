@@ -3,18 +3,13 @@ cdef class StationaryDistribution(object):
     Distance simply based on the stationary distribution of a, c, g, t of the VLMLCs
   """
 
-  cdef list alphabet
-
-  def __init__(self):
-    # Assume this is the alphabet, only relevant case for us.
-    self.alphabet = ['A', 'C', 'G', 'T']
-
   cpdef double distance(self, left_vlmc, right_vlmc):
     cdef dict left_stationary_prob = self._find_stationary_probability(left_vlmc)
     cdef dict right_stationary_prob = self._find_stationary_probability(right_vlmc)
 
+    alphabet = left_vlmc.alphabet
     cdef double distance = sum([abs(left_stationary_prob[char_] - right_stationary_prob[char_])
-                                  for char_ in self.alphabet])
+                                  for char_ in alphabet])
     return distance
 
   cdef dict _find_stationary_probability(self, vlmc):
@@ -23,7 +18,7 @@ cdef class StationaryDistribution(object):
 
     char_probabilities = {}
 
-    for char_ in self.alphabet:
+    for char_ in vlmc.alphabet:
       prob = 0
       for key, value in state_count.items():
         prob_of_state = value / sequence_length
