@@ -21,9 +21,9 @@ mpl.rcParams['ytick.labelsize'] = label_size
 mpl.rcParams['axes.axisbelow'] = True
 mpl.rcParams['font.size'] = 24
 
-def test_kl_divergence(tree_dir, fixed_length):
+def test_kl_divergence(tree_dir, out_dir, fixed_length):
   d = FixedLengthSequenceKLDivergence(fixed_length)
-  test_distance_function(d, tree_dir)
+  test_distance_function(d, tree_dir, out_dir)
   
 
 def test_negloglike(tree_dir, out_dir, sequence_length):
@@ -163,7 +163,7 @@ if __name__ == '__main__':
 
   if args.fixed_length_kl_divergence:
     print('Testing kl divergence, with fixed length: {}'.format(args.fixed_sequence_length))
-    test_kl_divergence(args.directory, args.fixed_sequence_length)
+    test_kl_divergence(args.directory, args.out_directory, args.fixed_sequence_length)
     
   if (args.negative_log_likelihood):
     print('Testing negative log likelihood with a generated sequence of length {}'.format(args.seqlen))
