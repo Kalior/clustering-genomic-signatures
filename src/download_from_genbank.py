@@ -63,7 +63,11 @@ def to_db(gb, fasta, organism, cnx, cursor):
       'seq': str(fasta.seq)
   }
 
-  if not 'N' in str(fasta.seq) and not 'Y' in str(fasta.seq):
+  # Guard against this since Daniel's classifier can't handle them.
+  # Another approach would be to replace them here, but seems to be
+  # able to find sequences without ambiguities.
+  ambiguous_alphabet = ["UWSMKRYBDHVN"]
+  if not any(s in str(fasta.seq) for s in ambiguous_alphabet):
     try:
       add_to_db(cursor, organism_data, genome_data)
       # remove_from_db(cursor, gb.id)
