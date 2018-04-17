@@ -1,5 +1,8 @@
 #! /usr/bin/python3.6
 
+# May need to set in mysql conf. (On my computer /etc/mysql/my.cnf:
+# innodb_log_file_size = 256M
+
 import ftplib
 import numpy as np
 import os
