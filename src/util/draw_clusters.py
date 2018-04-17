@@ -50,7 +50,7 @@ def _draw_nodes(G, metadata, genera, families, genera_colors, family_colors, gen
   # slightly move the labels above of the nodes
   pos_higher = {}
   for k, v in pos.items():
-    pos_higher[k] = (v[0], v[1] + 60)
+    pos_higher[k] = (v[0], v[1] + 30)
 
   nx.draw_networkx_labels(G, pos_higher, labels)
 
