@@ -5,3 +5,5 @@ from .acgt import ACGTContent
 from .frobenius import FrobeniusNorm
 from .estimate import EstimateVLMC
 from .projection import Projection
+from .fixed_length_sequence_kl_divergence import FixedLengthSequenceKLDivergence
+

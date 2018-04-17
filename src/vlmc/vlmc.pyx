@@ -88,6 +88,24 @@ cdef class VLMC(object):
       sequence_so_far += s
     return log_likelihood
 
+  cpdef double likelihood(self, sequence):
+    return self._likelihood(sequence, 0)
+  
+  cdef double _likelihood(self, sequence, nbr_skipped_letters):
+    # assume we already looked at the first nbr_skipped_letters
+    cdef str sequence_so_far = sequence[:nbr_skipped_letters]
+    cdef str sequence_left = sequence[nbr_skipped_letters:]
+    cdef double likelihood = 1.0
+    cdef double prob = -1
+    for s in sequence_left:
+      prob = self._probability_of_char_given_sequence(s, sequence_so_far[-self.order:])
+      if prob == 0:
+        return 0.0
+      else:
+        likelihood *= prob
+      sequence_so_far += s
+    return likelihood
+  
 
   cdef double _probability_of_char_given_sequence(self, character, seq):
     if len(seq) == self.order and seq in self.tree:

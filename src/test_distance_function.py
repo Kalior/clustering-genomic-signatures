@@ -7,7 +7,8 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 
 from vlmc import VLMC
-from distance import NegativeLogLikelihood, NaiveParameterSampling, StationaryDistribution, ACGTContent, FrobeniusNorm, EstimateVLMC
+from distance import NegativeLogLikelihood, NaiveParameterSampling, StationaryDistribution,\
+    ACGTContent, FrobeniusNorm, EstimateVLMC, FixedLengthSequenceKLDivergence
 import parse_trees_to_json
 from get_signature_metadata import get_metadata_for
 from util.print_distance import print_metrics, print_distance_output
@@ -20,6 +21,10 @@ mpl.rcParams['ytick.labelsize'] = label_size
 mpl.rcParams['axes.axisbelow'] = True
 mpl.rcParams['font.size'] = 24
 
+def test_kl_divergence(tree_dir, out_dir, fixed_length):
+  d = FixedLengthSequenceKLDivergence(fixed_length)
+  test_distance_function(d, tree_dir, out_dir)
+  
 
 def test_negloglike(tree_dir, out_dir, sequence_length):
   d = NegativeLogLikelihood(sequence_length)
@@ -142,7 +147,10 @@ if __name__ == '__main__':
   parser.add_argument('--stationary-distribution', action='store_true')
   parser.add_argument('--frobenius-norm', action='store_true')
   parser.add_argument('--estimate-vlmc', action='store_true')
-
+  parser.add_argument('--fixed-length-kl-divergence', action='store_true')
+  
+  parser.add_argument('--fixed-sequence-length', type=int, default=8,
+                      help='The length of the strings that are used in the fixed sequence length KL-divergence method.')
   parser.add_argument('--seqlen', type=int, default=1000,
                       help='The length of the sequences that are generated to calculate the likelihood.')
 
@@ -153,6 +161,10 @@ if __name__ == '__main__':
 
   args = parser.parse_args()
 
+  if args.fixed_length_kl_divergence:
+    print('Testing kl divergence, with fixed length: {}'.format(args.fixed_sequence_length))
+    test_kl_divergence(args.directory, args.out_directory, args.fixed_sequence_length)
+    
   if (args.negative_log_likelihood):
     print('Testing negative log likelihood with a generated sequence of length {}'.format(args.seqlen))
     test_negloglike(args.directory, args.out_directory, args.seqlen)
