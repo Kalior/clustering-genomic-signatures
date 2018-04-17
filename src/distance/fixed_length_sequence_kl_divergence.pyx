@@ -10,16 +10,15 @@ cdef class FixedLengthSequenceKLDivergence(object):
   D_kl (P || Q) := Σᵢ P(i)·log[ P(i)/Q(i) ]
   """
   cdef int fixed_length
-  cdef list alphabet
   
   def __cinit__(self, string_length):
     self.fixed_length = string_length
-    self.alphabet = ["A", "C", "G", "T"]
 
   cpdef double distance(self, left_vlmc, right_vlmc):
     # D_kl (P || Q) := Σᵢ P(i)·log[ P(i)/Q(i) ]
     cdef double KL_divergence = 0
-    cdef list all_possible_sequences = [''.join(p) for p in product(self.alphabet, repeat=self.fixed_length)]
+    cdef list alphabet = left_vlmc.alphabet
+    cdef list all_possible_sequences = [''.join(p) for p in product(alphabet, repeat=self.fixed_length)]
     cdef double p_i = -1
     cdef double q_i = -1
     cdef double contribution_i = -1
