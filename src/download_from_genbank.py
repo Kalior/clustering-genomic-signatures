@@ -11,8 +11,8 @@ import mysql.connector
 import json
 
 
-def download(organism, cnx, cursor):
-  Entrez.email = 'me@joelgustafsson.com'
+def download(organism, email, cnx, cursor):
+  Entrez.email = email
   seach_terms = ' AND '.join(['{}[organism]'.format(organism),
                               'complete genome[All Fields]',
                               'biomol_genomic[PROP]',
@@ -93,7 +93,8 @@ def main():
   cursor = cnx.cursor()
   cursor.execute('set global max_allowed_packet=67108864')
 
-  download("plants", cnx, cursor)
+  email = ''
+  download("plants", email, cnx, cursor)
   cnx.commit()
   cursor.close()
   cnx.close()
