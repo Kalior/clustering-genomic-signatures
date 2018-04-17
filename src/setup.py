@@ -6,6 +6,7 @@ files = ['vlmc/vlmc.pyx', 'distance/naive_parameter_sampling.pyx', 'distance/neg
          'distance/stationary_distribution.pyx', 'distance/acgt.pyx', 'distance/frobenius.pyx',
          'distance/estimate.pyx', 'distance/projection.pyx',
          'clustering/graph_based_clustering.pyx', 'clustering/mst_clustering.pyx',
+         'clustering/clustering_metrics.pyx',
          'clustering/average_link_clustering.pyx',
          'clustering/k_means.pyx', 'clustering/util.pyx',
          'clustering/fuzzy_similarity_clustering.pyx']

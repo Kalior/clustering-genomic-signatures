@@ -1,24 +1,27 @@
 import networkx as nx
 
 
-def print_connected_components(G, d, distance_mean, metadata):
+def print_connected_components(clustering_metrics):
+  G = clustering_metrics.G
   connected_component_metrics = [component_metrics(
-      connected, metadata, d) for connected in nx.connected_components(G)]
+      connected, clustering_metrics) for connected in nx.connected_components(G)]
 
+  metadata = clustering_metrics.metadata
   output = ["cluster {}:\n".format(i) + component_string(connected, metadata, connected_component_metrics[i])
             for i, connected in enumerate(nx.connected_components(G))]
 
   print('\n\n'.join(output))
 
-  filtered_metrics = [metrics for metrics, connected in zip(
+  metrics_for_non_single_clusters = [metrics for metrics, connected in zip(
       connected_component_metrics, nx.connected_components(G)) if len(connected) > 1]
 
+  distance_mean = clustering_metrics.distance_mean
   average_of_same_genus = sum(
-      [metrics[0] for metrics in filtered_metrics]) / len(filtered_metrics)
+      [metrics[0] for metrics in metrics_for_non_single_clusters]) / len(metrics_for_non_single_clusters)
   average_of_same_family = sum(
-      [metrics[1] for metrics in filtered_metrics]) / len(filtered_metrics)
+      [metrics[1] for metrics in metrics_for_non_single_clusters]) / len(metrics_for_non_single_clusters)
   total_average_distance = sum(
-      [metrics[2] for metrics in filtered_metrics]) / len(filtered_metrics) / distance_mean
+      [metrics[2] for metrics in metrics_for_non_single_clusters]) / len(metrics_for_non_single_clusters) / distance_mean
 
   print("Average percent of same genus in clusters: {:5.5f}\t"
         "Average percent of same family in clusters: {:5.5f}\t"
@@ -29,18 +32,10 @@ def print_connected_components(G, d, distance_mean, metadata):
   print("Cluster sizes " + " ".join([str(i) for i in sorted_sizes]))
 
 
-def component_metrics(connected, metadata, d):
-  percent_of_same_genus = sum(
-      [number_in_taxonomy(vlmc, connected, metadata, 'genus') for vlmc in connected]
-  ) / (len(connected) * len(connected))
-
-  percent_of_same_family = sum(
-      [number_in_taxonomy(vlmc, connected, metadata, 'family') for vlmc in connected]
-  ) / (len(connected) * len(connected))
-
-  connected_distances = [d.distance(v1, v2) for v1 in connected for v2 in connected]
-  average_distance = sum(connected_distances) / len(connected_distances)
-
+def component_metrics(connected_component, clustering_metrics):
+  percent_of_same_genus = clustering_metrics.percent_same_genus(connected_component)
+  percent_of_same_family = clustering_metrics.percent_same_family(connected_component)
+  average_distance = clustering_metrics.average_distance_between_vlmcs(connected_component)
   return percent_of_same_genus, percent_of_same_family, average_distance
 
 
@@ -61,8 +56,3 @@ def output_line(metadata, vlmc):
       metadata[vlmc.name]['genus'],
       metadata[vlmc.name]['family'])
 
-
-def number_in_taxonomy(vlmc, vlmcs, metadata, taxonomy):
-  number_of_same_taxonomy = len([other for other in vlmcs
-                                 if metadata[other.name][taxonomy] == metadata[vlmc.name][taxonomy]])
-  return number_of_same_taxonomy

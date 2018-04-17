@@ -4,6 +4,7 @@ import numpy as np
 cimport numpy as np
 import time
 from util import calculate_distances_within_vlmcs
+from clustering_metrics import ClusteringMetrics
 
 FLOATTYPE = np.float32
 
@@ -17,7 +18,7 @@ cdef class GraphBasedClustering:
     self.file_name = 'cluster_distances'
     self.indexed_distances = np.ndarray([len(vlmcs), len(vlmcs)], dtype=FLOATTYPE)
 
-  cpdef tuple cluster(self, clusters):
+  cpdef object cluster(self, clusters):
     G = nx.Graph()
     G.add_nodes_from(self.vlmcs)
 
@@ -35,8 +36,8 @@ cdef class GraphBasedClustering:
     self._make_fully_connected_components(G)
 
     distance_mean = np.mean(distances, axis=None)
-
-    return G, distance_mean
+    metrics = ClusteringMetrics(G, self.d, distance_mean, self.indexed_distances, self.vlmcs)
+    return metrics
 
   cdef void _make_fully_connected_components(self, G):
     connected_components = nx.connected_components(G)
@@ -69,3 +70,4 @@ cdef class GraphBasedClustering:
     np.save(self.file_name, distances)
 
     return distances
+

@@ -12,7 +12,7 @@ cdef class GraphBasedClustering:
   cdef str file_name
   cdef np.ndarray indexed_distances
 
-  cpdef tuple cluster(self, clusters)
+  cpdef object cluster(self, clusters)
 
   cdef void _cluster(self, G, num_clusters, distances)
 
@@ -21,3 +21,4 @@ cdef class GraphBasedClustering:
   cdef FLOATTYPE_t _find_distance_from_vlmc(self, v1, v2)
 
   cdef np.ndarray[FLOATTYPE_t, ndim=2] _calculate_distances(self)
+

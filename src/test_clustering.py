@@ -49,13 +49,13 @@ def test_kmeans(k, vlmcs):
 
 def test_clustering(d, clusters, vlmcs, cluster_class=MSTClustering, do_draw_graph=True):
   clustering = cluster_class(vlmcs, d)
-  G, distance_mean = clustering.cluster(clusters)
-
+  clustering_metrics = clustering.cluster(clusters)
   metadata = get_metadata_for([vlmc.name for vlmc in vlmcs])
+  clustering_metrics.metadata = metadata
 
   if do_draw_graph:
-    draw_graph(G, metadata)
-  print_connected_components(G, d, distance_mean, metadata)
+    draw_graph(clustering_metrics)
+  print_connected_components(clustering_metrics)
 
 
 if __name__ == '__main__':
