@@ -1,28 +1,22 @@
 import mysql.connector
-
-config = {
-    'user': 'virus',
-    'password': 'virus',
-    'host': 'localhost',
-    'database': 'virus',
-    'raise_on_warnings': True,
-}
+import json
 
 
 def get_metadata_for(signatures):
+  config = json.load(open('db_config.json'))
   cnx = mysql.connector.connect(**config)
   cursor = cnx.cursor()
 
   signature_aids = ', '.join(
       ["'{}'".format(signature) for signature in signatures])
 
-  query = ("select aid, fam, gen, spc from virus where aid in ({})".format(signature_aids))
+  query = ("select aid, fam, gen, spc, organism from virus where aid in ({})".format(signature_aids))
 
   cursor.execute(query)
 
   metadata = {}
-  for (aid, fam, gen, spc) in cursor:
-    metadata[aid] = {'family': fam, 'genus': gen, 'species': spc}
+  for (aid, fam, gen, spc, organism) in cursor:
+    metadata[aid] = {'family': fam, 'genus': gen, 'species': spc, 'organism': organism}
 
   cnx.close()
 

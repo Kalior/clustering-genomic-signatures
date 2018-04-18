@@ -1,0 +1,7 @@
+{
+  "user":               "virus",
+  "password":           "virus",
+  "host":               "localhost",
+  "database":           "virus",
+  "raise_on_warnings":  true
+}
