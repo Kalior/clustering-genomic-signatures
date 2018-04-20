@@ -8,7 +8,7 @@ import matplotlib as mpl
 
 from vlmc import VLMC
 from distance import NegativeLogLikelihood, NaiveParameterSampling, StationaryDistribution,\
-    ACGTContent, FrobeniusNorm, EstimateVLMC, FixedLengthSequenceKLDivergence
+    ACGTContent, FrobeniusNorm, EstimateVLMC, FixedLengthSequenceKLDivergence, Projection
 import parse_trees_to_json
 from get_signature_metadata import get_metadata_for
 from util.print_distance import print_metrics, print_distance_output
@@ -21,40 +21,10 @@ mpl.rcParams['ytick.labelsize'] = label_size
 mpl.rcParams['axes.axisbelow'] = True
 mpl.rcParams['font.size'] = 24
 
+
 def test_kl_divergence(tree_dir, out_dir, fixed_length):
   d = FixedLengthSequenceKLDivergence(fixed_length)
   test_distance_function(d, tree_dir, out_dir)
-  
-
-def test_negloglike(tree_dir, out_dir, sequence_length):
-  d = NegativeLogLikelihood(sequence_length)
-  test_distance_function(d, tree_dir, out_dir)
-
-
-def test_parameter_sampling(tree_dir, out_dir):
-  d = NaiveParameterSampling()
-  test_distance_function(d, tree_dir, out_dir)
-
-
-def test_acgt_content(tree_dir, out_dir):
-  d = ACGTContent()
-  test_distance_function(d, tree_dir, out_dir)
-
-
-def test_stationary_distribution(tree_dir, out_dir):
-  d = StationaryDistribution()
-  test_distance_function(d, tree_dir, out_dir)
-
-
-def test_frobenius_norm(tree_dir, out_dir):
-  d = FrobeniusNorm()
-  test_distance_function(d, tree_dir, out_dir)
-
-
-def test_estimate_vlmc(tree_dir, out_dir, sequence_length):
-  inner_d = FrobeniusNorm()
-  d = EstimateVLMC(inner_d)
-  test_distance_function(d, tree_dir, out_dir, out_dir)
 
 
 def test_distance_function(d, tree_dir, out_dir):
@@ -137,6 +107,36 @@ def calculate_distances(d, vlmc, other_vlmcs):
   return sorted_results, elapsed_time
 
 
+def parse_distance_method(args):
+  if args.negative_log_likelihood:
+    print('Testing negative log likelihood with a generated sequence of length {}'.format(args.seqlen))
+    return NegativeLogLikelihood(args.seqlen)
+  elif args.parameter_sampling:
+    print('Testing the measure of estimation error distance function, the parameter based sampling.')
+    return NaiveParameterSampling()
+  elif args.acgt_content:
+    print("Testing distance based only on acgt content.")
+    return ACGTContent(['C', 'G'])
+  elif args.stationary_distribution:
+    print("Testing distance based on the stationary distribution")
+    return StationaryDistribution()
+  elif args.estimate_vlmc:
+    print("Testing distance with an estimated vlmc")
+    inner_d = FrobeniusNorm()
+    return EstimateVLMC(inner_d)
+  elif args.frobenius_norm:
+    print("Testing clustering with distance as frobenius norm")
+    return FrobeniusNorm()
+  elif args.kmeans:
+    return Projection()
+  else:
+    return FrobeniusNorm()
+
+
+def test(args):
+  d = parse_distance_method(args)
+  test_distance_function(d, args.directory, args.out_directory)
+
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(
       description='Tests the distance functions for the vlmcs in ../trees, checking which vlmc they most closely match.')
@@ -148,7 +148,7 @@ if __name__ == '__main__':
   parser.add_argument('--frobenius-norm', action='store_true')
   parser.add_argument('--estimate-vlmc', action='store_true')
   parser.add_argument('--fixed-length-kl-divergence', action='store_true')
-  
+
   parser.add_argument('--fixed-sequence-length', type=int, default=8,
                       help='The length of the strings that are used in the fixed sequence length KL-divergence method.')
   parser.add_argument('--seqlen', type=int, default=1000,
@@ -160,31 +160,4 @@ if __name__ == '__main__':
                       help='The directory to where images are written.')
 
   args = parser.parse_args()
-
-  if args.fixed_length_kl_divergence:
-    print('Testing kl divergence, with fixed length: {}'.format(args.fixed_sequence_length))
-    test_kl_divergence(args.directory, args.out_directory, args.fixed_sequence_length)
-    
-  if (args.negative_log_likelihood):
-    print('Testing negative log likelihood with a generated sequence of length {}'.format(args.seqlen))
-    test_negloglike(args.directory, args.out_directory, args.seqlen)
-
-  if (args.parameter_sampling):
-    print('Testing the measure of estimation error distance function, the parameter based sampling.')
-    test_parameter_sampling(args.directory, args.out_directory)
-
-  if (args.acgt_content):
-    print("Testing distance based only on acgt content.")
-    test_acgt_content(args.directory, args.out_directory)
-
-  if (args.stationary_distribution):
-    print("Testing distance based on the stationary distribution.")
-    test_stationary_distribution(args.directory, args.out_directory)
-
-  if (args.frobenius_norm):
-    print("Testing distance frobenius norm.")
-    test_frobenius_norm(args.directory, args.out_directory)
-
-  if (args.estimate_vlmc):
-    print("Testing distance with an estimated vlmc")
-    test_estimate_vlmc(args.directory, args.out_directory, args.seqlen)
+  test(args)
