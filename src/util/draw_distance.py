@@ -25,8 +25,12 @@ def plot_distance(sorted_results, vlmc, gc_distance_function, metadata, out_dir)
 
   species_names = ["{}".format(metadata[v.name]['species']) for _, v in sorted_results]
 
-  legend_markers = [Line2D([0], [0], marker='o', markersize=16, markeredgecolor='#ff7f00',
+  legend_markers = [Line2D([0], [0], marker='o', markersize=16, markeredgecolor='#ff007f',
+                           markerfacecolor='#ff007f', label='Same order'),
+                    Line2D([0], [0], marker='o', markersize=16, markeredgecolor='#ff7f00',
                            markerfacecolor='#ff7f00', label='Same family'),
+                    Line2D([0], [0], marker='o', markersize=16, markeredgecolor='#7fff00',
+                           markerfacecolor='#7fff00', label='Same subfamily'),
                     Line2D([0], [0], marker='o', markersize=16, markeredgecolor='#007fff',
                            markerfacecolor='#007fff', label='Same genus'),
                     Line2D([0], [0], marker='.', markersize=16, linestyle='dashed',
@@ -52,23 +56,41 @@ def plot_distance(sorted_results, vlmc, gc_distance_function, metadata, out_dir)
 
 
 def plot_distance_(ax, sorted_results, vlmc, metadata, line_c, linestyle):
+  order = [(i, d) for i, (d, v) in enumerate(sorted_results)
+           if _equal_and_not_empty(metadata, v, vlmc, 'order') and
+           _not_equal_or_empty(metadata, v, vlmc, 'genus') and
+           _not_equal_or_empty(metadata, v, vlmc, 'family') and
+           _not_equal_or_empty(metadata, v, vlmc, 'subfamily')]
+
   family = [(i, d) for i, (d, v) in enumerate(sorted_results)
-            if metadata[v.name]['family'] == metadata[vlmc.name]['family'] and
-            metadata[v.name]['genus'] != metadata[vlmc.name]['genus']]
+            if _equal_and_not_empty(metadata, v, vlmc, 'family') and
+            _not_equal_or_empty(metadata, v, vlmc, 'genus') and
+            _not_equal_or_empty(metadata, v, vlmc, 'subfamily')]
+
+  subfamily = [(i, d) for i, (d, v) in enumerate(sorted_results)
+               if _equal_and_not_empty(metadata, v, vlmc, 'subfamily') and
+               _not_equal_or_empty(metadata, v, vlmc, 'genus')]
 
   genus = [(i, d) for i, (d, v) in enumerate(sorted_results)
-           if metadata[v.name]['genus'] == metadata[vlmc.name]['genus']]
-
-  other = [(i, d) for i, (d, v) in enumerate(sorted_results)
-           if metadata[v.name]['genus'] != metadata[vlmc.name]['genus'] and
-           metadata[v.name]['family'] != metadata[vlmc.name]['family']]
+           if _equal_and_not_empty(metadata, v, vlmc, 'genus')]
 
   every = [(i, d) for i, (d, v) in enumerate(sorted_results)]
 
   plot_tuple_list(ax, every, line_c, '.', linestyle)
+  scatter_tuple_list(ax, order, '#ff007f', 'o')
   scatter_tuple_list(ax, family, '#ff7f00', 'o')
+  scatter_tuple_list(ax, subfamily, '#7fff00', 'o')
   scatter_tuple_list(ax, genus, '#007fff', 'o')
-  # scatter_tuple_list(ax, other, 'k', '.')
+
+
+def _not_equal_or_empty(metadata, v, vlmc, taxonomy):
+  return (metadata[v.name][taxonomy] != metadata[vlmc.name][taxonomy] or
+          metadata[v.name][taxonomy] == '')
+
+
+def _equal_and_not_empty(metadata, v, vlmc, taxonomy):
+  return (metadata[v.name][taxonomy] == metadata[vlmc.name][taxonomy] and
+          metadata[v.name][taxonomy] != '')
 
 
 def plot_tuple_list(ax, tuple_list, color, marker, linestyle):

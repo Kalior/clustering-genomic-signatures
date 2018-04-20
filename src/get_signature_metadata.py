@@ -10,13 +10,14 @@ def get_metadata_for(signatures):
   signature_aids = ', '.join(
       ["'{}'".format(signature) for signature in signatures])
 
-  query = ("select aid, fam, gen, spc, organism from virus where aid in ({})".format(signature_aids))
+  query = ("select aid, ord, fam, sub, gen, spc, organism from virus where aid in ({})".format(signature_aids))
 
   cursor.execute(query)
 
   metadata = {}
-  for (aid, fam, gen, spc, organism) in cursor:
-    metadata[aid] = {'family': fam, 'genus': gen, 'species': spc, 'organism': organism}
+  for (aid, ord_, fam, sub, gen, spc, organism) in cursor:
+    metadata[aid] = {'order': ord_, 'family': fam, 'subfamily': sub,
+                     'genus': gen, 'species': spc, 'organism': organism}
 
   cnx.close()
 
