@@ -15,12 +15,14 @@ def test_clustering(d, clusters, vlmcs, out_directory, cluster_class=MSTClusteri
   metadata = get_metadata_for([vlmc.name for vlmc in vlmcs])
 
   clustering = cluster_class(vlmcs, d)
-  clustering_metrics = clustering.cluster(clusters)
-  clustering_metrics.metadata = metadata
+  for i in range(clusters + 0, clusters - 1, -1):
+    print(i)
+    clustering_metrics = clustering.cluster(i)
+    clustering_metrics.metadata = metadata
 
-  if do_draw_graph:
-    draw_graph(clustering_metrics, i, out_directory)
-  print_connected_components(clustering_metrics)
+    if do_draw_graph:
+      draw_graph(clustering_metrics, i, out_directory)
+    print_connected_components(clustering_metrics)
 
 
 def parse_trees(args):
