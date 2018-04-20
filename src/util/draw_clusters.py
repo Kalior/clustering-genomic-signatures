@@ -19,20 +19,15 @@ def draw_graph(clustering_metrics, clusters, out_directory):
 
 
 def _plot_graph(G, metadata, clusters, out_directory):
-  families = sorted(list(set([m['family'] for m in metadata.values()])))
-  genera = sorted(list(set([m['genus'] for m in metadata.values()])))
-  genera_colors = [genera.index(metadata[v.name]['genus']) for v in G.nodes()]
-  family_colors = [families.index(metadata[v.name]['family']) for v in G.nodes()]
-  genera_colormap = plt.cm.Set1
-  family_colormap = plt.cm.gist_stern
+  organisms = sorted(list(set([m['organism'] for m in metadata.values()])))
+  organism_colors = [organisms.index(metadata[v.name]['organism']) for v in G.nodes()]
+  organism_colormap = plt.cm.Set1
 
-  pos = _draw_nodes(G, metadata, genera, families, genera_colors,
-                    family_colors, genera_colormap, family_colormap)
+  pos = _draw_nodes(G, metadata, organisms, organism_colors, organism_colormap)
 
   cluster_colors = _draw_clusters(G, pos)
 
-  _draw_legend(G, metadata, genera, genera_colors, genera_colormap,
-               families, family_colors, family_colormap)
+  _draw_legend(G, metadata, organisms, organism_colors, organism_colormap)
 
   out_file = os.path.join(out_directory, 'clustering_{}.pdf'.format(clusters))
   plt.savefig(out_file, dpi='figure', format='pdf')
@@ -41,7 +36,7 @@ def _plot_graph(G, metadata, clusters, out_directory):
   return cluster_colors
 
 
-def _draw_nodes(G, metadata, genera, families, genera_colors, family_colors, genera_colormap, family_colormap):
+def _draw_nodes(G, metadata, organisms, organism_colors, organism_colormap):
   labels = {v: metadata[v.name]['species'] for v in G.nodes()}
 
   plt.figure(figsize=(30, 20), dpi=80)
@@ -49,21 +44,18 @@ def _draw_nodes(G, metadata, genera, families, genera_colors, family_colors, gen
 
   nx.draw(G, pos, with_labels=False, labels=labels, width=1,
           font_size=16, node_color='w', edge_color='#cccccc')
-  # families
-  outer_circles = nx.draw_networkx_nodes(
-      G, pos, node_size=2000, node_color=family_colors, cmap=family_colormap)
-  outer_circles.set_edgecolor('black')
 
-  # genera
+  # organism
   inner_circles = nx.draw_networkx_nodes(
-      G, pos, node_size=600, node_color=genera_colors, cmap=genera_colormap)
+      G, pos, node_size=600, node_color=organism_colors, cmap=organism_colormap)
+  inner_circles.set_edgecolor('black')
 
   # slightly move the labels above of the nodes
   pos_higher = {}
   for k, v in pos.items():
     pos_higher[k] = (v[0], v[1] + 30)
 
-  nx.draw_networkx_labels(G, pos_higher, labels)
+  # nx.draw_networkx_labels(G, pos_higher, labels)
 
   return pos
 
@@ -87,25 +79,21 @@ def _draw_clusters(G, pos):
   return cluster_colors
 
 
-def _draw_legend(G, metadata, genera, genera_colors, genera_colormap, families, family_colors, family_colormap):
-  family_genus_combinations = sorted(
-      set([(metadata[v.name]['family'], metadata[v.name]['genus']) for v in G.nodes()]))
+def _draw_legend(G, metadata, organisms, organism_colors, organism_colormap):
+  organism_set = sorted(
+      set([metadata[v.name]['organism'] for v in G.nodes()]))
 
-  genera_norm = colors.Normalize(vmin=min(genera_colors), vmax=max(genera_colors))
-  genera_colormap_mappable = cmx.ScalarMappable(norm=genera_norm, cmap=genera_colormap)
+  organism_norm = colors.Normalize(vmin=min(organism_colors), vmax=max(organism_colors))
+  organism_colormap_mappable = cmx.ScalarMappable(norm=organism_norm, cmap=organism_colormap)
 
-  family_norm = colors.Normalize(vmin=min(family_colors), vmax=max(family_colors))
-  family_colormap_mappable = cmx.ScalarMappable(norm=family_norm, cmap=family_colormap)
-
-  legend_markers = [Line2D([0],
-                           [0],
-                           label="Family: {} Genus: {}".format(family, genus),
+  legend_markers = [Line2D([0], [0],
+                           label="Organism: {}".format(org),
                            marker='o',
                            markersize=20,
                            markeredgewidth=6,
-                           markerfacecolor=genera_colormap_mappable.to_rgba(genera.index(genus)),
-                           markeredgecolor=family_colormap_mappable.to_rgba(families.index(family))
-                           ) for family, genus in family_genus_combinations]
+                           markeredgecolor='#ffffff',
+                           markerfacecolor=organism_colormap_mappable.to_rgba(organisms.index(org))
+                           ) for org in organism_set]
 
   l = plt.legend(handles=legend_markers, fontsize=20)
   l.draggable()
