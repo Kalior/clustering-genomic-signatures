@@ -9,8 +9,10 @@ cdef class MSTClustering(GraphBasedClustering):
     Super class for mst graph-based clustering methods.
   """
 
-  cdef void _cluster(self, G, num_clusters, distances)
-  cdef void _create_mst(self, sorted_distances, G)
-  cdef tuple _find_smallest_unconnected_edge(self, sorted_distances, smallest_distance_index, clustering)
-  cdef dict _merge_clusters(self, clustering, left, right)
-  cdef tuple _find_most_inconsistent_edge(self, G, sorted_distances)
+  cdef dict clustering
+
+  cdef void _initialise_clusters(self)
+  cdef void _cluster(self, num_clusters, distances)
+  cdef void _create_mst(self, sorted_distances, connections_to_make)
+  cdef tuple _find_smallest_unconnected_edge(self, sorted_distances, smallest_distance_index)
+  cdef dict _merge_clusters(self, left, right)
