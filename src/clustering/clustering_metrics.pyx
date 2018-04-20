@@ -24,12 +24,12 @@ cdef class ClusteringMetrics(object):
     self.d = d
     self.vlmcs = vlmcs
 
-    
+
   cpdef dict silhouette_metric(self):
     connected_components = list(nx.connected_components(self.G))
     average_dist_to_own_component = {}
     min_dist_to_other_component = {}
-    
+
     for component in connected_components:
       for v1 in component:
         minimum_average_distance_to_other_component = np.inf
@@ -50,7 +50,7 @@ cdef class ClusteringMetrics(object):
              max(min_dist_to_other_component[v.name], average_dist_to_own_component[v.name]))
       silhouette[v.name] = s_i
     return silhouette
- 
+
   cdef FLOATTYPE_t _same_component_average_distance_to_vlmcs(self, v1, component):
     total_distance_to_vlmcs = 0
     for v2 in component:
@@ -79,7 +79,7 @@ cdef class ClusteringMetrics(object):
     distances = [self.d.distance(v1, v2) for v1 in connected_component for v2 in connected_component]
     average_distance = sum(distances) / len(distances)
     return average_distance
-  
+
   cpdef double percent_same_family(self, connected_component):
     size_of_component = len(connected_component)
     percent_of_same_family = sum(
@@ -93,7 +93,7 @@ cdef class ClusteringMetrics(object):
       [self.number_in_taxonomy(vlmc, connected_component, 'genus') for vlmc in connected_component]
     ) / (size_of_component ** 2)
     return percent_of_same_genus
-  
+
   cdef int number_in_taxonomy(self, vlmc, vlmcs, taxonomy):
     number_of_same_taxonomy = len([other for other in vlmcs
                                  if self.metadata[other.name][taxonomy] == self.metadata[vlmc.name][taxonomy]])
@@ -103,5 +103,3 @@ cdef class ClusteringMetrics(object):
     v1_idx = self.vlmcs.index(v1)
     v2_idx = self.vlmcs.index(v2)
     return self.indexed_distances[v1_idx, v2_idx]
-
-  
