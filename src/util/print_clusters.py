@@ -23,7 +23,7 @@ def print_connected_components(clustering_metrics):
   total_average_distance = sum(
       [metrics[2] for metrics in metrics_for_non_single_clusters]) / len(metrics_for_non_single_clusters) / distance_mean
 
-  print("Average percent of same genus in clusters: {:5.5f}\t"
+  print("Average percent of same organism in clusters: {:5.5f}\t"
         "Average percent of same family in clusters: {:5.5f}\t"
         "Average distance in clusters: {:5.5f}\t".format(
             average_of_same_genus, average_of_same_family, total_average_distance))
@@ -42,7 +42,7 @@ def component_metrics(connected_component, clustering_metrics):
 def component_string(connected, metadata, metrics):
   output = [output_line(metadata, vlmc) for vlmc in connected]
 
-  metric_string = ("\nPercent of same genus: {:5.5f} \t"
+  metric_string = ("\nPercent of same organism: {:5.5f} \t"
                    "Percent of same family: {:5.5f} \t"
                    "Average distance: {:5.5f}\n".format(
                        metrics[0], metrics[1], metrics[2]))
@@ -53,6 +53,5 @@ def component_string(connected, metadata, metrics):
 def output_line(metadata, vlmc):
   return "{:>55}  {:20} {:20}".format(
       metadata[vlmc.name]['species'],
-      metadata[vlmc.name]['genus'],
+      metadata[vlmc.name]['organism'],
       metadata[vlmc.name]['family'])
-
