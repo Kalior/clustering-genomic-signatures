@@ -33,7 +33,7 @@ def print_connected_components(clustering_metrics):
 
 
 def component_metrics(connected_component, clustering_metrics):
-  percent_of_same_genus = clustering_metrics.percent_same_taxnomoy(connected_component, 'genus')
+  percent_of_same_genus = clustering_metrics.percent_same_taxonomy(connected_component, 'genus')
   percent_of_same_family = clustering_metrics.percent_same_taxonomy(connected_component, 'family')
   average_distance = clustering_metrics.average_distance_between_vlmcs(connected_component)
   return percent_of_same_genus, percent_of_same_family, average_distance

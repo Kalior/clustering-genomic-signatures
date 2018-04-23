@@ -89,11 +89,11 @@ cdef class ClusteringMetrics(object):
     average = 0
     connected_components = list(nx.connected_components(self.G))
     for connected_component in connected_components:
-      average += self.percent_same_taxnomy(connected_component, taxonomy) * len(connected_component)
+      average += self.percent_same_taxonomy(connected_component, taxonomy) * len(connected_component)
 
     return average / len(self.vlmcs)
 
-  cpdef double percent_same_taxnomy(self, connected_component, taxonomy):
+  cpdef double percent_same_taxonomy(self, connected_component, taxonomy):
     size_of_component = len(connected_component)
     percent_of_same_family = sum(
       [self._number_in_taxonomy(vlmc, connected_component, taxonomy) for vlmc in connected_component]
