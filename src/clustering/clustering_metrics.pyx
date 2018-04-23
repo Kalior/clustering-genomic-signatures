@@ -24,6 +24,11 @@ cdef class ClusteringMetrics(object):
     self.d = d
     self.vlmcs = vlmcs
 
+  cpdef double average_silhouette(self):
+    silhouette = self.silhouette_metric()
+
+    silhouette_values = [s for s in silhouette.values()]
+    return sum(silhouette_values) / len(silhouette_values)
 
   cpdef dict silhouette_metric(self):
     connected_components = list(nx.connected_components(self.G))
@@ -80,21 +85,22 @@ cdef class ClusteringMetrics(object):
     average_distance = sum(distances) / len(distances)
     return average_distance
 
-  cpdef double percent_same_family(self, connected_component):
+  cpdef double average_percent_same_taxonomy(self, taxonomy):
+    average = 0
+    connected_components = list(nx.connected_components(self.G))
+    for connected_component in connected_components:
+      average += self.percent_same_taxnomy(connected_component, taxonomy) * len(connected_component)
+
+    return average / len(self.vlmcs)
+
+  cpdef double percent_same_taxnomy(self, connected_component, taxonomy):
     size_of_component = len(connected_component)
     percent_of_same_family = sum(
-      [self.number_in_taxonomy(vlmc, connected_component, 'family') for vlmc in connected_component]
+      [self._number_in_taxonomy(vlmc, connected_component, taxonomy) for vlmc in connected_component]
     ) / (size_of_component ** 2)
     return percent_of_same_family
 
-  cpdef double percent_same_genus(self, connected_component):
-    size_of_component = len(connected_component)
-    percent_of_same_genus = sum(
-      [self.number_in_taxonomy(vlmc, connected_component, 'genus') for vlmc in connected_component]
-    ) / (size_of_component ** 2)
-    return percent_of_same_genus
-
-  cdef int number_in_taxonomy(self, vlmc, vlmcs, taxonomy):
+  cdef int _number_in_taxonomy(self, vlmc, vlmcs, taxonomy):
     number_of_same_taxonomy = len([other for other in vlmcs
                                  if self.metadata[other.name][taxonomy] == self.metadata[vlmc.name][taxonomy]])
     return number_of_same_taxonomy
