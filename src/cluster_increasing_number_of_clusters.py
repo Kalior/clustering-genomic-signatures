@@ -1,5 +1,4 @@
 #! /usr/bin/python3.6
-import time
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import numpy as np
@@ -13,10 +12,9 @@ mpl.rcParams['font.size'] = 24
 
 from vlmc import VLMC
 from distance import FrobeniusNorm
-from clustering import *
+from clustering import AverageLinkClustering
 import parse_trees_to_json
 from get_signature_metadata import get_metadata_for
-from util.print_clusters import print_connected_components
 
 
 def test_clustering(d, vlmcs, cluster_class):
