@@ -75,7 +75,7 @@ def test_distance_function_(d, vlmcs, test_vlmcs, metadata, out_dir):
 
     # print_distance_output(vlmc, vlmcs, sorted_results, elapsed_time, metadata, metrics)
     draw_gc_plot(sorted_results, vlmc, gc_distance_function, distance_ax, gc_ax)
-    plot_distance(sorted_results, vlmc, gc_distance_function, metadata, out_dir)
+    plot_distance(sorted_results, vlmc, gc_distance_function, metadata, out_dir, True, True)
 
   number_of_bins = len(vlmcs) / 10
   draw_box_plot(all_gc_differences, all_family_orders, all_genus_orders, number_of_bins, out_dir)
