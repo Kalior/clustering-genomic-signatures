@@ -22,7 +22,7 @@ def test_clustering(d, vlmcs, cluster_class):
 
   metadata = get_metadata_for([vlmc.name for vlmc in vlmcs])
 
-  clustering = cluster_class(vlmcs, d, metadata)
+  clustering = cluster_class(vlmcs, d)
   for i in range(len(vlmcs) - 1, 0, -1):
     print(i)
     clustering_metrics = clustering.cluster(i)
