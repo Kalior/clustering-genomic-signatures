@@ -47,18 +47,12 @@ cdef class AverageLinkClustering(GraphBasedClustering):
     print("Cluster time: {} s".format(cluster_time))
 
   cdef int _find_min_edge(self, distances):
-    min_edge_distance = np.inf
-    min_edge = -1
-
-    for i, edge in enumerate(distances):
+    while True:
+      i = np.random.random_integers(0, distances.shape[0])
+      edge = distances[int(i)]
       (left, right, _) = edge
       if self.clustering[int(left)] != self.clustering[int(right)]:
-        added_dist = self._added_internal_distance_with_edge(edge, distances)
-        if added_dist < min_edge_distance:
-          min_edge_distance = added_dist
-          min_edge = i
-
-    return min_edge
+        return i
 
   cdef double _added_internal_distance_with_edge(self, edge, distances):
     (left, right, dist) = edge
