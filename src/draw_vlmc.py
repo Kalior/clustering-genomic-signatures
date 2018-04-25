@@ -6,7 +6,7 @@ from networkx.drawing.nx_agraph import graphviz_layout
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import os
-from enum import Enum
+from enum import Enum, auto
 from itertools import combinations
 
 from vlmc import VLMC
@@ -23,34 +23,68 @@ class Part(Enum):
   NONE = 4
 
 
-def save(vlmcs, metadata, out_dir, deltas=False):
-  for vlmc in vlmcs:
+class NodeLabelType(Enum):
+  CONTEXT = auto()
+  DELTA_VALUE = auto()
+  STATIONARY_PROBABILITY = auto()
+
+  @staticmethod
+  def get_type(deltas, stationary):
+    if deltas:
+      return NodeLabelType.DELTA_VALUE
+    elif stationary:
+      return NodeLabelType.STATIONARY_PROBABILITY
+    else:
+      return NodeLabelType.CONTEXT
+
+  @staticmethod
+  def get_root_label(label):
+    return {
+        NodeLabelType.CONTEXT: "",
+        NodeLabelType.DELTA_VALUE: "",
+        NodeLabelType.STATIONARY_PROBABILITY: "1"
+    }.get(label)
+
+  @staticmethod
+  def get_node_label(vlmc, node, label_type):
+    return {
+        NodeLabelType.CONTEXT: node,
+        NodeLabelType.DELTA_VALUE: "-1", # currently not used, since deltas are its own attributes
+        NodeLabelType.STATIONARY_PROBABILITY: "{:.5f}".format(vlmc.stationary_probability(node))
+    }.get(label_type)
+
+
+def save(vlmcs, metadata, out_dir, deltas=False, stationary_prob_labels=False):
+  print(NodeLabelType)
+  label_type = NodeLabelType.get_type(deltas, stationary_prob_labels)
+  for vlmc in vlmcs[0:2]:
     plt.figure(figsize=(150, 30), dpi=80)
-    draw_with_probabilities(vlmc, metadata, deltas)
+    draw_with_probabilities(vlmc, metadata, label_type)
     out_file = os.path.join(out_dir, vlmc.name + '.pdf')
     plt.axis('off')
     plt.savefig(out_file, dpi='figure', format='pdf', bbox_inches='tight')
     plt.close()
 
 
-def draw_with_probabilities(vlmc, metadata, deltas):
+def draw_with_probabilities(vlmc, metadata, label_type):
   G = nx.DiGraph()
   if vlmc.name in metadata:
     root_name = metadata[vlmc.name]['species']
   else:
     root_name = vlmc.name
-  G.add_node(root_name, inner=True, delta=-1)
-  add_children(vlmc, G, "", root_name, deltas)
+  root_label = NodeLabelType.get_root_label(label_type)
+  G.add_node(root_name, label=root_label, inner=True, delta=-1)
+  add_children(vlmc, G, "", root_name, label_type)
 
   pos = graphviz_layout(G, prog='dot')
   nx.draw_networkx_nodes(G, pos, node_size=10, node_color='w')
 
-  if deltas:
+  if label_type is NodeLabelType.DELTA_VALUE:
     nodes = G.nodes(data=True)
     inner_nodes = {n[0]: n[1]['delta'] for n in nodes if n[1]['inner']}
   else:
-    nodes = G.nodes(data='inner')
-    inner_nodes = {n[0]: n[0] for n in nodes if n[1]}
+    nodes = G.nodes(data=True)
+    inner_nodes = {n[0]: n[1]['label'] for n in nodes if n[1]['inner']}
 
   nx.draw_networkx_labels(G, pos, font_size=16, labels=inner_nodes)
 
@@ -60,11 +94,11 @@ def draw_with_probabilities(vlmc, metadata, deltas):
   nx.draw_networkx_edges(G, pos, edgelist=inner_edges, arrows=True, edge_color='#ff7f00',
                          width=2, style='solid')
 
-  if not deltas:
+  if label_type is not NodeLabelType.DELTA_VALUE:
     nx.draw_networkx_edges(G, pos, edgelist=outer_edges, arrows=False, edge_color='#007fff',
                            width=1, style='dashed')
 
-  if deltas:
+  if label_type is NodeLabelType.DELTA_VALUE:
     edge_attributes = ['symbol']
   else:
     edge_attributes = ['symbol', 'prob']
@@ -75,19 +109,21 @@ def draw_with_probabilities(vlmc, metadata, deltas):
   nx.draw_networkx_edge_labels(G, pos, edge_labels=labels, font_size=12)
 
 
-def add_children(vlmc, G, context, root_name, deltas):
+def add_children(vlmc, G, context, root_name, label_type):
   for c in vlmc.alphabet:
     child = c + context
     parent_label = context
     if parent_label == "":
       parent_label = root_name
+
     if child in vlmc.tree:
-      G.add_node(child, inner=True, delta="{:.2f}".format(vlmc.tree[context][c]))
+      new_label = NodeLabelType.get_node_label(vlmc, child, label_type)
+      G.add_node(child, label=new_label, inner=True, delta="{:.2f}".format(vlmc.tree[context][c]))
       G.add_edge(parent_label, child, symbol=c,
                  prob="{:.2f}".format(vlmc.tree[context][c]), inner=True)
-      add_children(vlmc, G, child, root_name, deltas)
-    elif not deltas:
-      G.add_node(child, inner=False, delta=-1.0)
+      add_children(vlmc, G, child, root_name, label_type)
+    elif label_type is not NodeLabelType.DELTA_VALUE:
+      G.add_node(child, label="", inner=False, delta=-1.0)
       G.add_edge(parent_label, child, symbol=c, prob="{:.2f}".format(
           vlmc.tree[context][c]), inner=False)
 
@@ -160,6 +196,7 @@ if __name__ == '__main__':
       description='Prints vlmcs models, or the intersection of such.')
   parser.add_argument('--deltas', action='store_true')
   parser.add_argument('--intersection', action='store_true')
+  parser.add_argument('--stationary-probability-labels', action='store_true')
 
   parser.add_argument('--directory', type=str, default='../trees_pst_better',
                       help='The directory which contains the vlmcs to be printed.')
@@ -180,4 +217,4 @@ if __name__ == '__main__':
   if args.intersection:
     save_intersection(vlmcs, metadata, args.out_directory)
   else:
-    save(vlmcs, metadata, args.out_directory, args.deltas)
+    save(vlmcs, metadata, args.out_directory, args.deltas, args.stationary_probability_labels)
