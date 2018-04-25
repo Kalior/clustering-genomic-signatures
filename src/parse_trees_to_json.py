@@ -16,13 +16,23 @@ def parse_trees(directory, deltas=False):
 
 
 def _parse_file(file, deltas):
-  graph = {}
+  tree = {}
+  stationary_distribution = {}
   with open(file) as f:
-    for line in f:
-      if line[0:5] == "Node:":
-        key, children = _parse_line(line, deltas)
-        graph[key] = children
-  return json.dumps(graph)
+    total_occurences = -1
+    for i, line in enumerate([line for line in f if line[0:5] == "Node:"]):
+      key, children, occurences = _parse_line(line, deltas)
+      tree[key] = children
+      if i == 0:
+        total_occurences = occurences
+      
+      stationary_distribution[key] = occurences / (total_occurences - max(len(key) - 1, 0))
+
+  if deltas:
+    vlmc = tree # old format, used if we are parsing the delta values
+  else:
+    vlmc = {"tree": tree, "stationary_distribution": stationary_distribution}
+  return json.dumps(vlmc)
 
 
 def _parse_line(line, deltas):
@@ -45,11 +55,11 @@ def _parse_line(line, deltas):
   key = strings[1]
   if key == '#':
     key = ''
-  return key, children
+  return key, children, total
 
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(description='Process directory of .tree files into .json.')
-  parser.add_argument('dir', help='the directory with .tree files')
+  parser.add_argument('--dir', help='the directory with .tree files')
   args = parser.parse_args()
-  parse_trees(args.dir)
+  parse_trees(args.dir, deltas=True)

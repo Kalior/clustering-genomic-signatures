@@ -11,13 +11,15 @@ cdef class VLMC(object):
   cdef public int order
   cdef public str sequence
   cdef public list alphabet
+  cdef dict stationary_distribution
 
-  def __init__(self, tree, name):
+  def __init__(self, tree, name, stationary_distribution):
     self.tree = tree
     self.name = name
     self.order = self._calculate_order(tree)
     self.sequence = ""
     self.alphabet = ['A', 'C', 'G', 'T']
+    self.stationary_distribution = stationary_distribution
 
   def __str__(self):
     return self.name
@@ -34,8 +36,14 @@ cdef class VLMC(object):
       Expects the json to be in the following format:
       '{"":{"A":0.5,"B":0.5},"A":{"B":0.5,"A":0.5},"B":{"A":0.5,"B":0.5},"BA":{"A":0.5,"B":0.5},"AA":{"A":0.5,"B":0.5}}'
     """
-    tree = json.loads(s)
-    return VLMC(tree, name)
+    vlmc_info = json.loads(s)
+    if "tree" in vlmc_info and "stationary_distribution" in vlmc_info:
+      tree = vlmc_info["tree"]
+      stationary = vlmc_info["stationary_distribution"]
+    else: # assume its the old format where the json represented the tree
+      tree = vlmc_info
+      stationary = {} # let it crash if we accidantly use old
+    return VLMC(tree, name, stationary)
 
   @classmethod
   def from_json_dir(cls, directory):
@@ -44,8 +52,10 @@ cdef class VLMC(object):
       name, _ = os.path.splitext(file)
       name_without_parameter = VLMC.strip_parameters_from_name(name)
       with open(os.path.join(directory, file)) as f:
-        tree = json.load(f)
-        all_vlmcs.append(VLMC(tree, name_without_parameter))
+        vlmc_dict = json.load(f)
+        tree = vlmc_dict["tree"]
+        stationary = vlmc_dict["stationary_distribution"]
+        all_vlmcs.append(VLMC(tree, name_without_parameter, stationary))
 
     return all_vlmcs
 
@@ -62,7 +72,8 @@ cdef class VLMC(object):
     """
       Returns the vlmc tree in the same format as from_json expects.
     """
-    return json.dumps(self.tree)
+    as_dict = {"tree": self.tree, "stationary_distribution": self.stationary_distribution}
+    return json.dumps(as_dict)
 
   cpdef double log_likelihood_ignore_initial_bias(self, sequence):
     # skip the first /order/ characters to ignore the bias from
@@ -195,6 +206,14 @@ cdef class VLMC(object):
 
   cpdef void reset_sequence(self):
     self.sequence = ""
+
+
+  cpdef double stationary_probability(self, state):
+    if len(self.stationary_distribution) == 0:
+      raise RuntimeError("No information about stationary probabilities")
+
+    return self.stationary_distribution[state]
+
 
 if __name__ == "__main__":
   s = '{"":{"A":0.5,"B":0.5},"A":{"B":0.5,"A":0.5},"B":{"A":0.5,"B":0.5},"BA":{"A":0.5,"B":0.5},"AA":{"A":0.5,"B":0.5}}'
