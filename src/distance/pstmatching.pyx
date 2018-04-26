@@ -21,7 +21,7 @@ cdef class PSTMatching(object):
   cdef double state_weight(self, state, left_vlmc, right_vlmc):
     left_state = left_vlmc.get_context(state)
     right_state = right_vlmc.get_context(state)
-    weight = (left_vlmc.stationary_probability(left_state) + right_vlmc.stationary_probability(right_state)) / 2
+    weight = (left_vlmc.occurrence_probability(left_state) + right_vlmc.occurrence_probability(right_state)) / 2
     return weight
 
 

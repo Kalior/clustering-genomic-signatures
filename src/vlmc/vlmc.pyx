@@ -11,15 +11,15 @@ cdef class VLMC(object):
   cdef public int order
   cdef public str sequence
   cdef public list alphabet
-  cdef dict stationary_distribution
+  cdef dict occurrence_probabilites
 
-  def __init__(self, tree, name, stationary_distribution):
+  def __init__(self, tree, name, occurrence_probability):
     self.tree = tree
     self.name = name
     self.order = self._calculate_order(tree)
     self.sequence = ""
     self.alphabet = ['A', 'C', 'G', 'T']
-    self.stationary_distribution = stationary_distribution
+    self.occurrence_probabilites = occurrence_probability
 
   def __str__(self):
     return self.name
@@ -37,13 +37,13 @@ cdef class VLMC(object):
       '{"":{"A":0.5,"B":0.5},"A":{"B":0.5,"A":0.5},"B":{"A":0.5,"B":0.5},"BA":{"A":0.5,"B":0.5},"AA":{"A":0.5,"B":0.5}}'
     """
     vlmc_info = json.loads(s)
-    if "tree" in vlmc_info and "stationary_distribution" in vlmc_info:
+    if "tree" in vlmc_info and "occurrence_probability" in vlmc_info:
       tree = vlmc_info["tree"]
-      stationary = vlmc_info["stationary_distribution"]
+      occurrences = vlmc_info["occurrence_probability"]
     else: # assume its the old format where the json represented the tree
       tree = vlmc_info
-      stationary = {} # let it crash if we accidantly use old
-    return VLMC(tree, name, stationary)
+      occurrences = {} # let it crash if we accidantly use old
+    return VLMC(tree, name, occurrences)
 
   @classmethod
   def from_json_dir(cls, directory):
@@ -54,8 +54,8 @@ cdef class VLMC(object):
       with open(os.path.join(directory, file)) as f:
         vlmc_dict = json.load(f)
         tree = vlmc_dict["tree"]
-        stationary = vlmc_dict["stationary_distribution"]
-        all_vlmcs.append(VLMC(tree, name_without_parameter, stationary))
+        occurrence_probability = vlmc_dict["occurrence_probability"]
+        all_vlmcs.append(VLMC(tree, name_without_parameter, occurrence_probability))
 
     return all_vlmcs
 
@@ -72,7 +72,7 @@ cdef class VLMC(object):
     """
       Returns the vlmc tree in the same format as from_json expects.
     """
-    as_dict = {"tree": self.tree, "stationary_distribution": self.stationary_distribution}
+    as_dict = {"tree": self.tree, "occurrence_probability": self.occurrence_probabilites}
     return json.dumps(as_dict)
 
   cpdef double log_likelihood_ignore_initial_bias(self, sequence):
@@ -208,11 +208,11 @@ cdef class VLMC(object):
     self.sequence = ""
 
 
-  cpdef double stationary_probability(self, state):
-    if len(self.stationary_distribution) == 0:
-      raise RuntimeError("No information about stationary probabilities")
+  cpdef double occurrence_probability(self, state):
+    if len(self.occurrence_probabilites) == 0:
+      raise RuntimeError("No information about occurrence probabilites")
 
-    return self.stationary_distribution[state]
+    return self.occurrence_probabilites[state]
 
 
 if __name__ == "__main__":

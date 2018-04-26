@@ -26,14 +26,14 @@ class Part(Enum):
 class NodeLabelType(Enum):
   CONTEXT = auto()
   DELTA_VALUE = auto()
-  STATIONARY_PROBABILITY = auto()
+  OCCURRENCE_PROBABILITY = auto()
 
   @staticmethod
-  def get_type(deltas, stationary):
+  def get_type(deltas, occurrence):
     if deltas:
       return NodeLabelType.DELTA_VALUE
-    elif stationary:
-      return NodeLabelType.STATIONARY_PROBABILITY
+    elif occurrence:
+      return NodeLabelType.OCCURRENCE_PROBABILITY
     else:
       return NodeLabelType.CONTEXT
 
@@ -42,7 +42,7 @@ class NodeLabelType(Enum):
     return {
         NodeLabelType.CONTEXT: "",
         NodeLabelType.DELTA_VALUE: "-1",
-        NodeLabelType.STATIONARY_PROBABILITY: "1"
+        NodeLabelType.OCCURRENCE_PROBABILITY: "1"
     }.get(label_type)
 
   @staticmethod
@@ -50,12 +50,12 @@ class NodeLabelType(Enum):
     return {
         NodeLabelType.CONTEXT: character + node,
         NodeLabelType.DELTA_VALUE: "{:.2f}".format(vlmc.tree[node][character]),
-        NodeLabelType.STATIONARY_PROBABILITY: "{:.5f}".format(vlmc.stationary_probability(character + node))
+        NodeLabelType.OCCURRENCE_PROBABILITY: "{:.5f}".format(vlmc.occurrence_probability(character + node))
     }.get(label_type)
 
 
-def save(vlmcs, metadata, out_dir, deltas=False, stationary_prob_labels=False):
-  label_type = NodeLabelType.get_type(deltas, stationary_prob_labels)
+def save(vlmcs, metadata, out_dir, deltas=False, occurrence_probability=False):
+  label_type = NodeLabelType.get_type(deltas, occurrence_probability)
   for vlmc in vlmcs:
     plt.figure(figsize=(150, 30), dpi=80)
     draw_with_probabilities(vlmc, metadata, label_type)
@@ -191,7 +191,7 @@ if __name__ == '__main__':
       description='Prints vlmcs models, or the intersection of such.')
   parser.add_argument('--deltas', action='store_true')
   parser.add_argument('--intersection', action='store_true')
-  parser.add_argument('--stationary-probability-labels', action='store_true')
+  parser.add_argument('--occurrence-probability-labels', action='store_true')
 
   parser.add_argument('--directory', type=str, default='../trees_pst_better',
                       help='The directory which contains the vlmcs to be printed.')
@@ -212,4 +212,4 @@ if __name__ == '__main__':
   if args.intersection:
     save_intersection(vlmcs, metadata, args.out_directory)
   else:
-    save(vlmcs, metadata, args.out_directory, args.deltas, args.stationary_probability_labels)
+    save(vlmcs, metadata, args.out_directory, args.deltas, args.occurrence_probability_labels)

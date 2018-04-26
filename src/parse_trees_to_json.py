@@ -17,18 +17,18 @@ def parse_trees(directory, deltas=False):
 
 def _parse_file(file, deltas):
   tree = {}
-  stationary_distribution = {}
+  occurrence_probability = {}
   with open(file) as f:
-    total_occurences = -1
+    total_occurrences = -1
     for i, line in enumerate([line for line in f if line[0:5] == "Node:"]):
-      key, children, occurences = _parse_line(line, deltas)
+      key, children, occurrences = _parse_line(line, deltas)
       tree[key] = children
       if i == 0:
-        total_occurences = occurences
-      
-      stationary_distribution[key] = occurences / (total_occurences - max(len(key) - 1, 0))
+        total_occurrences = occurrences
 
-  vlmc = {"tree": tree, "stationary_distribution": stationary_distribution}
+      occurrence_probability[key] = occurrences / (total_occurrences - max(len(key) - 1, 0))
+
+  vlmc = {"tree": tree, "occurrence_probability": occurrence_probability}
   return json.dumps(vlmc)
 
 
