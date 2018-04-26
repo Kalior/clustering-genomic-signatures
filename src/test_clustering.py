@@ -1,6 +1,7 @@
 #! /usr/bin/python3.6
 import argparse
 import time
+import os
 
 from vlmc import VLMC
 from clustering import *
@@ -53,6 +54,11 @@ def test(args):
   vlmcs = parse_trees(args)
   cluster_class = parse_clustering_method(args)
   d = parse_distance_method(args)
+
+  try:
+    os.stat(args.out_directory)
+  except:
+    os.mkdir(args.out_directory)
 
   test_clustering(d, args.clusters, vlmcs, args.out_directory, cluster_class, do_draw_graph=True)
 
