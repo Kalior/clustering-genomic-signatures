@@ -38,26 +38,25 @@ class NodeLabelType(Enum):
       return NodeLabelType.CONTEXT
 
   @staticmethod
-  def get_root_label(label):
+  def get_root_label(label_type):
     return {
         NodeLabelType.CONTEXT: "",
-        NodeLabelType.DELTA_VALUE: "",
+        NodeLabelType.DELTA_VALUE: "-1",
         NodeLabelType.STATIONARY_PROBABILITY: "1"
-    }.get(label)
+    }.get(label_type)
 
   @staticmethod
-  def get_node_label(vlmc, node, label_type):
+  def get_node_label(vlmc, node, character, label_type):
     return {
-        NodeLabelType.CONTEXT: node,
-        NodeLabelType.DELTA_VALUE: "-1", # currently not used, since deltas are its own attributes
-        NodeLabelType.STATIONARY_PROBABILITY: "{:.5f}".format(vlmc.stationary_probability(node))
+        NodeLabelType.CONTEXT: character + node,
+        NodeLabelType.DELTA_VALUE: "{:.2f}".format(vlmc.tree[node][character]),
+        NodeLabelType.STATIONARY_PROBABILITY: "{:.5f}".format(vlmc.stationary_probability(character + node))
     }.get(label_type)
 
 
 def save(vlmcs, metadata, out_dir, deltas=False, stationary_prob_labels=False):
-  print(NodeLabelType)
   label_type = NodeLabelType.get_type(deltas, stationary_prob_labels)
-  for vlmc in vlmcs[0:2]:
+  for vlmc in vlmcs:
     plt.figure(figsize=(150, 30), dpi=80)
     draw_with_probabilities(vlmc, metadata, label_type)
     out_file = os.path.join(out_dir, vlmc.name + '.pdf')
@@ -73,18 +72,14 @@ def draw_with_probabilities(vlmc, metadata, label_type):
   else:
     root_name = vlmc.name
   root_label = NodeLabelType.get_root_label(label_type)
-  G.add_node(root_name, label=root_label, inner=True, delta=-1)
+  G.add_node(root_name, label=root_label, inner=True)
   add_children(vlmc, G, "", root_name, label_type)
 
   pos = graphviz_layout(G, prog='dot')
   nx.draw_networkx_nodes(G, pos, node_size=10, node_color='w')
 
-  if label_type is NodeLabelType.DELTA_VALUE:
-    nodes = G.nodes(data=True)
-    inner_nodes = {n[0]: n[1]['delta'] for n in nodes if n[1]['inner']}
-  else:
-    nodes = G.nodes(data=True)
-    inner_nodes = {n[0]: n[1]['label'] for n in nodes if n[1]['inner']}
+  nodes = G.nodes(data=True)
+  inner_nodes = {n[0]: n[1]['label'] for n in nodes if n[1]['inner']}
 
   nx.draw_networkx_labels(G, pos, font_size=16, labels=inner_nodes)
 
@@ -105,8 +100,10 @@ def draw_with_probabilities(vlmc, metadata, label_type):
 
   attributes = [nx.get_edge_attributes(G, attr) for attr in edge_attributes]
   keys = set([k for attrs in attributes for k in attrs.keys()])
-  labels = {k: " ".join([attrs[k] for attrs in attributes if k in attrs]) for k in keys}
-  nx.draw_networkx_edge_labels(G, pos, edge_labels=labels, font_size=12)
+  all_labels = {k: " ".join([attrs[k] for attrs in attributes if k in attrs]) for k in keys}
+  inner_labels = {edge[:-1]: all_labels[edge[:-1]] for edge in inner_edges}
+
+  nx.draw_networkx_edge_labels(G, pos, edge_labels=inner_labels, font_size=12)
 
 
 def add_children(vlmc, G, context, root_name, label_type):
@@ -117,13 +114,13 @@ def add_children(vlmc, G, context, root_name, label_type):
       parent_label = root_name
 
     if child in vlmc.tree:
-      new_label = NodeLabelType.get_node_label(vlmc, child, label_type)
-      G.add_node(child, label=new_label, inner=True, delta="{:.2f}".format(vlmc.tree[context][c]))
+      new_label = NodeLabelType.get_node_label(vlmc, context, c, label_type)
+      G.add_node(child, label=new_label, inner=True)
       G.add_edge(parent_label, child, symbol=c,
                  prob="{:.2f}".format(vlmc.tree[context][c]), inner=True)
       add_children(vlmc, G, child, root_name, label_type)
-    elif label_type is not NodeLabelType.DELTA_VALUE:
-      G.add_node(child, label="", inner=False, delta=-1.0)
+    else: #
+      G.add_node(child, label="", inner=False)
       G.add_edge(parent_label, child, symbol=c, prob="{:.2f}".format(
           vlmc.tree[context][c]), inner=False)
 
@@ -134,7 +131,6 @@ def save_intersection(vlmcs, metadata, out_dir):
     draw_intersection(vlmc_left, vlmc_right, metadata)
     out_file = os.path.join(out_dir, vlmc_left.name + '_' + vlmc_right.name + '.pdf')
     plt.title(metadata[vlmc_left.name]['species'] + " and " + metadata[vlmc_right.name]['species'])
-    # plt.title(vlmc_left.name + " and " + vlmc_right.name)
     plt.axis('off')
     plt.savefig(out_file, dpi='figure', format='pdf', bbox_inches='tight')
     plt.close()
@@ -160,7 +156,6 @@ def draw_intersection(vlmc_left, vlmc_right, metadata):
   nx.draw_networkx_nodes(G, pos, nodelist=intersection_nodes, node_size=100, node_color='#ff7f00')
   nx.draw_networkx_nodes(G, pos, nodelist=left_nodes, node_size=100, node_color='#007fff')
   nx.draw_networkx_nodes(G, pos, nodelist=right_nodes, node_size=100, node_color='#ff007f')
-  # nx.draw_networkx_labels(G, pos, font_size=16)
 
   nx.draw_networkx_edges(G, pos, edgelist=intersection_edges, arrows=True,
                          edge_color='#ff7f00', width=6, style='solid')

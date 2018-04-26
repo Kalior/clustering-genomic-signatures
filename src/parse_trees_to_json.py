@@ -28,10 +28,7 @@ def _parse_file(file, deltas):
       
       stationary_distribution[key] = occurences / (total_occurences - max(len(key) - 1, 0))
 
-  if deltas:
-    vlmc = tree # old format, used if we are parsing the delta values
-  else:
-    vlmc = {"tree": tree, "stationary_distribution": stationary_distribution}
+  vlmc = {"tree": tree, "stationary_distribution": stationary_distribution}
   return json.dumps(vlmc)
 
 
@@ -39,13 +36,13 @@ def _parse_line(line, deltas):
   numbers = re.findall('-?[0-9]+\.?[0-9]*', line)
   children = {}
   # Assumes we're only working with ACGT (in that order)
+  total = sum([int(numbers[i]) for i in [6, 7, 8, 9]])
   if deltas:
     children['A'] = float(numbers[14])
     children['C'] = float(numbers[15])
     children['G'] = float(numbers[16])
     children['T'] = float(numbers[17])
   else:
-    total = sum([int(numbers[i]) for i in [6, 7, 8, 9]])
     children['A'] = int(numbers[6]) / total
     children['C'] = int(numbers[7]) / total
     children['G'] = int(numbers[8]) / total
