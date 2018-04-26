@@ -45,7 +45,7 @@ def test_distance_function(d, tree_dir, out_dir):
   except:
     os.mkdir(out_dir)
 
-  test_distance_function_(d, vlmcs, test_vlmcs, metadata, out_dir, True, False, True)
+  return test_distance_function_(d, vlmcs, test_vlmcs, metadata, out_dir, True, False, True)
 
 
 def test_distance_function_(d, vlmcs, test_vlmcs, metadata, out_dir, print_metrics=True, print_every_distance=False, do_plot=False):
