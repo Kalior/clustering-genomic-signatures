@@ -33,10 +33,9 @@ def plot_distance(sorted_results, vlmc, gc_distance_function, metadata, out_dir,
                     legend_marker('Same family', 'o', '#ff7f00'),
                     legend_marker('Same subfamily', 'o', '#7fff00'),
                     legend_marker('Same genus', 'o', '#007fff'),
+                    legend_marker('Same host', '*', '#000000'),
                     legend_marker('Distance', '.', '#000000')
                     ]
-
-  plot_distance_(ax, sorted_results, vlmc, metadata, '#000000', '.', 'solid')
 
   if add_gc:
     gc_legend_marker = legend_marker('GC difference', '.', '#999999', 'dashed')
@@ -50,6 +49,8 @@ def plot_distance(sorted_results, vlmc, gc_distance_function, metadata, out_dir,
     legend_markers.append(sequence_length_legend_marker)
 
     plot_sequence_lengths(ax, sorted_results, vlmc, metadata)
+
+  plot_distance_(ax, sorted_results, vlmc, metadata, '#000000', '.', 'solid')
 
   # plt.xticks(np.arange(len(sorted_results)), fontsize=20)
 
@@ -72,11 +73,11 @@ def plot_sequence_lengths(ax, sorted_results, vlmc, metadata):
   seq_ax.set_ylabel('Sequence lengths', color=seq_color)
   seq_ax.tick_params(axis='y', labelcolor=seq_color)
 
-  lengths = [(metadata[v.name]['sequence_length'], v) for _, v in sorted_results]
+  lengths = [(i, metadata[v.name]['sequence_length']) for i, (_, v) in enumerate(sorted_results)]
 
-  seq_ax.set_ylim(-20000, max([l for l, _ in lengths]) + 20000)
+  seq_ax.set_ylim(-20000, max([l for _, l in lengths]) + 20000)
 
-  plot_distance_(seq_ax, lengths, vlmc, metadata, seq_color, 'x', 'dotted')
+  plot_tuple_list(seq_ax, lengths, seq_color, 'x', 'dotted')
 
 
 def plot_distance_(ax, sorted_results, vlmc, metadata, line_c, line_marker, linestyle):
@@ -98,6 +99,11 @@ def plot_distance_(ax, sorted_results, vlmc, metadata, line_c, line_marker, line
   genus = [(i, d) for i, (d, v) in enumerate(sorted_results)
            if _equal_and_not_empty(metadata, v, vlmc, 'genus')]
 
+  hosts = [(i, d) for i, (d, v) in enumerate(sorted_results)
+           if (host_in(metadata[v.name]['hosts'], metadata[vlmc.name]['hosts']) or
+               host_in(metadata[vlmc.name]['hosts'], metadata[v.name]['hosts'])) and
+           not metadata[v.name]['hosts'] == "Not Found"]
+
   every = [(i, d) for i, (d, v) in enumerate(sorted_results)]
 
   plot_tuple_list(ax, every, line_c, line_marker, linestyle)
@@ -105,6 +111,15 @@ def plot_distance_(ax, sorted_results, vlmc, metadata, line_c, line_marker, line
   scatter_tuple_list(ax, family, '#ff7f00', 'o')
   scatter_tuple_list(ax, subfamily, '#7fff00', 'o')
   scatter_tuple_list(ax, genus, '#007fff', 'o')
+  scatter_tuple_list(ax, hosts, line_c, '*')
+
+
+def host_in(hosts_left, hosts_right):
+  single_hosts = hosts_left.split(", ")
+  for host in single_hosts:
+    if host in hosts_right:
+      return True
+  return False
 
 
 def _not_equal_or_empty(metadata, v, vlmc, taxonomy):
