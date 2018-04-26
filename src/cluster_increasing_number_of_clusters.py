@@ -65,7 +65,7 @@ def plot_metrics(metrics, out_directory):
             'Percent of genus'
             ]
 
-  ax.legend(handles=handles, labels=labels, bbox_to_anchor=(1, 1), loc=2, borderaxespad=0.)
+  ax.legend(handles=handles, labels=labels)
 
   out_file = os.path.join(out_directory, 'increasing-number-of-clusters.pdf')
   plt.savefig(out_file, dpi='figure', format='pdf')
