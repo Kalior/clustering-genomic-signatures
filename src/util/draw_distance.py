@@ -4,19 +4,6 @@ import numpy as np
 import os
 
 
-def draw_gc_plot(sorted_results, vlmc, gc_distance_function, distance_ax, gc_ax):
-  gc_distances = [(gc_distance_function.distance(vlmc, v), v) for _, v in sorted_results]
-
-  draw_graph(sorted_results, distance_ax, "Distance")
-  draw_graph(gc_distances, gc_ax, "GC-difference")
-
-
-def draw_graph(distances, ax, title):
-  ax.set_title(title, fontsize=24)
-  distances = [d for d, _ in distances]
-  ax.plot(distances)
-
-
 def plot_distance(sorted_results, vlmc, gc_distance_function, metadata, out_dir, add_gc=True, add_sequence_lengths=False):
   fig, ax = plt.subplots(1, sharex='col', figsize=(30, 20), dpi=80)
   ax.set_title(metadata[vlmc.name]['species'], fontsize=30)
