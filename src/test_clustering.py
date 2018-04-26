@@ -21,7 +21,7 @@ def test_clustering(d, clusters, vlmcs, out_directory, cluster_class=MSTClusteri
     clustering_metrics.metadata = metadata
 
     if do_draw_graph:
-      draw_graph(clustering_metrics, i, out_directory)
+      draw_graph(clustering_metrics, 'Family', 'family', i, out_directory)
     print_connected_components(clustering_metrics)
 
 
