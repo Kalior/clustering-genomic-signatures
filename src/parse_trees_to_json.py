@@ -16,26 +16,33 @@ def parse_trees(directory, deltas=False):
 
 
 def _parse_file(file, deltas):
-  graph = {}
+  tree = {}
+  occurrence_probability = {}
   with open(file) as f:
-    for line in f:
-      if line[0:5] == "Node:":
-        key, children = _parse_line(line, deltas)
-        graph[key] = children
-  return json.dumps(graph)
+    total_occurrences = -1
+    for i, line in enumerate([line for line in f if line[0:5] == "Node:"]):
+      key, children, occurrences = _parse_line(line, deltas)
+      tree[key] = children
+      if i == 0:
+        total_occurrences = occurrences
+
+      occurrence_probability[key] = occurrences / (total_occurrences - max(len(key) - 1, 0))
+
+  vlmc = {"tree": tree, "occurrence_probability": occurrence_probability}
+  return json.dumps(vlmc)
 
 
 def _parse_line(line, deltas):
   numbers = re.findall('-?[0-9]+\.?[0-9]*', line)
   children = {}
   # Assumes we're only working with ACGT (in that order)
+  total = sum([int(numbers[i]) for i in [6, 7, 8, 9]])
   if deltas:
     children['A'] = float(numbers[14])
     children['C'] = float(numbers[15])
     children['G'] = float(numbers[16])
     children['T'] = float(numbers[17])
   else:
-    total = sum([int(numbers[i]) for i in [6, 7, 8, 9]])
     children['A'] = int(numbers[6]) / total
     children['C'] = int(numbers[7]) / total
     children['G'] = int(numbers[8]) / total
@@ -45,11 +52,11 @@ def _parse_line(line, deltas):
   key = strings[1]
   if key == '#':
     key = ''
-  return key, children
+  return key, children, total
 
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(description='Process directory of .tree files into .json.')
-  parser.add_argument('dir', help='the directory with .tree files')
+  parser.add_argument('--dir', help='the directory with .tree files')
   args = parser.parse_args()
-  parse_trees(args.dir)
+  parse_trees(args.dir, deltas=True)

@@ -8,7 +8,7 @@ import matplotlib as mpl
 
 from vlmc import VLMC
 from distance import NegativeLogLikelihood, NaiveParameterSampling, StationaryDistribution,\
-    ACGTContent, FrobeniusNorm, EstimateVLMC, FixedLengthSequenceKLDivergence, Projection
+    ACGTContent, FrobeniusNorm, EstimateVLMC, FixedLengthSequenceKLDivergence, Projection, PSTMatching
 import parse_trees_to_json
 from get_signature_metadata import get_metadata_for
 from util.print_distance import print_metrics, print_distance_output
@@ -129,6 +129,8 @@ def parse_distance_method(args):
     return FrobeniusNorm()
   elif args.kmeans:
     return Projection()
+  elif args.pst_matching:
+    return PSTMatching(args.dissimilarity_weight)
   else:
     return FrobeniusNorm()
 
@@ -148,6 +150,8 @@ if __name__ == '__main__':
   parser.add_argument('--frobenius-norm', action='store_true')
   parser.add_argument('--estimate-vlmc', action='store_true')
   parser.add_argument('--fixed-length-kl-divergence', action='store_true')
+  parser.add_argument('--kmeans', action='store_true')
+  parser.add_argument('--pst-matching', action='store_true')
 
   parser.add_argument('--fixed-sequence-length', type=int, default=8,
                       help='The length of the strings that are used in the fixed sequence length KL-divergence method.')
@@ -158,6 +162,7 @@ if __name__ == '__main__':
                       help='The directory which contains the trees to be used.')
   parser.add_argument('--out-directory', type=str, default='../images',
                       help='The directory to where images are written.')
+  parser.add_argument('--dissimilarity_weight', type=float, default=0.5)
 
   args = parser.parse_args()
   test(args)

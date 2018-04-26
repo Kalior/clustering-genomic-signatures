@@ -5,6 +5,7 @@ import numpy
 files = ['vlmc/vlmc.pyx', 'distance/naive_parameter_sampling.pyx', 'distance/negloglikelihood.pyx',
          'distance/stationary_distribution.pyx', 'distance/acgt.pyx', 'distance/frobenius.pyx',
          'distance/estimate.pyx', 'distance/projection.pyx', 'distance/fixed_length_sequence_kl_divergence.pyx',
+         'distance/pstmatching.pyx',
          'clustering/graph_based_clustering.pyx', 'clustering/mst_clustering.pyx',
          'clustering/clustering_metrics.pyx',
          'clustering/average_link_clustering.pyx',
