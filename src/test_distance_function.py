@@ -13,7 +13,7 @@ import parse_trees_to_json
 from get_signature_metadata import get_metadata_for
 from util.print_distance import print_metrics, print_distance_output
 from util.distance_metrics import update_metrics, normalise_metrics
-from util.draw_distance import draw_gc_plot, plot_distance, update_box_plot_data, draw_box_plot
+from util.draw_distance import plot_distance, update_box_plot_data, draw_box_plot
 
 label_size = 20
 mpl.rcParams['xtick.labelsize'] = label_size
@@ -45,10 +45,10 @@ def test_distance_function(d, tree_dir, out_dir):
   except:
     os.mkdir(out_dir)
 
-  test_distance_function_(d, vlmcs, test_vlmcs, metadata, out_dir)
+  test_distance_function_(d, vlmcs, test_vlmcs, metadata, out_dir, True, False, True)
 
 
-def test_distance_function_(d, vlmcs, test_vlmcs, metadata, out_dir):
+def test_distance_function_(d, vlmcs, test_vlmcs, metadata, out_dir, print_metrics=True, print_every_distance=False, do_plot=False):
   metrics = {
       "average_procent_of_genus_in_top": 0.0,
       "average_procent_of_family_in_top": 0.0,
@@ -64,37 +64,28 @@ def test_distance_function_(d, vlmcs, test_vlmcs, metadata, out_dir):
   all_family_orders = np.empty((len(vlmcs), len(vlmcs)))
   all_genus_orders = np.empty((len(vlmcs), len(vlmcs)))
 
-  fig, distance_ax, gc_ax = create_fig(len(vlmcs))
-
-  for i, vlmc in enumerate(vlmcs):
+  for f, vlmc in enumerate(vlmcs):
     sorted_results, elapsed_time = calculate_distances(d, vlmc, vlmcs)
 
     metrics = update_metrics(vlmc, vlmcs, sorted_results, metadata, elapsed_time, metrics)
     update_box_plot_data(vlmc, i, sorted_results, all_gc_differences,
                          all_family_orders, all_genus_orders, gc_distance_function, metadata)
 
-    # print_distance_output(vlmc, vlmcs, sorted_results, elapsed_time, metadata, metrics)
-    draw_gc_plot(sorted_results, vlmc, gc_distance_function, distance_ax, gc_ax)
-    plot_distance(sorted_results, vlmc, gc_distance_function, metadata, out_dir, True, True)
+    if print_every_distance:
+      print_distance_output(vlmc, vlmcs, sorted_results, elapsed_time, metadata, metrics)
+    if do_plots:
+      plot_distance(sorted_results, vlmc, gc_distance_function, metadata, out_dir, True, False)
 
-  number_of_bins = len(vlmcs) / 10
-  draw_box_plot(all_gc_differences, all_family_orders, all_genus_orders, number_of_bins, out_dir)
+  if do_plts:
+    number_of_bins = len(vlmcs) / 10
+    draw_box_plot(all_gc_differences, all_family_orders, all_genus_orders, number_of_bins, out_dir)
+
   metrics = normalise_metrics(metrics, vlmcs)
-  print_metrics(metrics)
 
-  out_file = os.path.join(out_dir, 'distance.pdf')
-  fig.savefig(out_file, dpi='figure', format='pdf')
+  if print_metrics:
+    print_metrics(metrics)
 
-
-def create_fig(size):
-  fig, [distance_ax, gc_ax] = plt.subplots(2, sharex='col', figsize=(30, 20), dpi=80)
-  distance_ax.set_xlim(-1, size)
-  gc_ax.set_xlim(-1, size)
-  plt.xticks(range(size))
-  gc_ax.grid(color='#cccccc', linestyle='--', linewidth=1)
-  distance_ax.grid(color='#cccccc', linestyle='--', linewidth=1)
-
-  return fig, distance_ax, gc_ax
+  return metrics
 
 
 def calculate_distances(d, vlmc, other_vlmcs):
@@ -125,7 +116,7 @@ def parse_distance_method(args):
     inner_d = FrobeniusNorm()
     return EstimateVLMC(inner_d)
   elif args.frobenius_norm:
-    print("Testing clustering with distance as frobenius norm")
+    print("Testing distance as frobenius norm")
     return FrobeniusNorm()
   elif args.kmeans:
     return Projection()
@@ -137,6 +128,11 @@ def parse_distance_method(args):
 
 def test(args):
   d = parse_distance_method(args)
+  try:
+    os.stat(args.out_directory)
+  except:
+    os.mkdir(args.out_directory)
+
   test_distance_function(d, args.directory, args.out_directory)
 
 if __name__ == '__main__':
