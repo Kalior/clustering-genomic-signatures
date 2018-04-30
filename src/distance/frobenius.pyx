@@ -9,16 +9,24 @@ cdef class FrobeniusNorm(object):
     calculating the frobenius norm of the difference.
   """
 
+  cdef bint use_union
+
+  def __init__(self, use_union=False):
+    self.use_union = use_union
+
   cpdef double distance(self, left_vlmc, right_vlmc):
     distance = self._frobenius_norm(left_vlmc, right_vlmc)
     return distance
 
   cdef double _frobenius_norm(self, left_vlmc, right_vlmc):
-    # intersection:
-    # cdef list shared_contexts = [context for context in left_vlmc.tree if context in right_vlmc.tree]
+    cdef set shared_contexts
+    if self.use_union:
+      # union
+      shared_contexts = set(left_vlmc.tree.keys()).union(set(right_vlmc.tree.keys()))
+    else:
+      # intersection:
+      shared_contexts = set([context for context in left_vlmc.tree if context in right_vlmc.tree])
 
-    # union
-    cdef set shared_contexts = set(left_vlmc.tree.keys()).union(set(right_vlmc.tree.keys()))
 
     cdef np.ndarray[FLOATTYPE_t, ndim=2] left_matrix = self._create_matrix(left_vlmc, shared_contexts)
     cdef np.ndarray[FLOATTYPE_t, ndim=2] right_matrix = self._create_matrix(right_vlmc, shared_contexts)

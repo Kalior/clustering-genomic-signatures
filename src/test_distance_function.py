@@ -22,11 +22,6 @@ mpl.rcParams['axes.axisbelow'] = True
 mpl.rcParams['font.size'] = 24
 
 
-def test_kl_divergence(tree_dir, out_dir, fixed_length):
-  d = FixedLengthSequenceKLDivergence(fixed_length)
-  test_distance_function(d, tree_dir, out_dir)
-
-
 def test_distance_function(d, tree_dir, out_dir):
   parse_trees_to_json.parse_trees(tree_dir)
   vlmcs = VLMC.from_json_dir(tree_dir)
@@ -116,14 +111,18 @@ def parse_distance_method(args):
     inner_d = FrobeniusNorm()
     return EstimateVLMC(inner_d)
   elif args.frobenius_norm:
-    print("Testing distance as frobenius norm")
-    return FrobeniusNorm()
+    print("Testing distance as frobenius norm, with union: {}".format(args.use_union))
+    return FrobeniusNorm(args.use_union)
   elif args.kmeans:
     return Projection()
   elif args.pst_matching:
+    print("Testing distance with PST matching")
     return PSTMatching(args.dissimilarity_weight)
+  elif args.fixed_length_kl_divergence:
+    print("Testing distance with fixed length kl, with {} length".format(args.fixed_sequence_length))
+    return FixedLengthSequenceKLDivergence(args.fixed_sequence_length)
   else:
-    return FrobeniusNorm()
+    return FrobeniusNorm(args.use_union)
 
 
 def test(args):
@@ -153,12 +152,14 @@ if __name__ == '__main__':
                       help='The length of the strings that are used in the fixed sequence length KL-divergence method.')
   parser.add_argument('--seqlen', type=int, default=1000,
                       help='The length of the sequences that are generated to calculate the likelihood.')
+  parser.add_argument('--dissimilarity_weight', type=float, default=0.5)
+  parser.add_argument('--use-union', action='store_true')
 
   parser.add_argument('--directory', type=str, default='../trees',
                       help='The directory which contains the trees to be used.')
   parser.add_argument('--out-directory', type=str, default='../images',
                       help='The directory to where images are written.')
-  parser.add_argument('--dissimilarity_weight', type=float, default=0.5)
+  parser.add_argument('--plot_distances', action='store_true')
 
   args = parser.parse_args()
   test(args)
