@@ -43,15 +43,25 @@ def same_genus_or_family_string(metadata, vlmc, other_vlmc):
     return ''
 
 
-def print_metrics(metrics):
-  print("Distance calculated in: {}s".format(metrics["global_time"]))
-  print("Average procent of genus in top #genus: {:5.5f}\t"
-        "Average procent of family in top #family {:5.5f}\n"
-        "Average distance fraction to genus: {:5.5f}\t"
-        "Average distance fraction to family {:5.5f}\t"
-        "Average distance: {:5.5f}\n".format(
-            metrics["average_procent_of_genus_in_top"],
-            metrics["average_procent_of_family_in_top"],
-            metrics["total_average_distance_to_genus"],
-            metrics["total_average_distance_to_family"],
-            metrics["total_average_distance"]))
+def print_metrics(metrics, latex):
+  if latex:
+    # Name, % genus, % family, dist genus, dist family, time
+    print("{:20} & {:10.5f} & {:10.5f} & {:10.5f} & {:10.5f} & {:10.5f}s \\\\ \hline".format(
+        metrics['distance_name'],
+        metrics['average_procent_of_genus_in_top'],
+        metrics['average_procent_of_family_in_top'],
+        metrics['total_average_distance_to_genus'],
+        metrics['total_average_distance_to_family'],
+        metrics['global_time']))
+  else:
+    print("Distance calculated in: {}s".format(metrics["global_time"]))
+    print("Average procent of genus in top #genus: {:5.5f}\t"
+          "Average procent of family in top #family {:5.5f}\n"
+          "Average distance fraction to genus: {:5.5f}\t"
+          "Average distance fraction to family {:5.5f}\t"
+          "Average distance: {:5.5f}\n".format(
+              metrics["average_procent_of_genus_in_top"],
+              metrics["average_procent_of_family_in_top"],
+              metrics["total_average_distance_to_genus"],
+              metrics["total_average_distance_to_family"],
+              metrics["total_average_distance"]))

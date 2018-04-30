@@ -13,16 +13,17 @@ import parse_trees_to_json
 from get_signature_metadata import get_metadata_for
 from util.print_distance import print_metrics, print_distance_output
 from util.distance_metrics import update_metrics, normalise_metrics
-from util.draw_distance import plot_distance, update_box_plot_data, draw_box_plot
+from util.draw_distance import plot_distance, update_gc_box_data, update_metadata_box,\
+    plot_cummlative_box, plot_gc_box
 
-label_size = 20
+label_size = 20 * 2
 mpl.rcParams['xtick.labelsize'] = label_size
 mpl.rcParams['ytick.labelsize'] = label_size
 mpl.rcParams['axes.axisbelow'] = True
-mpl.rcParams['font.size'] = 24
+mpl.rcParams['font.size'] = 24 * 2
 
 
-def test_distance_function(d, tree_dir, out_dir):
+def test_distance_function(d, tree_dir, out_dir, plot_distances=False, plot_boxes=False):
   parse_trees_to_json.parse_trees(tree_dir)
   vlmcs = VLMC.from_json_dir(tree_dir)
 
@@ -40,11 +41,12 @@ def test_distance_function(d, tree_dir, out_dir):
   except:
     os.mkdir(out_dir)
 
-  return test_distance_function_(d, vlmcs, test_vlmcs, metadata, out_dir, True, False, True)
+  return test_distance_function_(d, vlmcs, test_vlmcs, metadata, out_dir, True, False, plot_distances, plot_boxes)
 
 
-def test_distance_function_(d, vlmcs, test_vlmcs, metadata, out_dir, do_print_metrics=True, print_every_distance=False, do_plot=False):
+def test_distance_function_(d, vlmcs, test_vlmcs, metadata, out_dir, do_print_metrics=True, print_every_distance=False, plot_distances=False, plot_boxes=False):
   metrics = {
+      "distance_name": d.__class__.__name__,
       "average_procent_of_genus_in_top": 0.0,
       "average_procent_of_family_in_top": 0.0,
       "total_average_distance_to_genus": 0.0,
@@ -59,26 +61,29 @@ def test_distance_function_(d, vlmcs, test_vlmcs, metadata, out_dir, do_print_me
   all_family_orders = np.empty((len(vlmcs), len(vlmcs)))
   all_genus_orders = np.empty((len(vlmcs), len(vlmcs)))
 
-  for f, vlmc in enumerate(vlmcs):
+  for index, vlmc in enumerate(vlmcs):
     sorted_results, elapsed_time = calculate_distances(d, vlmc, vlmcs)
 
     metrics = update_metrics(vlmc, vlmcs, sorted_results, metadata, elapsed_time, metrics)
-    update_box_plot_data(vlmc, i, sorted_results, all_gc_differences,
-                         all_family_orders, all_genus_orders, gc_distance_function, metadata)
+    update_gc_box_data(vlmc, index, sorted_results, all_gc_differences, gc_distance_function)
+    update_metadata_box(vlmc, index, sorted_results, all_family_orders, metadata, 'family')
+    update_metadata_box(vlmc, index, sorted_results, all_genus_orders, metadata, 'genus')
 
     if print_every_distance:
       print_distance_output(vlmc, vlmcs, sorted_results, elapsed_time, metadata, metrics)
-    if do_plots:
+    if plot_distances:
       plot_distance(sorted_results, vlmc, gc_distance_function, metadata, out_dir, True, False)
 
-  if do_plots:
-    number_of_bins = len(vlmcs) / 10
-    draw_box_plot(all_gc_differences, all_family_orders, all_genus_orders, number_of_bins, out_dir)
+  if plot_boxes:
+    number_of_bins = 10  # len(vlmcs) / 10
+    plot_cummlative_box(all_family_orders, number_of_bins, 'family', out_dir)
+    plot_cummlative_box(all_genus_orders, number_of_bins, 'genus', out_dir)
+    plot_gc_box(all_gc_differences, number_of_bins, out_dir)
 
   metrics = normalise_metrics(metrics, vlmcs)
 
   if do_print_metrics:
-    print_metrics(metrics)
+    print_metrics(metrics, True)
 
   return metrics
 
@@ -132,7 +137,8 @@ def test(args):
   except:
     os.mkdir(args.out_directory)
 
-  test_distance_function(d, args.directory, args.out_directory)
+  test_distance_function(d, args.directory, args.out_directory,
+                         args.plot_distances, args.plot_boxes)
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(
@@ -159,7 +165,8 @@ if __name__ == '__main__':
                       help='The directory which contains the trees to be used.')
   parser.add_argument('--out-directory', type=str, default='../images',
                       help='The directory to where images are written.')
-  parser.add_argument('--plot_distances', action='store_true')
+  parser.add_argument('--plot-distances', action='store_true')
+  parser.add_argument('--plot-boxes', action='store_true')
 
   args = parser.parse_args()
   test(args)

@@ -131,39 +131,38 @@ def scatter_tuple_list(ax, tuple_list, c, marker):
   ax.scatter(xs, ys, s=600, c=c, marker=marker)
 
 
-def update_box_plot_data(vlmc, index, sorted_results, all_gc_differences,
-                         all_family_orders, all_genus_orders, gc_distance_function, metadata):
+def update_gc_box_data(vlmc, index, sorted_results, all_gc_differences, gc_distance_function):
   gc_distances = [gc_distance_function.distance(vlmc, v) for _, v in sorted_results]
   for i, gc_distance in enumerate(gc_distances):
     all_gc_differences[index, i] = gc_distance
 
+
+def update_metadata_box(vlmc, index, sorted_results, all_meta_orders, metadata, meta_key):
   for i, (_, other) in enumerate(sorted_results):
-    if metadata[other.name]['family'] == metadata[vlmc.name]['family']:
-      all_family_orders[index, i] = 1
+    if metadata[other.name][meta_key] == metadata[vlmc.name][meta_key]:
+      all_meta_orders[index, i] = 1
     else:
-      all_family_orders[index, i] = 0
-
-  for i, (_, other) in enumerate(sorted_results):
-    if metadata[other.name]['genus'] == metadata[vlmc.name]['genus']:
-      all_genus_orders[index, i] = 1
-    else:
-      all_genus_orders[index, i] = 0
+      all_meta_orders[index, i] = 0
 
 
-def draw_box_plot(all_gc_differences, all_family_orders, all_genus_orders, number_of_bins, out_dir):
+def plot_gc_box(all_gc_differences, number_of_bins, out_dir):
   gc_binned = all_gc_differences.T.reshape(-1)
   gc_binned = np.array_split(gc_binned, number_of_bins, axis=0)
 
-  family_binned = bin_cummulative(all_family_orders, number_of_bins)
-  genus_binned = bin_cummulative(all_genus_orders, number_of_bins)
+  fig, ax = plt.subplots(1, figsize=(80, 20), dpi=80)
+  boxplot(ax, gc_binned, "GC-difference")
 
-  fig, [gc_ax, family_ax, genus_ax] = plt.subplots(3, figsize=(30, 20), dpi=80)
+  out_file = os.path.join(out_dir, "box-gc.pdf")
+  fig.savefig(out_file, dpi='figure', format='pdf')
 
-  boxplot(gc_ax, gc_binned, "GC-difference")
-  boxplot(family_ax, family_binned, "Cummulative percent of family captured", (0, 1.1))
-  boxplot(genus_ax, genus_binned, "Cummulative percent of genus captured", (0, 1.1))
 
-  out_file = os.path.join(out_dir, "box.pdf")
+def plot_cummlative_box(all_meta_orders, number_of_bins, meta_name, out_dir):
+  meta_binned = bin_cummulative(all_meta_orders, number_of_bins)
+
+  fig, ax = plt.subplots(1, figsize=(80, 20), dpi=80)
+  boxplot(ax, meta_binned, "Cummulative percent of {} captured".format(meta_name), (0, 1.1))
+
+  out_file = os.path.join(out_dir, "box-{}.pdf".format(meta_name))
   fig.savefig(out_file, dpi='figure', format='pdf')
 
 
