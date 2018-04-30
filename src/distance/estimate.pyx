@@ -48,7 +48,7 @@ cdef class EstimateVLMC(object):
         for character in alphabet:
           tree[context][character] = transition_counters[context][character] / count
 
-    return VLMC(tree, "estimated")
+    return VLMC(tree, "estimated", {})
 
   cdef dict _count_events(self, vlmc, sequence):
     cdef dict transition_counters = {}
