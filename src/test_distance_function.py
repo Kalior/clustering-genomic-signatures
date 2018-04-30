@@ -48,7 +48,7 @@ def test_distance_function(d, tree_dir, out_dir):
   return test_distance_function_(d, vlmcs, test_vlmcs, metadata, out_dir, True, False, True)
 
 
-def test_distance_function_(d, vlmcs, test_vlmcs, metadata, out_dir, print_metrics=True, print_every_distance=False, do_plot=False):
+def test_distance_function_(d, vlmcs, test_vlmcs, metadata, out_dir, do_print_metrics=True, print_every_distance=False, do_plot=False):
   metrics = {
       "average_procent_of_genus_in_top": 0.0,
       "average_procent_of_family_in_top": 0.0,
@@ -76,13 +76,13 @@ def test_distance_function_(d, vlmcs, test_vlmcs, metadata, out_dir, print_metri
     if do_plots:
       plot_distance(sorted_results, vlmc, gc_distance_function, metadata, out_dir, True, False)
 
-  if do_plts:
+  if do_plots:
     number_of_bins = len(vlmcs) / 10
     draw_box_plot(all_gc_differences, all_family_orders, all_genus_orders, number_of_bins, out_dir)
 
   metrics = normalise_metrics(metrics, vlmcs)
 
-  if print_metrics:
+  if do_print_metrics:
     print_metrics(metrics)
 
   return metrics
