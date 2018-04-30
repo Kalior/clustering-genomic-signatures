@@ -15,7 +15,7 @@ def draw_graph(clustering_metrics, meta_name, meta_key, clusters, out_directory)
 
   cluster_colors = _plot_graph(G, metadata, meta_name, meta_key, clusters, out_directory)
 
-  _plot_silhouette(clustering_metrics, cluster_colors, out_directory)
+  _plot_silhouette(clustering_metrics, cluster_colors, meta_key, out_directory)
 
 
 def _plot_graph(G, metadata, meta_name, meta_key, clusters, out_directory):
@@ -29,7 +29,7 @@ def _plot_graph(G, metadata, meta_name, meta_key, clusters, out_directory):
 
   _draw_legend(G, metadata, meta_name, meta, meta_colors, meta_colormap)
 
-  out_file = os.path.join(out_directory, 'clustering_{}.pdf'.format(clusters))
+  out_file = os.path.join(out_directory, 'clustering_{}_{}.pdf'.format(meta_key, clusters))
   plt.savefig(out_file, dpi='figure', format='pdf')
   plt.close()
 
@@ -97,7 +97,7 @@ def _draw_legend(G, metadata, meta_name, meta, meta_colors, meta_colormap):
   l.draggable()
 
 
-def _plot_silhouette(clustering_metrics, cluster_colors, out_directory):
+def _plot_silhouette(clustering_metrics, cluster_colors, meta_key, out_directory):
   G = clustering_metrics.G
   metadata = clustering_metrics.metadata
   silhouette = clustering_metrics.silhouette_metric()
@@ -116,6 +116,7 @@ def _plot_silhouette(clustering_metrics, cluster_colors, out_directory):
   plt.bar(x=range(len(silhouette)), height=bar_heights, tick_label=bar_labels, color=bar_colors)
   plt.xticks(range(len(bar_heights)), rotation=30, ha="right")
 
-  out_file = os.path.join(out_directory, 'sillhouette_{}.pdf'.format(len(connected_components)))
+  out_file = os.path.join(out_directory, 'sillhouette_{}_{}.pdf'.format(
+      meta_key, len(connected_components)))
   plt.savefig(out_file, dpi='figure', format='pdf')
   plt.close()

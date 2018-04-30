@@ -15,14 +15,16 @@ from util.print_clusters import print_connected_components
 def test_clustering(d, clusters, vlmcs, out_directory, cluster_class=MSTClustering, do_draw_graph=True):
   metadata = get_metadata_for([vlmc.name for vlmc in vlmcs])
 
-  clustering = cluster_class(vlmcs, d)
-  for i in range(clusters + 0, clusters - 1, -1):
+  clustering = cluster_class(vlmcs, d, metadata)
+  for i in range(clusters + 6, clusters - 1, -1):
     print(i)
     clustering_metrics = clustering.cluster(i)
     clustering_metrics.metadata = metadata
 
     if do_draw_graph:
-      draw_graph(clustering_metrics, 'Family', 'family', i, out_directory)
+      pictures = [('Family', 'family'), ('Genus', 'genus'), ('Host', 'hosts')]
+      for name, key in pictures:
+        draw_graph(clustering_metrics, name, key, i, out_directory)
     print_connected_components(clustering_metrics)
 
 
@@ -73,9 +75,11 @@ if __name__ == '__main__':
   parser.add_argument('--stationary-distribution', action='store_true')
   parser.add_argument('--estimate-vlmc', action='store_true')
   parser.add_argument('--frobenius-norm', action='store_true')
+  parser.add_argument('--pst-matching', action='store_true')
 
   parser.add_argument('--seqlen', type=int, default=1000,
                       help='The length of the sequences that are generated to calculate the likelihood.')
+  parser.add_argument('--dissimilarity_weight', type=float, default=0.5)
 
   parser.add_argument('--clusters', type=int, default=10,
                       help='The number of clusters produced.')
