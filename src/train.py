@@ -17,7 +17,9 @@ def train(vlmcs, sequence_length, out_directory, number_of_parameters=128):
       'number_of_parameters': number_of_parameters,
       'min_count': 4,
       'max_depth': 15,
-      'count_free_parameters_individually': 'false'
+      'count_free_parameters_individually': 'false',
+      'generate_full_markov_chain': False,
+      'markov_chain_order': 3
   }
   train_vlmcs(parameters, list_path, out_directory)
 
@@ -45,22 +47,29 @@ def train_vlmcs(parameters, list_path, out_directory, input_directory=None, add_
   if input_directory is None:
     input_directory = out_directory
 
-  standard_args = "-pseudo -crr -f_f {} -ipf .fa -ipwd {} -opwd {} -osf TEST_ -m 1 -frac 0 -revcomp".format(
-      list_path, input_directory, out_directory)
-  parameter_args = "-c_c {} -nc {} -npar {} -minc {} -kmax {} -free {}".format(
+  #model 0 = full order markov chain, 1 = variable markov chain
+  if parameters['generate_full_markov_chain']:
+    model_type = 0
+  else:
+    model_type = 1
+  standard_args = "-pseudo -crr -f_f {} -ipf .fa -ipwd {} -opwd {} -osf TEST_ -m {} -frac 0 -revcomp".format(
+      list_path, input_directory, out_directory, model_type)
+  parameter_args = "-c_c {} -nc {} -npar {} -minc {} -kmax {} -free {} -k {}".format(
       parameters['use_constant_cutoff'],
       parameters['cutoff_value'],
       parameters['number_of_parameters'],
       parameters['min_count'],
       parameters['max_depth'],
-      parameters['count_free_parameters_individually']
+      parameters['count_free_parameters_individually'],
+      parameters['markov_chain_order']
   )
 
   args = ("../lib/classifier " + standard_args + " " + parameter_args).split()
 
   popen = subprocess.Popen(args, stdout=subprocess.PIPE)
   popen.wait()
-  output = popen.stdout.read()
+  # print("Waited for classifier")
+  # output = popen.stdout.read()
   # print(output.decode("utf-8"))
   if add_underlines_:
     # Needed for the parsing (since we expect them to be there...)

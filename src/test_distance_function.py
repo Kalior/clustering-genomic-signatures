@@ -35,11 +35,11 @@ def test_distance_function(d, tree_dir, out_dir, plot_distances=False, plot_boxe
     test_vlmcs = VLMC.from_json_dir(test_dir)
   else:
     test_vlmcs = vlmcs
-
-  try:
-    os.stat(out_dir)
-  except:
-    os.mkdir(out_dir)
+  if out_dir is not None:
+    try:
+      os.stat(out_dir)
+    except:
+      os.mkdir(out_dir)
 
   return test_distance_function_(d, vlmcs, test_vlmcs, metadata, out_dir, True, False, plot_distances, plot_boxes)
 
