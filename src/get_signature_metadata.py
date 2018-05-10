@@ -103,6 +103,21 @@ def matches(species, row):
   for spc in species:
     if spc in row_species:
       return spc
+    split_spc = spc.split(" ")
+
+    # Greekify if herpes or endornavirus
+    greeks = ['alpha', 'beta', 'gamma']
+    if len(split_spc) > 1 and split_spc[1] == "herpesvirus":
+      for greek in greeks:
+        greek_spc = " ".join([split_spc[0], greek + split_spc[1], split_spc[2]])
+        if greek_spc in row_species:
+          return spc
+    elif len(split_spc) > 2 and split_spc[2] == "endornavirus":
+      for greek in greeks:
+        greek_spc = " ".join([split_spc[0], split_spc[1], greek + " ".join(split_spc[2:])])
+        if greek_spc in row_species:
+          return spc
+
   return None
 
 
