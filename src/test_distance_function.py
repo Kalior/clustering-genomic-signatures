@@ -6,6 +6,14 @@ import os
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 
+if __name__ == '__main__':
+  label_size = 20 * 2
+  mpl.rcParams['xtick.labelsize'] = label_size
+  mpl.rcParams['ytick.labelsize'] = label_size
+  mpl.rcParams['axes.axisbelow'] = True
+  mpl.rcParams['font.size'] = 24 * 2
+
+
 from vlmc import VLMC
 from distance import NegativeLogLikelihood, NaiveParameterSampling, StationaryDistribution,\
     ACGTContent, FrobeniusNorm, EstimateVLMC, FixedLengthSequenceKLDivergence, Projection, PSTMatching
@@ -15,12 +23,6 @@ from util.print_distance import print_metrics, print_distance_output
 from util.distance_metrics import update_metrics, normalise_metrics
 from util.draw_distance import plot_distance, update_gc_box_data, update_metadata_box,\
     plot_cummlative_box, plot_gc_box
-
-label_size = 20 * 2
-mpl.rcParams['xtick.labelsize'] = label_size
-mpl.rcParams['ytick.labelsize'] = label_size
-mpl.rcParams['axes.axisbelow'] = True
-mpl.rcParams['font.size'] = 24 * 2
 
 
 def test_distance_function(d, tree_dir, out_dir, plot_distances=False, plot_boxes=False):
@@ -41,10 +43,13 @@ def test_distance_function(d, tree_dir, out_dir, plot_distances=False, plot_boxe
   except:
     os.mkdir(out_dir)
 
-  return test_distance_function_(d, vlmcs, test_vlmcs, metadata, out_dir, True, False, plot_distances, plot_boxes)
+  return test_distance_function_(d, vlmcs, test_vlmcs, metadata, out_dir,
+                                 True, False, plot_distances, plot_boxes)
 
 
-def test_distance_function_(d, vlmcs, test_vlmcs, metadata, out_dir, do_print_metrics=True, print_every_distance=False, plot_distances=False, plot_boxes=False):
+def test_distance_function_(d, vlmcs, test_vlmcs, metadata, out_dir,
+                            do_print_metrics=True, print_every_distance=False,
+                            plot_distances=False, plot_boxes=False):
   metrics = {
       "distance_name": d.__class__.__name__,
       "average_procent_of_genus_in_top": 0.0,
@@ -72,7 +77,8 @@ def test_distance_function_(d, vlmcs, test_vlmcs, metadata, out_dir, do_print_me
     if print_every_distance:
       print_distance_output(vlmc, vlmcs, sorted_results, elapsed_time, metadata, metrics)
     if plot_distances:
-      plot_distance(sorted_results, vlmc, gc_distance_function, metadata, out_dir, True, False)
+      plot_distance(sorted_results, vlmc, gc_distance_function,
+                    metadata, out_dir, add_gc=True, add_sequence_lengths=False)
 
   if plot_boxes:
     number_of_bins = 10  # len(vlmcs) / 10
@@ -158,7 +164,7 @@ if __name__ == '__main__':
                       help='The length of the strings that are used in the fixed sequence length KL-divergence method.')
   parser.add_argument('--seqlen', type=int, default=1000,
                       help='The length of the sequences that are generated to calculate the likelihood.')
-  parser.add_argument('--dissimilarity_weight', type=float, default=0.5)
+  parser.add_argument('--dissimilarity-weight', type=float, default=0.5)
   parser.add_argument('--use-union', action='store_true')
 
   parser.add_argument('--directory', type=str, default='../trees',
