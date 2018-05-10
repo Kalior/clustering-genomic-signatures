@@ -3,12 +3,21 @@ import argparse
 import time
 import os
 
+import matplotlib as mpl
+
+if __name__ == '__main__':
+  label_size = 20 * 2
+  mpl.rcParams['xtick.labelsize'] = label_size
+  mpl.rcParams['ytick.labelsize'] = label_size
+  mpl.rcParams['axes.axisbelow'] = True
+  mpl.rcParams['font.size'] = 24 * 2
+
 from vlmc import VLMC
 from clustering import *
 import parse_trees_to_json
 from get_signature_metadata import get_metadata_for
 from test_distance_function import parse_distance_method
-from util.draw_clusters import draw_graph
+from util.draw_clusters import draw_graph, plot_largest_components
 from util.print_clusters import print_connected_components
 
 
@@ -16,15 +25,19 @@ def test_clustering(d, clusters, vlmcs, out_directory, cluster_class=MSTClusteri
   metadata = get_metadata_for([vlmc.name for vlmc in vlmcs])
 
   clustering = cluster_class(vlmcs, d, metadata)
-  for i in range(clusters + 6, clusters - 1, -1):
+  for i in range(clusters + 0, clusters - 1, -1):
     print(i)
     clustering_metrics = clustering.cluster(i)
     clustering_metrics.metadata = metadata
 
     if do_draw_graph:
-      pictures = [('Family', 'family'), ('Genus', 'genus'), ('Host', 'hosts')]
+      plot_largest_components(clustering_metrics, i, out_directory)
+
+      pictures = [('Family', 'family'), ('Genus', 'genus'),
+                  ('Host', 'hosts'), ('Baltimore', 'baltimore')]
       for name, key in pictures:
         draw_graph(clustering_metrics, name, key, i, out_directory)
+
     print_connected_components(clustering_metrics)
 
 
@@ -62,12 +75,13 @@ def test(args):
   except:
     os.mkdir(args.out_directory)
 
-  test_clustering(d, args.clusters, vlmcs, args.out_directory, cluster_class, do_draw_graph=True)
+  test_clustering(d, args.clusters, vlmcs, args.out_directory, cluster_class, args.draw_graph)
 
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(
-      description='Tests the clustering/distance functions for vlmcs, checking which vlmc they most closely match.')
+      description=('Tests the clustering/distance functions for vlmcs,'
+                   'checking which vlmc they most closely match.'))
 
   parser.add_argument('--parameter-sampling', action='store_true')
   parser.add_argument('--negative-log-likelihood', action='store_true')
@@ -79,7 +93,8 @@ if __name__ == '__main__':
 
   parser.add_argument('--seqlen', type=int, default=1000,
                       help='The length of the sequences that are generated to calculate the likelihood.')
-  parser.add_argument('--dissimilarity_weight', type=float, default=0.5)
+  parser.add_argument('--dissimilarity-weight', type=float, default=0.5)
+  parser.add_argument('--use-union', action='store_true')
 
   parser.add_argument('--clusters', type=int, default=10,
                       help='The number of clusters produced.')
@@ -88,6 +103,7 @@ if __name__ == '__main__':
                       help='The directory to source the trees for the VLMCs from.')
   parser.add_argument('--out-directory', type=str, default='../images',
                       help='The directory to where images are written.')
+  parser.add_argument('--draw-graph', action='store_true')
 
   parser.add_argument('--average-link-clustering', action='store_true')
   parser.add_argument('--single-link-clustering', action='store_true')
