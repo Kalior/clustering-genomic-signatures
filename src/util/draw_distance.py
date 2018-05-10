@@ -16,13 +16,14 @@ def plot_distance(sorted_results, vlmc, gc_distance_function, metadata, out_dir,
   plt.xticks(np.arange(len(sorted_results)), rotation=30, fontsize=16)
   ax.set_xticklabels(species_names, ha="right")
 
-  legend_markers = [legend_marker('Same order', 'o', '#ff007f'),
-                    legend_marker('Same family', 'o', '#ff7f00'),
-                    legend_marker('Same subfamily', 'o', '#7fff00'),
-                    legend_marker('Same genus', 'o', '#007fff'),
-                    legend_marker('Same host', '*', '#000000'),
-                    legend_marker('Distance', '.', '#000000')
-                    ]
+  legend_markers = [
+      legend_marker('Same order', 'o', '#ff007f'),
+      legend_marker('Same family', 'o', '#ff7f00'),
+      legend_marker('Same subfamily', 'o', '#7fff00'),
+      legend_marker('Same genus', 'o', '#007fff'),
+      legend_marker('Same host', '*', '#000000'),
+      legend_marker('Distance', '.', '#000000')
+  ]
 
   if add_gc:
     gc_legend_marker = legend_marker('GC difference', '.', '#999999', 'dashed')
