@@ -12,21 +12,13 @@ def print_connected_components(clustering_metrics):
 
   print('\n\n'.join(output))
 
-  metrics_for_non_single_clusters = [metrics for metrics, connected in zip(
-      connected_component_metrics, nx.connected_components(G)) if len(connected) > 1]
-
   distance_mean = clustering_metrics.distance_mean
-  average_of_same_genus = sum(
-      [metrics[0] for metrics in metrics_for_non_single_clusters]) / len(metrics_for_non_single_clusters)
-  average_of_same_family = sum(
-      [metrics[1] for metrics in metrics_for_non_single_clusters]) / len(metrics_for_non_single_clusters)
-  total_average_distance = sum(
-      [metrics[2] for metrics in metrics_for_non_single_clusters]) / len(metrics_for_non_single_clusters) / distance_mean
+  average_of_same_genus = clustering_metrics.average_percent_same_taxonomy('genus')
+  average_of_same_family = clustering_metrics.average_percent_same_taxonomy('family')
 
   print("Average percent of same genus in clusters: {:5.5f}\t"
-        "Average percent of same family in clusters: {:5.5f}\t"
-        "Average distance in clusters: {:5.5f}\t".format(
-            average_of_same_genus, average_of_same_family, total_average_distance))
+        "Average percent of same family in clusters: {:5.5f}\n".format(
+            average_of_same_genus, average_of_same_family))
 
   sorted_sizes = sorted([len(connected) for connected in nx.connected_components(G)])
   print("Cluster sizes " + " ".join([str(i) for i in sorted_sizes]))
@@ -35,17 +27,15 @@ def print_connected_components(clustering_metrics):
 def component_metrics(connected_component, clustering_metrics):
   percent_of_same_genus = clustering_metrics.percent_same_taxonomy(connected_component, 'genus')
   percent_of_same_family = clustering_metrics.percent_same_taxonomy(connected_component, 'family')
-  average_distance = clustering_metrics.average_distance_between_vlmcs(connected_component)
-  return percent_of_same_genus, percent_of_same_family, average_distance
+  return percent_of_same_genus, percent_of_same_family
 
 
 def component_string(connected, metadata, metrics):
   output = [output_line(metadata, vlmc) for vlmc in connected]
 
   metric_string = ("\nPercent of same genus: {:5.5f} \t"
-                   "Percent of same family: {:5.5f} \t"
-                   "Average distance: {:5.5f}\n".format(
-                       metrics[0], metrics[1], metrics[2]))
+                   "Percent of same family: {:5.5f} \n".format(
+                       metrics[0], metrics[1]))
 
   return '\n'.join(output) + metric_string
 
