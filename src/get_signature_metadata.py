@@ -73,26 +73,33 @@ def get_virus_hosts(signatures, metadata, file=None):
   return _find_hosts(file, species)
 
 
-def _find_hosts(file, species):
-  hosts = {}
+def _find_hosts(file, species, host_class=False):
+  hosts_list = {}
   with open(file) as f:
     rd = csv.reader(f, delimiter="\t", quotechar='"')
     for row in rd:
       match = matches(species, row)
       if not match is None:
-        host_split = row[9].split("; ")
-        if len(host_split) > 4:
-          host = host_split[4]
-        else:
-          host = "Not Found"
 
-        if match in hosts and host not in hosts[match]:
-          hosts[match] += ", " + host
+        if host_class:
+          host_split = row[9].split("; ")
+          if len(host_split) > 4:
+            host = host_split[4]
+          else:
+            host = ''
         else:
-          hosts[match] = host
+          host = row[8]
 
+        if match in hosts_list and host not in hosts_list[match] and host != "":
+          hosts_list[match] += [host]
+        elif host != "":
+          hosts_list[match] = [host]
+
+  hosts = {}
   for spc in species:
-    if not spc in hosts:
+    if spc in hosts_list:
+      hosts[spc] = ", ".join(sorted(hosts_list[spc]))
+    else:
       hosts[spc] = "Not Found"
 
   return hosts
