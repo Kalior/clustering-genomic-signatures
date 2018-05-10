@@ -12,10 +12,12 @@ cdef class GraphBasedClustering:
   """
     Super class for every graph-based clustering method.
   """
-  def __cinit__(self, vlmcs, d):
+
+  def __cinit__(self, vlmcs, d, metadata):
     self.vlmcs = vlmcs
     self.d = d
     self.file_name = 'cluster_distances'
+    self.metadata = metadata
     self.indexed_distances = np.ndarray([len(vlmcs), len(vlmcs)], dtype=FLOATTYPE)
 
     G = nx.Graph()
@@ -42,7 +44,8 @@ cdef class GraphBasedClustering:
     self.created_clusters = clusters
 
     distance_mean = np.mean(self.distances, axis=None)
-    metrics = ClusteringMetrics(self.G, self.d, distance_mean, self.indexed_distances, self.vlmcs)
+    metrics = ClusteringMetrics(self.G, self.d, distance_mean,
+                                self.indexed_distances, self.vlmcs, self.metadata)
     return metrics
 
   cdef void _make_fully_connected_components(self):

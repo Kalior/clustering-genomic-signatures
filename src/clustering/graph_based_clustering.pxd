@@ -14,6 +14,7 @@ cdef class GraphBasedClustering:
   cdef np.ndarray indexed_distances
   cdef int created_clusters
   cdef object G
+  cdef dict metadata
 
   cpdef object cluster(self, clusters)
 

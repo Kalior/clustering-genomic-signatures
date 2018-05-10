@@ -26,7 +26,6 @@ def test_clustering(d, vlmcs, cluster_class):
   for i in range(len(vlmcs) - 1, 0, -1):
     print(i)
     clustering_metrics = clustering.cluster(i)
-    clustering_metrics.metadata = metadata
 
     metrics[i, 0] = clustering_metrics.average_silhouette()
     metrics[i, 1] = clustering_metrics.average_percent_same_taxonomy('order')

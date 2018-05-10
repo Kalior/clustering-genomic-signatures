@@ -28,7 +28,6 @@ def test_clustering(d, clusters, vlmcs, out_directory, cluster_class=MSTClusteri
   for i in range(clusters + 0, clusters - 1, -1):
     print(i)
     clustering_metrics = clustering.cluster(i)
-    clustering_metrics.metadata = metadata
 
     if do_draw_graph:
       plot_largest_components(clustering_metrics, i, out_directory)
@@ -60,9 +59,12 @@ def parse_clustering_method(args):
   elif args.kmeans:
     print("Testing k means clustering with k = {}".format(args.clusters))
     return KMeans
+  elif args.dendrogram:
+    print("Clustering to dendrogram with the help of scipy")
+    return DendrogramClustering
   else:
     print("Clustering with min single linkage")
-    return MSTClustering
+    return AverageLinkClustering
 
 
 def test(args):
@@ -109,6 +111,7 @@ if __name__ == '__main__':
   parser.add_argument('--single-link-clustering', action='store_true')
   parser.add_argument('--fuzzy-similarity-clustering', action='store_true')
   parser.add_argument('--kmeans', action='store_true')
+  parser.add_argument('--dendrogram', action='store_true')
 
   args = parser.parse_args()
   test(args)

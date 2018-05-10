@@ -17,13 +17,14 @@ cdef class ClusteringMetrics(object):
   cdef object d
   cdef list vlmcs
 
-  def __cinit__(self, G, d, distance_mean, indexed_distances, vlmcs):
-    self.G = G # the clustering of the vlmcs
+  def __cinit__(self, G, d, distance_mean, indexed_distances, vlmcs, metadata):
+    self.G = G  # the clustering of the vlmcs
     self.distance_mean = distance_mean
     self.indexed_distances = indexed_distances
-    self.metadata = None # needs to be set after initialization
+    self.metadata = None  # needs to be set after initialization
     self.d = d
     self.vlmcs = vlmcs
+    self.metadata = metadata
 
   cpdef double average_silhouette(self):
     silhouette = self.silhouette_metric()
