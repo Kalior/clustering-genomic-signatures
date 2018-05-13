@@ -146,10 +146,8 @@ def test(args):
   test_distance_function(d, args.directory, args.out_directory,
                          args.plot_distances, args.plot_boxes)
 
-if __name__ == '__main__':
-  parser = argparse.ArgumentParser(
-      description='Tests the distance functions for the vlmcs in ../trees, checking which vlmc they most closely match.')
 
+def add_distance_arguments(parser):
   parser.add_argument('--parameter-sampling', action='store_true')
   parser.add_argument('--negative-log-likelihood', action='store_true')
   parser.add_argument('--acgt-content', action='store_true')
@@ -157,7 +155,6 @@ if __name__ == '__main__':
   parser.add_argument('--frobenius-norm', action='store_true')
   parser.add_argument('--estimate-vlmc', action='store_true')
   parser.add_argument('--fixed-length-kl-divergence', action='store_true')
-  parser.add_argument('--kmeans', action='store_true')
   parser.add_argument('--pst-matching', action='store_true')
 
   parser.add_argument('--fixed-sequence-length', type=int, default=8,
@@ -166,6 +163,12 @@ if __name__ == '__main__':
                       help='The length of the sequences that are generated to calculate the likelihood.')
   parser.add_argument('--dissimilarity-weight', type=float, default=0.5)
   parser.add_argument('--use-union', action='store_true')
+
+if __name__ == '__main__':
+  parser = argparse.ArgumentParser(
+      description='Tests the distance functions for the vlmcs in ../trees, checking which vlmc they most closely match.')
+
+  add_distance_arguments(parser)
 
   parser.add_argument('--directory', type=str, default='../trees',
                       help='The directory which contains the trees to be used.')

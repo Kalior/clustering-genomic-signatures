@@ -16,7 +16,7 @@ from vlmc import VLMC
 from clustering import *
 import parse_trees_to_json
 from get_signature_metadata import get_metadata_for
-from test_distance_function import parse_distance_method
+from test_distance_function import parse_distance_method, add_distance_arguments
 from util.draw_clusters import draw_graph, plot_largest_components
 from util.print_clusters import print_connected_components
 
@@ -80,23 +80,20 @@ def test(args):
   test_clustering(d, args.clusters, vlmcs, args.out_directory, cluster_class, args.draw_graph)
 
 
+def add_clustering_arguments(parser):
+  parser.add_argument('--average-link-clustering', action='store_true')
+  parser.add_argument('--single-link-clustering', action='store_true')
+  parser.add_argument('--fuzzy-similarity-clustering', action='store_true')
+  parser.add_argument('--kmeans', action='store_true')
+  parser.add_argument('--dendrogram', action='store_true')
+
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(
       description=('Tests the clustering/distance functions for vlmcs,'
                    'checking which vlmc they most closely match.'))
 
-  parser.add_argument('--parameter-sampling', action='store_true')
-  parser.add_argument('--negative-log-likelihood', action='store_true')
-  parser.add_argument('--acgt-content', action='store_true')
-  parser.add_argument('--stationary-distribution', action='store_true')
-  parser.add_argument('--estimate-vlmc', action='store_true')
-  parser.add_argument('--frobenius-norm', action='store_true')
-  parser.add_argument('--pst-matching', action='store_true')
-
-  parser.add_argument('--seqlen', type=int, default=1000,
-                      help='The length of the sequences that are generated to calculate the likelihood.')
-  parser.add_argument('--dissimilarity-weight', type=float, default=0.5)
-  parser.add_argument('--use-union', action='store_true')
+  add_distance_arguments(parser)
+  add_clustering_arguments(parser)
 
   parser.add_argument('--clusters', type=int, default=10,
                       help='The number of clusters produced.')
@@ -106,12 +103,6 @@ if __name__ == '__main__':
   parser.add_argument('--out-directory', type=str, default='../images',
                       help='The directory to where images are written.')
   parser.add_argument('--draw-graph', action='store_true')
-
-  parser.add_argument('--average-link-clustering', action='store_true')
-  parser.add_argument('--single-link-clustering', action='store_true')
-  parser.add_argument('--fuzzy-similarity-clustering', action='store_true')
-  parser.add_argument('--kmeans', action='store_true')
-  parser.add_argument('--dendrogram', action='store_true')
 
   args = parser.parse_args()
   test(args)
