@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 import numpy as np
 import os
+import argparse
 
 label_size = 20 * 2
 mpl.rcParams['xtick.labelsize'] = label_size
@@ -15,6 +16,8 @@ from distance import FrobeniusNorm, PSTMatching, NegativeLogLikelihood, ACGTCont
 from clustering import AverageLinkClustering, MSTClustering
 import parse_trees_to_json
 from get_signature_metadata import get_metadata_for
+from test_clustering import parse_clustering_method, add_clustering_arguments
+from test_distance_function import parse_distance_method, add_distance_arguments
 
 
 def test_clustering(d, vlmcs, cluster_class):
@@ -73,21 +76,24 @@ def plot_metrics(metrics, out_directory, name):
   ax.legend(handles=handles, labels=labels, fontsize=30, markerscale=3)
 
   out_file = os.path.join(
-      out_directory, 'increasing-number-of-clusters-{}.pdf'.format(name))
+      out_directory, '{}.pdf'.format(name))
   plt.savefig(out_file, dpi='figure', format='pdf')
   plt.close(fig)
 
 
-def test(tree_directory, out_directory):
+def test(args):
+  tree_directory = args.directory
+  out_directory = args.out_directory
   parse_trees_to_json.parse_trees(tree_directory)
   vlmcs = VLMC.from_json_dir(tree_directory)
 
-  cluster_class = AverageLinkClustering
-  # d = NegativeLogLikelihood(16000)
-  # d = FrobeniusNorm(True)
-  # d = PSTMatching(0.5)
-  d = ACGTContent(['C', 'G'])
-  name = 'GC-distance'
+  cluster_class = parse_clustering_method(args)
+  d = parse_distance_method(args)
+
+  if args.name:
+    name = args.name
+  else:
+    name = cluster_class.__name__ + ", " + d.__class__.__name__
 
   metrics = test_clustering(d, vlmcs, cluster_class)
 
@@ -100,6 +106,18 @@ def test(tree_directory, out_directory):
 
 
 if __name__ == '__main__':
-  tree_directory = '../trees_more_192'
-  out_directory = '../images/tests/increasing-clusters/single'
-  test(tree_directory, out_directory)
+  parser = argparse.ArgumentParser(
+      description=('Outputs a plot the clustering metrics with number of clusters from 1 to size of data set.'))
+
+  add_distance_arguments(parser)
+  add_clustering_arguments(parser)
+
+  parser.add_argument('--directory', type=str, default='../trees_more_192',
+                      help='The directory to source the trees for the VLMCs from.')
+  parser.add_argument('--out-directory', type=str, default='../images/tests/increasing-clusters/',
+                      help='The directory to where images are written.')
+
+  parser.add_argument('--name', type=str)
+
+  args = parser.parse_args()
+  test(args)
