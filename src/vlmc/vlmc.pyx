@@ -61,11 +61,12 @@ cdef class VLMC(object):
 
   @classmethod
   def strip_parameters_from_name(cls, signature_name):
-    stripped_order_prefix = signature_name[3:]
-    split_name = stripped_order_prefix.split("_")
-    removed_start_stop_indicies = split_name[:len(split_name) - 2]
+    split_name = signature_name.split("_")
+    # pst_vlmc_name_23_23 -> pst, vlmc, name, 23, 23
+    removed_start_stop_indicies = split_name[1:len(split_name) - 2]
+    # pst, vlmc, name, 23, 23 -> vlmc, name
     remove_empty_strings = [s for s in removed_start_stop_indicies if s != ""]
-    aid = '_'.join(remove_empty_strings)
+    aid = '_'.join(remove_empty_strings) # vlmc, name -> vlmc_name
     return aid
 
   def to_json(self):
