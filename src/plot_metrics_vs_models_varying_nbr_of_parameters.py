@@ -18,6 +18,10 @@ if __name__ == '__main__':
   mpl.rcParams['font.size'] = 24 * 2
 
 
+metrics_used = ["average_procent_of_genus_in_top", "average_procent_of_family_in_top",
+                "total_average_distance_to_genus", "total_average_distance_to_family",
+                "total_average_distance"]
+
 # k_values is all different "orders" to test for the full order markov chain
 # test vlmcs in range(min_param, max_param, step=step_size)
 def main(d=FrobeniusNorm(), use_small_data_set=True, min_param=1000,
@@ -80,13 +84,23 @@ def create_list_file_of_vlmc_names(fasta_folder, from_start, percentage, use_sma
 
 def create_data_matrices(nbr_data_points):
   data = {
-      "average_procent_of_genus_in_top": np.zeros(nbr_data_points),
-      "average_procent_of_family_in_top": np.zeros(nbr_data_points),
-      "total_average_distance_to_genus": np.zeros(nbr_data_points),
-      "total_average_distance_to_family": np.zeros(nbr_data_points),
-      "total_average_distance": np.zeros(nbr_data_points)
+      "Percent of genus": np.zeros(nbr_data_points),
+      "Percent of family": np.zeros(nbr_data_points),
+      "Distance to genus": np.zeros(nbr_data_points),
+      "Distance to family": np.zeros(nbr_data_points),
+      "Average distance": np.zeros(nbr_data_points)
   }
   return data
+
+
+def get_pretty_name(metric):
+  return {
+      "average_procent_of_genus_in_top": "Percent of genus",
+      "average_procent_of_family_in_top": "Percent of family",
+      "total_average_distance_to_genus": "Distance to genus",
+      "total_average_distance_to_family": "Distance to family",
+      "total_average_distance": "Average distance"
+  }.get(metric)
 
 
 def get_default_params(min_count, max_depth):
@@ -118,9 +132,8 @@ def plot_vlmc_metrics(all_parameters_to_test, parameters, file_of_vlmc_names,
       train_vlmcs(parameters, file_of_vlmc_names, param_directory, input_directory=fasta_folder, add_underlines_=False)
     metrics = test_distance_function(d, param_directory, out_dir=None)
     print(metrics)
-    for key in metrics_data_vlmc.keys():
-      if key is not "global_time":
-        metrics_data_vlmc[key][datum_index] = metrics[key]
+    for key in metrics_used:
+      metrics_data_vlmc[get_pretty_name(key)][datum_index] = metrics[key]
 
   param_fig, param_ax = plt.subplots(1, figsize=(30, 20), dpi=80)
   for k, v in metrics_data_vlmc.items():
@@ -150,9 +163,8 @@ def plot_mc_metrics(k_values, parameters, file_of_vlmc_names,
       train_vlmcs(parameters, file_of_vlmc_names, param_directory, input_directory=fasta_folder, add_underlines_=False)
     metrics = test_distance_function(d, param_directory, out_dir=None)
     print(metrics)
-    for key in metrics_data_markov_chain.keys():
-      if key is not "global_time":
-        metrics_data_markov_chain[key][datum_index] = metrics[key]
+    for key in metrics_used:
+      metrics_data_markov_chain[get_pretty_name(key)][datum_index] = metrics[key]
 
   markov_fig, markov_ax = plt.subplots(1, figsize=(30, 20), dpi=80)
   for k, v in metrics_data_markov_chain.items():
