@@ -6,6 +6,7 @@ from vlmc import VLMC
 
 import json
 import numpy as np
+from collections import Counter
 
 
 def print_relations(vlmcs, metadata):
@@ -54,9 +55,29 @@ def from_tree_to_list(vlmc):
   return [(context, c, p) for context in vlmc.tree.keys() for (c, p) in vlmc.tree[context].items()]
 
 
+def number_in_ranks(metadata):
+  ranks = ['organism', 'order', 'family', 'subfamily', 'genus']
+  for rank in ranks:
+    number_in_rank(metadata, rank)
+
+  length_family = ([(v['sequence_length'], v['family']) for k, v in metadata.items()])
+  lengths = np.array([v['sequence_length'] for v in metadata.values()])
+  print("Sequence length, min: {}, max: {}, mean: {}, median: {}".format(
+      lengths.min(), lengths.max(), lengths.mean(), np.median(lengths)))
+  length_family = sorted(length_family, key=lambda k: k[0])
+  print(np.array_split(length_family, 10))
+
+
+def number_in_rank(metadata, key):
+  rank = Counter([v[key] for v in metadata.values()])
+  print("{}: size {}\n{}".format(key, len(rank.keys()), rank))
+
+
 if __name__ == '__main__':
-  tree_dir = '../trees_pst_better'
+  tree_dir = '../trees_mixed_192'
   parse_trees_to_json.parse_trees(tree_dir)
   vlmcs = VLMC.from_json_dir(tree_dir)
   metadata = get_metadata_for([vlmc.name for vlmc in vlmcs])
-  print_relations(vlmcs, metadata)
+  vlmcs = [v for v in vlmcs if metadata[v.name]['organism'] == 'virus']
+  metadata = {k: v for k, v in metadata.items() if v['organism'] == 'virus'}
+  number_in_ranks(metadata)
