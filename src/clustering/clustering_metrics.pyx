@@ -119,7 +119,7 @@ cdef class ClusteringMetrics(object):
     sensitivity = true_positives / (true_positives + false_negatives)
     precision = true_positives / (true_positives + false_positives)
     specificity = true_negatives / (true_negatives + false_positives)
-    return sensitivity, specificity
+    return sensitivity, precision
 
   cdef tuple count_positives(self, meta_key):
     cdef int true_positives = 0
@@ -128,10 +128,11 @@ cdef class ClusteringMetrics(object):
     for connected_component in connected_components:
       pairs = product(connected_component, repeat=2)
       for v1, v2 in pairs:
-        if self.metadata[v1.name][meta_key] == self.metadata[v2.name][meta_key]:
-          true_positives += 1
-        else:
-          false_positives += 1
+        if v1 != v2:
+          if self.metadata[v1.name][meta_key] == self.metadata[v2.name][meta_key]:
+            true_positives += 1
+          else:
+            false_positives += 1
 
     return true_positives, false_positives
 
@@ -141,11 +142,12 @@ cdef class ClusteringMetrics(object):
     connected_components = list(nx.connected_components(self.G))
     for connected_component in connected_components:
       for other_component in connected_components:
-        pairs = product(connected_component, other_component)
-        for v1, v2 in pairs:
-          if self.metadata[v1.name][meta_key] == self.metadata[v2.name][meta_key]:
-            false_negatives += 1
-          else:
-            true_negatives += 1
+        if connected_component is not other_component:
+          pairs = product(connected_component, other_component)
+          for v1, v2 in pairs:
+            if self.metadata[v1.name][meta_key] == self.metadata[v2.name][meta_key]:
+              false_negatives += 1
+            else:
+              true_negatives += 1
 
     return true_negatives, false_negatives
