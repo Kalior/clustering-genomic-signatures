@@ -23,7 +23,7 @@ from test_distance_function import parse_distance_method, add_distance_arguments
 def test_clustering(d, vlmcs, cluster_class):
   metadata = get_metadata_for([vlmc.name for vlmc in vlmcs])
 
-  metrics = np.zeros([len(vlmcs), 8], dtype=np.float32)
+  metrics = np.zeros([len(vlmcs), 6], dtype=np.float32)
 
   clustering = cluster_class(vlmcs, d, metadata)
   for i in range(len(vlmcs) - 1, 0, -1):
@@ -31,14 +31,12 @@ def test_clustering(d, vlmcs, cluster_class):
     clustering_metrics = clustering.cluster(i)
 
     metrics[i, 0] = clustering_metrics.average_silhouette()
-    metrics[i, 1] = clustering_metrics.average_percent_same_taxonomy('order')
+    metrics[i, 1] = clustering_metrics.average_percent_same_taxonomy('organism')
     metrics[i, 2] = clustering_metrics.average_percent_same_taxonomy('family')
-    metrics[i, 3] = clustering_metrics.average_percent_same_taxonomy('subfamily')
-    metrics[i, 4] = clustering_metrics.average_percent_same_taxonomy('genus')
+    metrics[i, 3] = clustering_metrics.average_percent_same_taxonomy('genus')
     fam_sensitivity, fam_specificity = clustering_metrics.sensitivity_specificity('family')
-    metrics[i, 5] = fam_sensitivity
-    metrics[i, 6] = fam_specificity
-    metrics[i, 7] = clustering_metrics.average_percent_same_taxonomy('baltimore')
+    metrics[i, 4] = fam_sensitivity
+    metrics[i, 5] = fam_specificity
 
   return metrics
 
@@ -64,13 +62,11 @@ def plot_metrics(metrics, out_directory, name):
   handles = ax.plot(metrics[1:], markersize=5, marker='o')
 
   labels = ['Silhouette',
-            'Percent of order',
+            'Percent of organism',
             'Percent of family',
-            'Percent of subfamily',
             'Percent of genus',
             'Sensitivity of family',
             'Specificity of family',
-            'Percent of baltimore'
             ]
 
   ax.legend(handles=handles, labels=labels, fontsize=30, markerscale=3)
