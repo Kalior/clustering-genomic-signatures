@@ -13,15 +13,13 @@ def plot_distance(sorted_results, vlmc, gc_distance_function, metadata, out_dir,
   ax.set_ylabel('Distances')
 
   species_names = ["{}".format(metadata[v.name]['species']) for _, v in sorted_results]
+  aids = [v.name for _, v in sorted_results]
   plt.xticks(np.arange(len(sorted_results)), rotation=30, fontsize=16)
-  ax.set_xticklabels(species_names, ha="right")
+  ax.set_xticklabels(aids, ha="right")
 
   legend_markers = [
-      legend_marker('Same order', 'o', '#ff007f'),
       legend_marker('Same family', 'o', '#ff7f00'),
-      legend_marker('Same subfamily', 'o', '#7fff00'),
       legend_marker('Same genus', 'o', '#007fff'),
-      legend_marker('Same host', '*', '#000000'),
       legend_marker('Distance', '.', '#000000')
   ]
 
@@ -39,8 +37,6 @@ def plot_distance(sorted_results, vlmc, gc_distance_function, metadata, out_dir,
     plot_sequence_lengths(ax, sorted_results, vlmc, metadata)
 
   plot_distance_(ax, sorted_results, vlmc, metadata, '#000000', '.', 'solid')
-
-  # plt.xticks(np.arange(len(sorted_results)), fontsize=20)
 
   ax.legend(handles=legend_markers, fontsize=24)
 
