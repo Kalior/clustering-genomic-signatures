@@ -44,7 +44,7 @@ cdef class GraphBasedClustering:
     self.created_clusters = clusters
 
     distance_mean = np.mean(self.distances, axis=None)
-    metrics = ClusteringMetrics(self.G, self.d, distance_mean,
+    metrics = ClusteringMetrics(self.G, distance_mean,
                                 self.indexed_distances, self.vlmcs, self.metadata)
     return metrics
 
