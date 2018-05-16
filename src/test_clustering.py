@@ -29,6 +29,12 @@ def test_clustering(d, clusters, vlmcs, out_directory, cluster_class=MSTClusteri
     print(i)
     clustering_metrics = clustering.cluster(i)
 
+    sensitivy, specificity = clustering_metrics.sensitivity_specificity('family')
+    percent_family = clustering_metrics.average_percent_same_taxonomy('family')
+    percent_genus = clustering_metrics.average_percent_same_taxonomy('genus')
+    print("Sensitivity: {}, Specificity: {}, Percent family: {}, Percent genus: {}".format(
+        sensitivy, specificity, percent_family, percent_genus))
+
     if do_draw_graph:
       plot_largest_components(clustering_metrics, i, out_directory)
 
