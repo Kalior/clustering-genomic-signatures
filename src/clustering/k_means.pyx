@@ -5,7 +5,8 @@ cimport numpy as np
 import random
 import math
 
-from util import calculate_distances_within_vlmcs
+
+from util import calculate_distances_within_vlmcs, index_distances
 from distance.projection cimport Projection
 
 INTTYPE = np.int32
@@ -19,13 +20,17 @@ cdef class KMeans:
   cdef np.ndarray projected_vlmcs
   cdef int nbr_vlmcs
   cdef Projection distance_function
+  cdef dict metadata
 
-  def __cinit__(self, vlmcs, d):
+  def __cinit__(self, vlmcs, d, metadata):
     self.vlmcs = vlmcs
     self.distance_function = d
+    self.distance_function.set_vlmcs(vlmcs)
     self.nbr_vlmcs = len(vlmcs)
-    self.projected_vlmcs = np.zeros([self.nbr_vlmcs, self.distance_function.dimension], dtype=FLOATTYPE)
+    self.projected_vlmcs = np.zeros(
+        [self.nbr_vlmcs, self.distance_function.dimension], dtype=FLOATTYPE)
     self.initialize_vlmc_to_index_dict()
+    self.metadata = metadata
 
   cdef initialize_vlmc_to_index_dict(self):
     self.vlmc_to_array_index = {}
@@ -33,9 +38,9 @@ cdef class KMeans:
       self.projected_vlmcs[i, :] = self.distance_function.vlmc_to_vector(vlmc)
       self.vlmc_to_array_index[vlmc] = i
 
-  cpdef tuple cluster(self, nbr_clusters):
-    cdef np.ndarray[INTTYPE_t, ndim=1] vlmc_index_to_cluster_index = np.zeros(self.nbr_vlmcs, dtype=INTTYPE)
-    cdef np.ndarray[FLOATTYPE_t, ndim=2] centroids = self.initialize_centroids_randomly(nbr_clusters)
+  cpdef object cluster(self, nbr_clusters):
+    cdef np.ndarray[INTTYPE_t, ndim = 1] vlmc_index_to_cluster_index = np.zeros(self.nbr_vlmcs, dtype=INTTYPE)
+    cdef np.ndarray[FLOATTYPE_t, ndim = 2] centroids = self.initialize_centroids_randomly(nbr_clusters)
 
     cdef bint some_vlmc_changed_cluster = True
     cdef int new_cluster = -1
@@ -53,8 +58,12 @@ cdef class KMeans:
         self.update_centroid(centroids, i, vlmc_index_to_cluster_index)
 
     G = self.create_graph(nbr_clusters, vlmc_index_to_cluster_index)
-    cdef np.ndarray[FLOATTYPE_t, ndim=2] distances = calculate_distances_within_vlmcs(self.vlmcs, self.distance_function)
-    return G, distances.mean()
+    cdef np.ndarray[FLOATTYPE_t, ndim = 2] distances = calculate_distances_within_vlmcs(self.vlmcs, self.distance_function)
+    cdef np.ndarray[FLOATTYPE_t, ndim = 2] indexed_distances = index_distances(self.vlmcs, distances)
+
+    metrics = ClusteringMetrics(G, distances.mean(),
+                                indexed_distances, self.vlmcs, self.metadata)
+    return metrics
 
   cdef object create_graph(self, nbr_clusters, vlmc_index_to_cluster_index):
     G = nx.Graph()
@@ -89,9 +98,9 @@ cdef class KMeans:
         closest_centroid = centroid_index
     return closest_centroid
 
-  cdef np.ndarray[FLOATTYPE_t, ndim=2] initialize_centroids_randomly(self, nbr_clusters):
+  cdef np.ndarray[FLOATTYPE_t, ndim = 2] initialize_centroids_randomly(self, nbr_clusters):
     centroid_indices = random.sample(range(self.nbr_vlmcs), nbr_clusters)
-    cdef np.ndarray[FLOATTYPE_t, ndim=2] centroids = np.zeros([nbr_clusters, self.distance_function.dimension], dtype=FLOATTYPE)
+    cdef np.ndarray[FLOATTYPE_t, ndim = 2] centroids = np.zeros([nbr_clusters, self.distance_function.dimension], dtype=FLOATTYPE)
     for i, centroid_index in enumerate(centroid_indices):
       centroids[i, :] = self.projected_vlmcs[centroid_index, :]
     return centroids

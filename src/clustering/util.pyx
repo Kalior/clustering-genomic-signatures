@@ -19,3 +19,15 @@ cpdef public np.ndarray[FLOATTYPE_t, ndim = 2] calculate_distances_within_vlmcs(
       distances[distances_index, 2] = dist
       distances_index += 1
   return distances
+
+cpdef public np.ndarray[FLOATTYPE_t, ndim = 2] index_distances(vlmcs, distances):
+  indexed_distances = np.ndarray([len(vlmcs), len(vlmcs)], dtype=FLOATTYPE)
+  cdef int left_i, right_i
+  cdef FLOATTYPE_t dist = -1.0
+  for column in distances:
+    left_i = column[0]
+    right_i = column[1]
+    dist = column[2]
+    indexed_distances[left_i, right_i] = dist
+
+  return indexed_distances
