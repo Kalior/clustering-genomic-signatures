@@ -80,11 +80,6 @@ cdef class ClusteringMetrics(object):
     average_external_distance = total_distance_to_vlmcs / len(other_component)
     return average_external_distance
 
-  cpdef FLOATTYPE_t average_distance_between_vlmcs(self, connected_component):
-    distances = [self.d.distance(v1, v2) for v1 in connected_component for v2 in connected_component]
-    average_distance = sum(distances) / len(distances)
-    return average_distance
-
   cpdef double average_percent_same_taxonomy(self, taxonomy):
     average = 0
     connected_components = list(nx.connected_components(self.G))
