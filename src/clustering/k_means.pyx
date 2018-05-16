@@ -7,6 +7,7 @@ import math
 
 
 from util import calculate_distances_within_vlmcs, index_distances
+from clustering_metrics import ClusteringMetrics
 from distance.projection cimport Projection
 
 INTTYPE = np.int32
