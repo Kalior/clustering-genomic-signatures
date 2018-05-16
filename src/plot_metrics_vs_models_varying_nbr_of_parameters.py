@@ -140,7 +140,7 @@ def plot_vlmc_metrics(all_parameters_to_test, parameters, file_of_vlmc_names,
     param_ax.semilogx(all_parameters_to_test, v, label=k, markersize=5, marker='o')
 
   param_ax.set_ylim(0, 1.1)
-  param_ax.legend(fontsize=24, loc=2)
+  param_ax.legend(fontsize=24, loc=2, markerscale=3)
   param_ax.grid(color='#cccccc', linestyle='--', linewidth=1)
 
   out_file_vlmc = os.path.join(image_directory, 'vlmc-metrics-large-increasing-parameters.pdf')
@@ -173,7 +173,7 @@ def plot_mc_metrics(k_values, parameters, file_of_vlmc_names,
 
   markov_ax.set_ylim(0, 1.1)
   markov_ax.grid(color='#cccccc', linestyle='--', linewidth=1)
-  markov_ax.legend(fontsize=24, loc=2)
+  markov_ax.legend(fontsize=24, loc=2, markerscale=3)
 
   out_file_markov = os.path.join(image_directory, 'markov-metrics-large-increasing-parameters.pdf')
   plt.savefig(out_file_markov, bbox_inches='tight', dpi='figure', format='pdf')
