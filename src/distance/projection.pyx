@@ -4,7 +4,7 @@ FLOATTYPE = np.float32
 ctypedef np.float32_t FLOATTYPE_t
 
 cdef class Projection:
-  def __cinit__(self, vlmcs):
+  cpdef set_vlmcs(self, vlmcs):
     self.vlmcs = vlmcs
     self.initialize_transition_to_index_dict()
     self.dimension = len(self.context_transition_to_array_index) * 4
@@ -21,14 +21,14 @@ cdef class Projection:
       for character in alphabet:
         self.context_transition_to_array_index[context][character] = i
         i += 1
-    
+
   cpdef distance(self, left, right):
     left_vector = self.vlmc_to_vector(left)
     right_vector = self.vlmc_to_vector(right)
     return np.linalg.norm(left_vector - right_vector)
-  
+
   cdef np.ndarray vlmc_to_vector(self, vlmc):
-    cdef np.ndarray[FLOATTYPE_t, ndim=1] array = np.zeros(self.dimension, dtype=FLOATTYPE)
+    cdef np.ndarray[FLOATTYPE_t, ndim = 1] array = np.zeros(self.dimension, dtype=FLOATTYPE)
     for context in vlmc.tree:
       for character in vlmc.alphabet:
         index = self.context_transition_to_array_index[context][character]

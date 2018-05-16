@@ -60,6 +60,9 @@ def test_distance_function_(d, vlmcs, test_vlmcs, metadata, out_dir,
       "global_time": 0
   }
 
+  if metrics["distance_name"] == "Projection":
+    d.set_vlmcs(vlmcs)
+
   gc_distance_function = ACGTContent(['C', 'G'])
 
   all_gc_differences = np.empty((len(vlmcs), len(vlmcs)))
