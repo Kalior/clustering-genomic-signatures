@@ -69,37 +69,23 @@ def plot_sequence_lengths(ax, sorted_results, vlmc, metadata):
 
 
 def plot_distance_(ax, sorted_results, vlmc, metadata, line_c, line_marker, linestyle):
-  order = [(i, d) for i, (d, v) in enumerate(sorted_results)
-           if _equal_and_not_empty(metadata, v, vlmc, 'order') and
-           _not_equal_or_empty(metadata, v, vlmc, 'genus') and
-           _not_equal_or_empty(metadata, v, vlmc, 'family') and
-           _not_equal_or_empty(metadata, v, vlmc, 'subfamily')]
-
   family = [(i, d) for i, (d, v) in enumerate(sorted_results)
             if _equal_and_not_empty(metadata, v, vlmc, 'family') and
-            _not_equal_or_empty(metadata, v, vlmc, 'genus') and
-            _not_equal_or_empty(metadata, v, vlmc, 'subfamily')]
-
-  subfamily = [(i, d) for i, (d, v) in enumerate(sorted_results)
-               if _equal_and_not_empty(metadata, v, vlmc, 'subfamily') and
-               _not_equal_or_empty(metadata, v, vlmc, 'genus')]
+            _not_equal_or_empty(metadata, v, vlmc, 'genus')]
 
   genus = [(i, d) for i, (d, v) in enumerate(sorted_results)
            if _equal_and_not_empty(metadata, v, vlmc, 'genus')]
 
-  hosts = [(i, d) for i, (d, v) in enumerate(sorted_results)
-           if (host_in(metadata[v.name]['hosts'], metadata[vlmc.name]['hosts']) or
-               host_in(metadata[vlmc.name]['hosts'], metadata[v.name]['hosts'])) and
-           not metadata[v.name]['hosts'] == "Not Found"]
+  baltimore = [(i, d) for i, (d, v) in enumerate(sorted_results)
+               if _equal_and_not_empty(metadata, v, vlmc, 'baltimore')]
 
   every = [(i, d) for i, (d, v) in enumerate(sorted_results)]
 
   plot_tuple_list(ax, every, line_c, line_marker, linestyle)
-  scatter_tuple_list(ax, order, '#ff007f', 'o')
   scatter_tuple_list(ax, family, '#ff7f00', 'o')
-  scatter_tuple_list(ax, subfamily, '#7fff00', 'o')
   scatter_tuple_list(ax, genus, '#007fff', 'o')
-  scatter_tuple_list(ax, hosts, line_c, '*')
+  # scatter_tuple_list(ax, baltimore, line_c, '*')
+  # scatter_tuple_list(ax, hosts, line_c, '*')
 
 
 def host_in(hosts_left, hosts_right):
