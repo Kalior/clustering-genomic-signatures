@@ -24,12 +24,15 @@ metrics_used = ["average_procent_of_genus_in_top", "average_procent_of_family_in
 
 # k_values is all different "orders" to test for the full order markov chain
 # test vlmcs in range(min_param, max_param, step=step_size)
+
+
 def main(d=FrobeniusNorm(), use_small_data_set=True, min_param=1000,
          max_param=10000, step_size=1000, k_values=[2, 3, 4, 5, 6, 7, 8],
          directory_trained_models="../lib/trainedmodels", min_count=4,
          max_depth=15, from_start='f', percentage=100, image_directory='../images',
          fasta_folder="../lib/fasta"):
-  file_of_vlmc_names = create_list_file_of_vlmc_names(fasta_folder, from_start, percentage, use_small_data_set)
+  file_of_vlmc_names = create_list_file_of_vlmc_names(
+      fasta_folder, from_start, percentage, use_small_data_set)
   parameters = get_default_params(min_count, max_depth)
 
   # all_parameters_to_test = range(min_param, max_param, step_size)
@@ -60,11 +63,11 @@ def extract_from_data_set_fasta_files(from_start, percentage,
 
 def get_select_query(use_small_data_set):
   if use_small_data_set:
-    query = "(virus.aid=\'AF147806.2\' OR virus.aid=\'AF147806.2\' OR virus.aid=\'GU980198.1\' OR virus.aid=\'JN133502.1\' OR virus.aid=\'JQ596859.1\' OR virus.aid=\'KF487736.1\' OR virus.aid=\'KJ627438.1\' OR virus.aid=\'NC_001493.2\' OR virus.aid=\'NC_001650.1\' OR virus.aid=\'AB026117.1\' OR virus.aid=\'AC_000005.1\' OR virus.aid=\'AF258784.1\' OR virus.aid=\'JN418926.1\' OR virus.aid=\'KF429754.1\' OR virus.aid=\'NC_000942.1\' OR virus.aid=\'NC_001454.1\' OR virus.aid=\'NC_001734.1\' OR virus.aid=\'NC_002513.1\' OR virus.aid=\'NC_005905.1\' OR virus.aid=\'NC_007767.1\' OR virus.aid=\'NC_008035.3\' OR virus.aid=\'NC_007921.1\' OR virus.aid=\'NC_008293.1\' OR virus.aid=\'NC_008348.1\' OR virus.aid=\'NC_008725.1\' OR virus.aid=\'NC_009011.2\' OR virus.aid=\'KF234407.1\' OR virus.aid=\'NC_001132.2\' OR virus.aid=\'NC_001266.1\' OR virus.aid=\'NC_001611.1\' OR virus.aid=\'NC_001731.1\' OR virus.aid=\'NC_002188.1\' OR virus.aid=\'NC_003389.1\' OR virus.aid=\'NC_003391.1\')"
+    query = "(organism='virus' AND (virus.aid=\'AF147806.2\' OR virus.aid=\'AF147806.2\' OR virus.aid=\'GU980198.1\' OR virus.aid=\'JN133502.1\' OR virus.aid=\'JQ596859.1\' OR virus.aid=\'KF487736.1\' OR virus.aid=\'KJ627438.1\' OR virus.aid=\'NC_001493.2\' OR virus.aid=\'NC_001650.1\' OR virus.aid=\'AB026117.1\' OR virus.aid=\'AC_000005.1\' OR virus.aid=\'AF258784.1\' OR virus.aid=\'JN418926.1\' OR virus.aid=\'KF429754.1\' OR virus.aid=\'NC_000942.1\' OR virus.aid=\'NC_001454.1\' OR virus.aid=\'NC_001734.1\' OR virus.aid=\'NC_002513.1\' OR virus.aid=\'NC_005905.1\' OR virus.aid=\'NC_007767.1\' OR virus.aid=\'NC_008035.3\' OR virus.aid=\'NC_007921.1\' OR virus.aid=\'NC_008293.1\' OR virus.aid=\'NC_008348.1\' OR virus.aid=\'NC_008725.1\' OR virus.aid=\'NC_009011.2\' OR virus.aid=\'KF234407.1\' OR virus.aid=\'NC_001132.2\' OR virus.aid=\'NC_001266.1\' OR virus.aid=\'NC_001611.1\' OR virus.aid=\'NC_001731.1\' OR virus.aid=\'NC_002188.1\' OR virus.aid=\'NC_003389.1\' OR virus.aid=\'NC_003391.1\'))"
     return query
   else:
     # I think this is correct for the larger data set?
-    return "((LENGTH(seq) > 18000 OR fam=\'Flaviviridae\' OR fam=\'Endornaviridae\' OR fam=\'Hypoviridae\' OR fam=\'Retroviridae\') AND (fam!=\'Spiraviridae\' AND fam!=\'Sphaerolipoviridae\' AND fam!=\'Rudiviridae\' AND fam!=\'Roniviridae\' AND fam!=\'Polydnaviridae\' AND fam!=\'Paramyxoviridae\' AND fam!=\'Myoviridae\' AND fam!=\'Marseilleviridae\' AND fam!=\'Malacoherpesviridae\' AND fam!=\'Hytrosaviridae\' AND fam!=\'Hypoviridae\' AND fam!=\'Globuloviridae\' AND fam!=\'Fuselloviridae\' AND fam!=\'Closteroviridae\' AND fam!=\'Bicaudaviridae\' AND fam!=\'Ascoviridae\'))"
+    return "(organism='virus' AND (LENGTH(seq) > 18000 OR fam=\'Flaviviridae\' OR fam=\'Endornaviridae\' OR fam=\'Hypoviridae\' OR fam=\'Retroviridae\') AND (fam!=\'Spiraviridae\' AND fam!=\'Sphaerolipoviridae\' AND fam!=\'Rudiviridae\' AND fam!=\'Roniviridae\' AND fam!=\'Polydnaviridae\' AND fam!=\'Paramyxoviridae\' AND fam!=\'Myoviridae\' AND fam!=\'Marseilleviridae\' AND fam!=\'Malacoherpesviridae\' AND fam!=\'Hytrosaviridae\' AND fam!=\'Hypoviridae\' AND fam!=\'Globuloviridae\' AND fam!=\'Fuselloviridae\' AND fam!=\'Closteroviridae\' AND fam!=\'Bicaudaviridae\' AND fam!=\'Ascoviridae\'))"
 
 
 def delete_files_in_directory(directory):
@@ -74,10 +77,11 @@ def delete_files_in_directory(directory):
 def create_list_file_of_vlmc_names(fasta_folder, from_start, percentage, use_small_data_set):
   # start by extracting the fasta files into "../lib/fasta"-directory
   # assume db2fasta lies in working directory "."
-  file_of_vlmc_names = "/tmp/list.txt" # had trouble using local file
+  file_of_vlmc_names = "/tmp/list.txt"  # had trouble using local file
   tree_files_exists = False
   if not tree_files_exists:
-    extract_from_data_set_fasta_files(from_start, percentage, use_small_data_set=use_small_data_set)
+    extract_from_data_set_fasta_files(
+        from_start, percentage, use_small_data_set=use_small_data_set)
   os.system("ls -1 {}/*.fa | /bin/sed 's!.*/!!' | /bin/sed 's/\.fa$//' > {}".format(fasta_folder, file_of_vlmc_names))
   return file_of_vlmc_names
 
@@ -110,7 +114,8 @@ def get_default_params(min_count, max_depth):
       'number_of_parameters': 0,
       'min_count': min_count,
       'max_depth': max_depth,
-      'count_free_parameters_individually': "false", # false = Dalevi's way of calculating the nbr of parameters
+      # false = Dalevi's way of calculating the nbr of parameters
+      'count_free_parameters_individually': "false",
       'generate_full_markov_chain': False,
       'markov_chain_order': 3
   }
@@ -129,7 +134,8 @@ def plot_vlmc_metrics(all_parameters_to_test, parameters, file_of_vlmc_names,
     if not os.path.exists(param_directory):
       # if we haven't already generated these, models, generate them
       os.makedirs(param_directory)
-      train_vlmcs(parameters, file_of_vlmc_names, param_directory, input_directory=fasta_folder, add_underlines_=False)
+      train_vlmcs(parameters, file_of_vlmc_names, param_directory,
+                  input_directory=fasta_folder, add_underlines_=False)
     metrics = test_distance_function(d, param_directory, out_dir=None)
     print(metrics)
     for key in metrics_used:
@@ -160,7 +166,8 @@ def plot_mc_metrics(k_values, parameters, file_of_vlmc_names,
     if not os.path.exists(param_directory):
       # if we haven't already generated these, models, generate them
       os.makedirs(param_directory)
-      train_vlmcs(parameters, file_of_vlmc_names, param_directory, input_directory=fasta_folder, add_underlines_=False)
+      train_vlmcs(parameters, file_of_vlmc_names, param_directory,
+                  input_directory=fasta_folder, add_underlines_=False)
     metrics = test_distance_function(d, param_directory, out_dir=None)
     print(metrics)
     for key in metrics_used:
