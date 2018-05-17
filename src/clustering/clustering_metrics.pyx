@@ -106,15 +106,15 @@ cdef class ClusteringMetrics(object):
     return self.indexed_distances[v1_idx, v2_idx]
 
   cpdef tuple sensitivity_specificity(self, meta_key):
-    true_positives, false_positives = self.count_positives(meta_key)
-    true_negatives, false_negatives = self.count_negatives(meta_key)
+    true_positives, false_positives = self._count_positives(meta_key)
+    true_negatives, false_negatives = self._count_negatives(meta_key)
 
     sensitivity = true_positives / (true_positives + false_negatives)
     precision = true_positives / (true_positives + false_positives)
     specificity = true_negatives / (true_negatives + false_positives)
     return sensitivity, precision
 
-  cdef tuple count_positives(self, meta_key):
+  cdef tuple _count_positives(self, meta_key):
     cdef int true_positives = 0
     cdef int false_positives = 0
     connected_components = nx.connected_components(self.G)
@@ -129,7 +129,7 @@ cdef class ClusteringMetrics(object):
 
     return true_positives, false_positives
 
-  cdef tuple count_negatives(self, meta_key):
+  cdef tuple _count_negatives(self, meta_key):
     cdef int false_negatives = 0
     cdef int true_negatives = 0
     connected_components = list(nx.connected_components(self.G))
@@ -144,3 +144,8 @@ cdef class ClusteringMetrics(object):
               true_negatives += 1
 
     return true_negatives, false_negatives
+
+  cpdef tuple cluster_size_metrics(self):
+    connected_components = nx.connected_components(self.G)
+    sizes = np.array([len(c) for c in connected_components])
+    return sizes.mean(), np.median(sizes), sizes.min(), sizes.max()

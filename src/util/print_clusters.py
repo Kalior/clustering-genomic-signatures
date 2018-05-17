@@ -12,17 +12,6 @@ def print_connected_components(clustering_metrics):
 
   print('\n\n'.join(output))
 
-  distance_mean = clustering_metrics.distance_mean
-  average_of_same_genus = clustering_metrics.average_percent_same_taxonomy('genus')
-  average_of_same_family = clustering_metrics.average_percent_same_taxonomy('family')
-
-  print("Average percent of same genus in clusters: {:5.5f}\t"
-        "Average percent of same family in clusters: {:5.5f}\n".format(
-            average_of_same_genus, average_of_same_family))
-
-  sorted_sizes = sorted([len(connected) for connected in nx.connected_components(G)])
-  print("Cluster sizes " + " ".join([str(i) for i in sorted_sizes]))
-
 
 def component_metrics(connected_component, clustering_metrics):
   percent_of_same_genus = clustering_metrics.percent_same_taxonomy(connected_component, 'genus')
@@ -45,3 +34,18 @@ def output_line(metadata, vlmc):
       metadata[vlmc.name]['species'],
       metadata[vlmc.name]['genus'],
       metadata[vlmc.name]['family'])
+
+
+def print_cluster_metrics(clustering_metrics, clusters):
+  sensitivy, specificity = clustering_metrics.sensitivity_specificity('family')
+  percent_family = clustering_metrics.average_percent_same_taxonomy('family')
+  percent_baltimore = clustering_metrics.average_percent_same_taxonomy('baltimore')
+  average_cluster_size, median_cluster_size, min_cluster_size, max_cluster_size = \
+      clustering_metrics.cluster_size_metrics()
+
+  print("k & Sensitivity &  Specificity & Percent family & Percent baltimore "
+        "& Average size & Median size & Min size & Max size \\\\ \\hline")
+  print(("{} & {:.2f} & {:.2f} & {:.2f} & {:.2f}"
+         " & {:.2f} & {} & {} & {} \\\\ \\hline").format(
+      clusters, sensitivy, specificity, percent_family, percent_baltimore,
+      average_cluster_size, median_cluster_size, min_cluster_size, max_cluster_size))

@@ -18,7 +18,7 @@ import parse_trees_to_json
 from get_signature_metadata import get_metadata_for
 from test_distance_function import parse_distance_method, add_distance_arguments
 from util.draw_clusters import draw_graph, plot_largest_components
-from util.print_clusters import print_connected_components
+from util.print_clusters import print_connected_components, print_cluster_metrics
 
 
 def test_clustering(d, clusters, vlmcs, out_directory, cluster_class=MSTClustering, do_draw_graph=True):
@@ -29,12 +29,6 @@ def test_clustering(d, clusters, vlmcs, out_directory, cluster_class=MSTClusteri
     print(i)
     clustering_metrics = clustering.cluster(i)
 
-    sensitivy, specificity = clustering_metrics.sensitivity_specificity('family')
-    percent_family = clustering_metrics.average_percent_same_taxonomy('family')
-    percent_genus = clustering_metrics.average_percent_same_taxonomy('genus')
-    print("Sensitivity: {}, Specificity: {}, Percent family: {}, Percent genus: {}".format(
-        sensitivy, specificity, percent_family, percent_genus))
-
     if do_draw_graph:
       plot_largest_components(clustering_metrics, i, out_directory)
 
@@ -44,6 +38,7 @@ def test_clustering(d, clusters, vlmcs, out_directory, cluster_class=MSTClusteri
         draw_graph(clustering_metrics, name, key, i, out_directory)
 
     print_connected_components(clustering_metrics)
+    print_cluster_metrics(clustering_metrics, i)
 
 
 def parse_trees(args):
@@ -63,7 +58,7 @@ def parse_clustering_method(args):
     print("Clustering with the fuzzy similarity measure")
     return FuzzySimilarityClustering
   elif args.kmeans:
-    print("Testing k means clustering with k = {}".format(args.clusters))
+    print("Testing k means clustering")
     return KMeans
   elif args.dendrogram:
     print("Clustering to dendrogram with the help of scipy")
