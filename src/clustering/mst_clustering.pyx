@@ -13,10 +13,12 @@ cdef class MSTClustering(GraphBasedClustering):
     A clustering implementation which keeps the VLMCs as nodes in a graph.
     Adds the minimum distance for every node which isn't in the same cluster already.
   """
+
   def __cinit__(self):
     self._initialise_clusters()
 
   cdef void _initialise_clusters(self):
+    self.merge_distances = []
     self.clustering = {}
     # Keep track of which cluster each vlmc is in
     for i, vlmc in enumerate(self.vlmcs):
@@ -26,7 +28,7 @@ cdef class MSTClustering(GraphBasedClustering):
     start_time = time.time()
 
     # Sort the array by the distances
-    cdef np.ndarray[FLOATTYPE_t, ndim=2] sorted_distances = distances[distances[:,2].argsort()]
+    cdef np.ndarray[FLOATTYPE_t, ndim = 2] sorted_distances = distances[distances[:, 2].argsort()]
 
     sorting_time = time.time() - start_time
     start_time = time.time()
@@ -49,7 +51,9 @@ cdef class MSTClustering(GraphBasedClustering):
       # Add an edge for the shortest distnce
       # Take the smallest distance
       smallest_distance_index, [left, right, dist] = \
-        self._find_smallest_unconnected_edge(sorted_distances, smallest_distance_index)
+          self._find_smallest_unconnected_edge(sorted_distances, smallest_distance_index)
+
+      self.merge_distances.append(dist)
 
       self.G.add_edge(self.vlmcs[int(left)], self.vlmcs[int(right)], weight=dist)
 

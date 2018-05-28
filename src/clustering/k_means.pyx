@@ -63,7 +63,7 @@ cdef class KMeans:
     cdef np.ndarray[FLOATTYPE_t, ndim = 2] indexed_distances = index_distances(self.vlmcs, distances)
 
     metrics = ClusteringMetrics(G, distances.mean(),
-                                indexed_distances, self.vlmcs, self.metadata)
+                                indexed_distances, self.vlmcs, self.metadata, [])
     return metrics
 
   cdef object create_graph(self, nbr_clusters, vlmc_index_to_cluster_index):

@@ -19,6 +19,7 @@ cdef class GraphBasedClustering:
     self.file_name = 'cluster_distances'
     self.metadata = metadata
     self.indexed_distances = np.ndarray([len(vlmcs), len(vlmcs)], dtype=FLOATTYPE)
+    self.merge_distances = []
 
     G = nx.Graph()
     G.add_nodes_from(self.vlmcs)
@@ -44,8 +45,8 @@ cdef class GraphBasedClustering:
     self.created_clusters = clusters
 
     distance_mean = np.mean(self.distances, axis=None)
-    metrics = ClusteringMetrics(self.G, distance_mean,
-                                self.indexed_distances, self.vlmcs, self.metadata)
+    metrics = ClusteringMetrics(self.G, distance_mean, self.indexed_distances,
+                                self.vlmcs, self.metadata, self.merge_distances)
     return metrics
 
   cdef void _make_fully_connected_components(self):

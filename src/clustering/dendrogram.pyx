@@ -26,6 +26,6 @@ cdef class DendrogramClustering(GraphBasedClustering):
     plt.tight_layout()
 
     file_name = 'dendrogram.pdf'
-    folder = '../images/'
+    folder = '../images/clustering/'
     file_path = os.path.join(folder, file_name)
     plt.savefig(file_path, dpi='figure', format='pdf')

@@ -19,19 +19,21 @@ cdef class AverageLinkClustering(GraphBasedClustering):
     self._initialise_clusters()
 
   cdef void _initialise_clusters(self):
+    self.merge_distances = []
     self.clustering = {}
     # Keep track of which cluster each vlmc is in
     for i, _ in enumerate(self.vlmcs):
       self.clustering[i] = [i]
 
     for left, _ in enumerate(self.vlmcs):
-      heap = [(self.indexed_distances[left, right], (right,)) for right, _ in enumerate(self.vlmcs) if left != right]
+      heap = [(self.indexed_distances[left, right], (right,))
+              for right, _ in enumerate(self.vlmcs) if left != right]
       heapify(heap)
       self.cluster_heaps[(left,)] = heap
 
-      distances = {(right,): self.indexed_distances[left, right] for right, _ in enumerate(self.vlmcs) if left != right}
+      distances = {(right,): self.indexed_distances[left, right]
+                   for right, _ in enumerate(self.vlmcs) if left != right}
       self.cluster_distances[(left,)] = distances
-
 
   cdef void _cluster(self, num_clusters, distances):
     start_time = time.time()
@@ -43,13 +45,15 @@ cdef class AverageLinkClustering(GraphBasedClustering):
       connections_to_make = self.created_clusters - num_clusters
 
     for i in range(connections_to_make):
-      left, right = self._find_min_edge()
+      left, right, distance = self._find_min_edge()
       # If there are no more edges to add...
       if (-1,) in [left, right]:
         break
 
+      self.merge_distances.append(distance)
+
       self.G.add_edge(self.vlmcs[left[0]], self.vlmcs[right[0]],
-          weight=self.indexed_distances[left[0], right[0]])
+                      weight=self.indexed_distances[left[0], right[0]])
       self._merge_clusters(left, right)
 
     cluster_time = time.time() - start_time
@@ -73,7 +77,7 @@ cdef class AverageLinkClustering(GraphBasedClustering):
         min_cluster_from = key
         min_cluster_to = other_cluster_key
 
-    return min_cluster_from, min_cluster_to
+    return min_cluster_from, min_cluster_to, min_edge_distance
 
   cdef void _merge_clusters(self, left, right):
     left_cluster = self.clustering[left[0]]

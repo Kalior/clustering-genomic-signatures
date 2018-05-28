@@ -15,6 +15,7 @@ cdef class GraphBasedClustering:
   cdef int created_clusters
   cdef object G
   cdef dict metadata
+  cdef list merge_distances
 
   cpdef object cluster(self, clusters)
 
@@ -24,5 +25,4 @@ cdef class GraphBasedClustering:
 
   cdef FLOATTYPE_t _find_distance_from_vlmc(self, v1, v2)
 
-  cdef np.ndarray[FLOATTYPE_t, ndim=2] _calculate_distances(self)
-
+  cdef np.ndarray[FLOATTYPE_t, ndim = 2] _calculate_distances(self)

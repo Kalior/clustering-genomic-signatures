@@ -15,14 +15,16 @@ cdef class ClusteringMetrics(object):
   cdef np.ndarray indexed_distances
   cdef public dict metadata
   cdef list vlmcs
+  cdef list merge_distances
 
-  def __cinit__(self, G, distance_mean, indexed_distances, vlmcs, metadata):
+  def __cinit__(self, G, distance_mean, indexed_distances, vlmcs, metadata, merge_distances):
     self.G = G  # the clustering of the vlmcs
     self.distance_mean = distance_mean
     self.indexed_distances = indexed_distances
     self.metadata = None  # needs to be set after initialization
     self.vlmcs = vlmcs
     self.metadata = metadata
+    self.merge_distances = merge_distances
 
   cpdef double average_silhouette(self):
     silhouette = self.silhouette_metric()
@@ -38,7 +40,8 @@ cdef class ClusteringMetrics(object):
     for component in connected_components:
       for v1 in component:
         minimum_average_distance_to_other_component = np.inf
-        average_dist_to_own_component[v1.name] = self._same_component_average_distance_to_vlmcs(v1, component)
+        average_dist_to_own_component[
+            v1.name] = self._same_component_average_distance_to_vlmcs(v1, component)
 
         # calculate distance to other components
         for other_component in connected_components:
@@ -66,9 +69,9 @@ cdef class ClusteringMetrics(object):
     average_internal_distance = 0
     nbr_other_elements_in_cluster = len(component) - 1
     if nbr_other_elements_in_cluster == 0:
-       average_internal_distance = 0
+      average_internal_distance = 0
     else:
-       average_internal_distance = total_distance_to_vlmcs / nbr_other_elements_in_cluster
+      average_internal_distance = total_distance_to_vlmcs / nbr_other_elements_in_cluster
     return average_internal_distance
 
   cdef FLOATTYPE_t _other_component_average_distance_to_vlmcs(self, v1, other_component):
@@ -84,20 +87,22 @@ cdef class ClusteringMetrics(object):
     average = 0
     connected_components = list(nx.connected_components(self.G))
     for connected_component in connected_components:
-      average += self.percent_same_taxonomy(connected_component, taxonomy) * len(connected_component)
+      average += self.percent_same_taxonomy(connected_component,
+                                            taxonomy) * len(connected_component)
 
     return average / len(self.vlmcs)
 
   cpdef double percent_same_taxonomy(self, connected_component, taxonomy):
     size_of_component = len(connected_component)
     percent_of_same_family = sum(
-      [self._number_in_taxonomy(vlmc, connected_component, taxonomy) for vlmc in connected_component]
+        [self._number_in_taxonomy(vlmc, connected_component, taxonomy)
+         for vlmc in connected_component]
     ) / (size_of_component ** 2)
     return percent_of_same_family
 
   cdef int _number_in_taxonomy(self, vlmc, vlmcs, taxonomy):
     number_of_same_taxonomy = len([other for other in vlmcs
-                                 if self.metadata[other.name][taxonomy] == self.metadata[vlmc.name][taxonomy]])
+                                   if self.metadata[other.name][taxonomy] == self.metadata[vlmc.name][taxonomy]])
     return number_of_same_taxonomy
 
   cdef FLOATTYPE_t _find_distance_from_vlmc(self, v1, v2):
@@ -149,3 +154,30 @@ cdef class ClusteringMetrics(object):
     connected_components = nx.connected_components(self.G)
     sizes = np.array([len(c) for c in connected_components])
     return sizes.mean(), np.median(sizes), sizes.min(), sizes.max()
+
+  cpdef list get_merge_distances(self):
+    return self.merge_distances
+
+  cpdef float get_latest_merge_distance(self):
+    if len(self.merge_distances) > 0:
+      return self.merge_distances[-1]
+    else:
+      return -1
+
+  cpdef float average_distance_std(self, distance_function):
+    connected_components = list(nx.connected_components(self.G))
+    sum_of_gc_std = 0
+    for connected_component in connected_components:
+      gc_distances = [distance_function.distance(v1, v2)
+                      for v1 in connected_component for v2 in connected_component
+                      if v1 != v2]
+
+      if len(gc_distances) < 1:
+        gc_std = 0
+      else:
+        gc_std = np.std(gc_distances)
+      sum_of_gc_std += gc_std
+
+    number_of_clusters = len(connected_components)
+    average_gc = sum_of_gc_std / number_of_clusters
+    return average_gc
