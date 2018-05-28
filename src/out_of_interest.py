@@ -67,7 +67,8 @@ def number_in_ranks(metadata):
   print("Sequence length, min: {}, max: {}, mean: {}, median: {}".format(
       lengths.min(), lengths.max(), lengths.mean(), np.median(lengths)))
   length_family = sorted(length_family, key=lambda k: k[0])
-  print(np.array_split(length_family, 10))
+  lengths = sorted(lengths)
+  print([np.mean(l) for l in np.array_split(lengths, 10)])
 
 
 def number_in_rank(metadata, key):
@@ -87,11 +88,16 @@ def order_analysis(vlmcs):
 
 
 if __name__ == '__main__':
-  tree_dir = '../trees_48'
+  tree_dir = '../trees_virus_martin_all_96'
+  # tree_dir = '../trees_more_192'
   parse_trees_to_json.parse_trees(tree_dir)
   vlmcs = VLMC.from_json_dir(tree_dir)
   metadata = get_metadata_for([vlmc.name for vlmc in vlmcs])
-  vlmcs = [v for v in vlmcs if metadata[v.name]['organism'] == 'virus']
-  metadata = {k: v for k, v in metadata.items() if v['organism'] == 'virus'}
-  # number_in_ranks(metadata)
-  order_analysis(vlmcs)
+  # vlmcs = [v for v in vlmcs if metadata[v.name]['genus'] == 'Ebolavirus']
+  # metadata = {k: v for k, v in metadata.items() if v['genus'] == 'Ebolavirus'}
+  # vlmcs = {metadata[v.name]['species']: v for v in vlmcs}
+  # vlmcs = [v for _, v in vlmcs.items()]
+  metadata = get_metadata_for([vlmc.name for vlmc in vlmcs])
+
+  number_in_ranks(metadata)
+  # order_analysis(vlmcs)
