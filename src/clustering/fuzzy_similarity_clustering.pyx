@@ -17,29 +17,31 @@ from average_link_clustering cimport AverageLinkClustering
 from graph_based_clustering cimport GraphBasedClustering
 
 
-cdef class FuzzySimilarityClustering(MSTClustering):
+cdef class FuzzySimilarityClustering(AverageLinkClustering):
   """
     Clusters the the vlmcs based on the fuzzy similarity measure.
   """
 
-  cdef np.ndarray[FLOATTYPE_t, ndim=2] _calculate_distances(self):
-    cdef np.ndarray[FLOATTYPE_t, ndim=2] distances = GraphBasedClustering._calculate_distances(self)
-    cdef np.ndarray[FLOATTYPE_t, ndim=2] sorted_distances = distances[distances[:,2].argsort()]
+  cdef np.ndarray[FLOATTYPE_t, ndim = 2] _calculate_distances(self):
+    cdef np.ndarray[FLOATTYPE_t, ndim = 2] distances = GraphBasedClustering._calculate_distances(self)
+    cdef np.ndarray[FLOATTYPE_t, ndim = 2] sorted_distances = distances[distances[:, 2].argsort()]
 
-    k = 3
-    rmax = 5
-    alpha = 0.1
-    cdef np.ndarray[FLOATTYPE_t, ndim=2] fuzzy_similarity_measures = \
-      self._calculate_fuzzy_similarity_measures(sorted_distances, k, rmax, alpha)
+    k = 5
+    rmax = 10
+    alpha = 0.001
+    cdef np.ndarray[FLOATTYPE_t, ndim = 2] fuzzy_similarity_measures = \
+        self._calculate_fuzzy_similarity_measures(sorted_distances, k, rmax, alpha)
 
-    cdef np.ndarray[FLOATTYPE_t, ndim=2] fuzzy_similarity_measures_extended = \
-      self._extend_format(fuzzy_similarity_measures)
+    self.indexed_distances = fuzzy_similarity_measures
+
+    cdef np.ndarray[FLOATTYPE_t, ndim = 2] fuzzy_similarity_measures_extended = \
+        self._extend_format(fuzzy_similarity_measures)
 
     return fuzzy_similarity_measures_extended
 
-  cdef np.ndarray[FLOATTYPE_t, ndim=2] _extend_format(self, fuzzy_similarity_measures):
+  cdef np.ndarray[FLOATTYPE_t, ndim = 2] _extend_format(self, fuzzy_similarity_measures):
     cdef int num_vlmcs = len(self.vlmcs)
-    cdef np.ndarray[FLOATTYPE_t, ndim=2] fuzzy_measure = np.zeros([fuzzy_similarity_measures.size, 3], dtype=FLOATTYPE)
+    cdef np.ndarray[FLOATTYPE_t, ndim = 2] fuzzy_measure = np.zeros([fuzzy_similarity_measures.size, 3], dtype=FLOATTYPE)
     cdef int i, j
     for i in range(len(self.vlmcs)):
       for j in range(len(self.vlmcs)):
@@ -50,13 +52,13 @@ cdef class FuzzySimilarityClustering(MSTClustering):
 
     return fuzzy_measure
 
-  cdef np.ndarray[FLOATTYPE_t, ndim=2] _calculate_fuzzy_similarity_measures(self, distances, k, rmax, alpha):
-    cdef np.ndarray[FLOATTYPE_t, ndim=2] fuzzy_similarity_measures = np.zeros([len(self.vlmcs), len(self.vlmcs)], dtype=FLOATTYPE)
+  cdef np.ndarray[FLOATTYPE_t, ndim = 2] _calculate_fuzzy_similarity_measures(self, distances, k, rmax, alpha):
+    cdef np.ndarray[FLOATTYPE_t, ndim = 2] fuzzy_similarity_measures = np.zeros([len(self.vlmcs), len(self.vlmcs)], dtype=FLOATTYPE)
     for r in range(1, rmax + 1):
       for i, left in enumerate(self.vlmcs):
         for j, right in enumerate(self.vlmcs):
           fuzzy_similarity_measures[i, j] = (1 - alpha) * fuzzy_similarity_measures[i, j] + \
-            alpha * self._fuzzy_similarity(i, j, k, r, distances)
+              alpha * self._fuzzy_similarity(i, j, k, r, distances)
 
     return fuzzy_similarity_measures
 
@@ -71,6 +73,6 @@ cdef class FuzzySimilarityClustering(MSTClustering):
     return - shared_neighbours.size / denominator
 
   cdef np.ndarray _k_nearest_neighbours(self, i, k, distances):
-    neighbour_idx = np.where( distances[:, 0] == i )
+    neighbour_idx = np.where(distances[:, 0] == i)
     neighbours = distances[neighbour_idx]
     return neighbours[0:k]
