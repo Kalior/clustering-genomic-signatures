@@ -36,7 +36,7 @@ def normalise_metrics(metrics, vlmcs):
   else:
     metrics["total_average_distance_to_genus"] /= (len(vlmcs) * metrics["total_average_distance"])
     metrics["total_average_distance_to_family"] /= (len(vlmcs) * metrics["total_average_distance"])
-  metrics["total_average_distance"] = 1
+  # metrics["total_average_distance"] = 1
 
   return metrics
 

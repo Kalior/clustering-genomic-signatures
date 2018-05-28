@@ -132,20 +132,22 @@ def plot_gc_box(all_gc_differences, number_of_bins, out_dir):
   gc_binned = all_gc_differences.T.reshape(-1)
   gc_binned = np.array_split(gc_binned, number_of_bins, axis=0)
 
-  fig, ax = plt.subplots(1, figsize=(80, 20), dpi=80)
+  fig, ax = plt.subplots(1, figsize=(60, 20), dpi=80)
   boxplot(ax, gc_binned, "GC-difference")
 
   out_file = os.path.join(out_dir, "box-gc.pdf")
+  plt.tight_layout()
   fig.savefig(out_file, dpi='figure', format='pdf')
 
 
 def plot_cummlative_box(all_meta_orders, number_of_bins, meta_name, out_dir):
   meta_binned = bin_cummulative(all_meta_orders, number_of_bins)
 
-  fig, ax = plt.subplots(1, figsize=(80, 20), dpi=80)
-  boxplot(ax, meta_binned, "Cummulative percent of {} captured".format(meta_name), (0, 1.1))
+  fig, ax = plt.subplots(1, figsize=(60, 20), dpi=80)
+  boxplot(ax, meta_binned, "Cummulative percent of {} captured".format(meta_name), (-0.1, 1.1))
 
   out_file = os.path.join(out_dir, "box-{}.pdf".format(meta_name))
+  plt.tight_layout()
   fig.savefig(out_file, dpi='figure', format='pdf')
 
 

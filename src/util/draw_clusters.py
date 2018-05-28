@@ -169,6 +169,7 @@ def plot_counts(connected_component, metadata, clusters, meta_key, index, out_di
   out_file = os.path.join(out_dir, name)
 
   plt.savefig(out_file, bbox_inches='tight', dpi='figure', format='pdf')
+  plt.close()
 
   meta_str = "\\\\ ".join(["{}: {}".format(k, v) for k, v in meta])
 
