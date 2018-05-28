@@ -1,15 +1,16 @@
 #! /usr/bin/python3.6
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+from matplotlib.lines import Line2D
 import numpy as np
 import os
 import argparse
 
-label_size = 20 * 2
+label_size = 20 * 3
 mpl.rcParams['xtick.labelsize'] = label_size
 mpl.rcParams['ytick.labelsize'] = label_size
 mpl.rcParams['axes.axisbelow'] = True
-mpl.rcParams['font.size'] = 24 * 2
+mpl.rcParams['font.size'] = 24 * 3
 
 from vlmc import VLMC
 from distance import FrobeniusNorm, PSTMatching, NegativeLogLikelihood, ACGTContent
@@ -23,7 +24,7 @@ from test_distance_function import parse_distance_method, add_distance_arguments
 def test_clustering(d, vlmcs, cluster_class):
   metadata = get_metadata_for([vlmc.name for vlmc in vlmcs])
 
-  metrics = np.zeros([len(vlmcs), 6], dtype=np.float32)
+  metrics = np.zeros([len(vlmcs), 7], dtype=np.float32)
 
   clustering = cluster_class(vlmcs, d, metadata)
   for i in range(len(vlmcs) - 1, 0, -1):
@@ -37,6 +38,7 @@ def test_clustering(d, vlmcs, cluster_class):
     fam_sensitivity, fam_specificity = clustering_metrics.sensitivity_specificity('family')
     metrics[i, 4] = fam_sensitivity
     metrics[i, 5] = fam_specificity
+    metrics[i, 6] = clustering_metrics.get_latest_merge_distance()
 
   return metrics
 
@@ -44,7 +46,7 @@ def test_clustering(d, vlmcs, cluster_class):
 def plot_metrics(metrics, out_directory, name):
   fig, ax = plt.subplots(1, sharex='col', figsize=(30, 20), dpi=80)
   ax.set_title(
-      'Metrics with increasing number of clusters, {}'.format(name))
+      '{}'.format(name))
 
   xticks_step = (len(metrics) // 20) + 1
   xtick_locs = np.arange(0, len(metrics), xticks_step)
@@ -59,7 +61,14 @@ def plot_metrics(metrics, out_directory, name):
   ax.set_ylabel('Average of metric')
   ax.grid(color='#cccccc', linestyle='--', linewidth=1)
 
-  handles = ax.plot(metrics[1:], markersize=5, marker='o')
+  linestyles = ['-', '--', '-.', ':', '--', '-.', ':']
+  linewidths = [4, 4, 4, 4, 7, 7, 7]
+  colors = ['#e53935', '#8E24AA', '#3949AB', '#039BE5',
+            '#00897B', '#7CB342', '#546E7A', '#FB8C00', '#6D4C41']
+
+  for i in range(metrics.shape[1]):
+    ax.plot(metrics[1:, i], markersize=0, marker=None, color=colors[i],
+            linestyle=linestyles[i], linewidth=linewidths[i])
 
   labels = ['Silhouette',
             'Percent of organism',
@@ -67,14 +76,23 @@ def plot_metrics(metrics, out_directory, name):
             'Percent of genus',
             'Sensitivity of family',
             'Specificity of family',
+            'Distance between merged clusters'
             ]
 
-  ax.legend(handles=handles, labels=labels, fontsize=30, markerscale=3)
+  legend_markers = [legend_marker(labels[i], linestyles[i], colors[i], linewidths[i])
+                    for i in range(metrics.shape[1])]
+
+  ax.legend(handles=legend_markers, fontsize=30, markerscale=0, loc=4)
 
   out_file = os.path.join(
       out_directory, '{}.pdf'.format(name))
   plt.savefig(out_file, dpi='figure', format='pdf')
   plt.close(fig)
+
+
+def legend_marker(label, linestyle, color, linewidth):
+  return Line2D([0], [0], marker=None, linestyle=linestyle, linewidth=linewidth,
+                markerfacecolor=color, color=color, label=label)
 
 
 def test(args):
