@@ -9,13 +9,14 @@ import subprocess
 import sys
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+from matplotlib.lines import Line2D
 
 if __name__ == '__main__':
-  label_size = 20 * 2
+  label_size = 20 * 3
   mpl.rcParams['xtick.labelsize'] = label_size
   mpl.rcParams['ytick.labelsize'] = label_size
   mpl.rcParams['axes.axisbelow'] = True
-  mpl.rcParams['font.size'] = 24 * 2
+  mpl.rcParams['font.size'] = 24 * 3
 
 
 metrics_used = ["average_procent_of_genus_in_top", "average_procent_of_family_in_top",
@@ -142,16 +143,27 @@ def plot_vlmc_metrics(all_parameters_to_test, parameters, file_of_vlmc_names,
       metrics_data_vlmc[get_pretty_name(key)][datum_index] = metrics[key]
 
   param_fig, param_ax = plt.subplots(1, figsize=(30, 20), dpi=80)
-  for k, v in metrics_data_vlmc.items():
-    param_ax.semilogx(all_parameters_to_test, v, label=k, markersize=5, marker='o')
 
+  linestyles = ['-', '--', '-.', ':', '--']
+  linewidths = [4, 4, 4, 4, 7]
+  colors = ['#e53935', '#8E24AA', '#3949AB', '#039BE5', '#00897B']
+  labels = []
+
+  for i, (k, v) in enumerate(metrics_data_vlmc.items()):
+    labels.append(k)
+    param_ax.semilogx(all_parameters_to_test, v, label=k, markersize=0, marker=None,
+                      color=colors[i], linewidth=linewidths[i], linestyle=linestyles[i])
+
+  legend_markers = [legend_marker(labels[i], linestyles[i], colors[i], linewidths[i])
+                    for i in range(len(metrics_data_vlmc.items()))]
+
+  param_ax.legend(handles=legend_markers, fontsize=30, markerscale=0, loc=2)
   param_ax.set_ylim(0, 1.1)
-  param_ax.legend(fontsize=24, loc=2, markerscale=3)
   param_ax.grid(color='#cccccc', linestyle='--', linewidth=1)
 
-  out_file_vlmc = os.path.join(image_directory, 'vlmc-metrics-large-increasing-parameters.pdf')
+  out_file_vlmc = os.path.join(image_directory, 'vlmc-metrics-increasing-parameters.pdf')
   plt.savefig(out_file_vlmc, bbox_inches='tight', dpi='figure', format='pdf')
-  plt.show()
+  plt.close()
 
 
 def plot_mc_metrics(k_values, parameters, file_of_vlmc_names,
@@ -173,26 +185,41 @@ def plot_mc_metrics(k_values, parameters, file_of_vlmc_names,
     for key in metrics_used:
       metrics_data_markov_chain[get_pretty_name(key)][datum_index] = metrics[key]
 
+  linestyles = ['-', '--', '-.', ':', '--']
+  linewidths = [4, 4, 4, 4, 7]
+  colors = ['#e53935', '#8E24AA', '#3949AB', '#039BE5', '#00897B']
+  labels = []
+
   markov_fig, markov_ax = plt.subplots(1, figsize=(30, 20), dpi=80)
-  for k, v in metrics_data_markov_chain.items():
+  for i, (k, v) in enumerate(metrics_data_markov_chain.items()):
+    labels.append(k)
     x_values = 3 * np.power(4 * np.ones(nbr_data_points), np.array(k_values))
-    markov_ax.semilogx(x_values, v, label=k, markersize=5, marker='o')
+    markov_ax.semilogx(x_values, v, label=k, markersize=0, marker=None,
+                       color=colors[i], linewidth=linewidths[i], linestyle=linestyles[i])
+
+  legend_markers = [legend_marker(labels[i], linestyles[i], colors[i], linewidths[i])
+                    for i in range(len(metrics_data_markov_chain.items()))]
+
+  markov_ax.legend(handles=legend_markers, fontsize=30, markerscale=0, loc=2)
 
   markov_ax.set_ylim(0, 1.1)
   markov_ax.grid(color='#cccccc', linestyle='--', linewidth=1)
-  markov_ax.legend(fontsize=24, loc=2, markerscale=3)
 
-  out_file_markov = os.path.join(image_directory, 'markov-metrics-large-increasing-parameters.pdf')
+  out_file_markov = os.path.join(image_directory, 'markov-metrics-increasing-parameters.pdf')
   plt.savefig(out_file_markov, bbox_inches='tight', dpi='figure', format='pdf')
-  plt.show()
+  plt.close()
 
+
+def legend_marker(label, linestyle, color, linewidth):
+  return Line2D([0], [0], marker=None, linestyle=linestyle, linewidth=linewidth,
+                markerfacecolor=color, color=color, label=label)
 
 if __name__ == '__main__':
-  k_values = [2, 3]
+  k_values = [2, 3, 4, 5, 6, 7, 8]
   min_param = 100
   max_param = 1000
   step_size = 100
-  directory_trained_models = '../lib/trained_large_models'
+  directory_trained_models = '../lib/trainedmodels'
   main(min_param=min_param, max_param=max_param, step_size=step_size,
        k_values=k_values, directory_trained_models=directory_trained_models,
        use_small_data_set=True)
