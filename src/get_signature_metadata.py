@@ -78,7 +78,7 @@ def _find_hosts(file, species, host_class=False):
   with open(file) as f:
     rd = csv.reader(f, delimiter="\t", quotechar='"')
     for row in rd:
-      match = matches(species, row)
+      match = _matches(species, row)
       if not match is None:
 
         if host_class:
@@ -105,7 +105,7 @@ def _find_hosts(file, species, host_class=False):
   return hosts
 
 
-def matches(species, row):
+def _matches(species, row):
   row_species = row[1]
   for spc in species:
     if spc in row_species:
