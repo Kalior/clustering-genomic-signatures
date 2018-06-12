@@ -127,7 +127,7 @@ def parse_distance_method(args):
   elif args.frobenius_norm:
     print("Testing distance as frobenius norm, with union: {}".format(args.use_union))
     return FrobeniusNorm(args.use_union)
-  elif args.kmeans:
+  elif "kmeans" in args and args.kmeans:
     return Projection()
   elif args.pst_matching:
     print("Testing distance with PST matching")
