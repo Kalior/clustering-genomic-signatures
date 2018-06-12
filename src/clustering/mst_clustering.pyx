@@ -72,7 +72,7 @@ cdef class MSTClustering(GraphBasedClustering):
 
     return smallest_distance_index, [left, right, dist]
 
-  cdef dict _merge_clusters(self, left, right):
+  cdef void _merge_clusters(self, left, right):
     # Save this value as it may get overwritten during the for-loop below.
     rename_cluster = self.clustering[int(left)]
 

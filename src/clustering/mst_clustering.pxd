@@ -11,8 +11,6 @@ cdef class MSTClustering(GraphBasedClustering):
 
   cdef dict clustering
 
-  cdef void _initialise_clusters(self)
   cdef void _cluster(self, num_clusters, distances)
   cdef void _create_mst(self, sorted_distances, connections_to_make)
   cdef tuple _find_smallest_unconnected_edge(self, sorted_distances, smallest_distance_index)
-  cdef dict _merge_clusters(self, left, right)

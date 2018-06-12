@@ -19,7 +19,13 @@ cdef class GraphBasedClustering:
 
   cpdef object cluster(self, clusters)
 
+  cdef void _initialise_clusters(self)
+
   cdef void _cluster(self, num_clusters, distances)
+
+  cdef tuple _find_min_edge(self)
+
+  cdef void _merge_clusters(self, left, right)
 
   cdef void _make_fully_connected_components(self)
 

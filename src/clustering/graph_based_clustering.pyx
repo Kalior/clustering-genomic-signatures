@@ -33,6 +33,9 @@ cdef class GraphBasedClustering:
     self.G = nx.Graph()
     self.G.add_nodes_from(self.vlmcs)
 
+  cdef void _initialise_clusters(self):
+    return
+
   cpdef object cluster(self, clusters):
     if clusters > self.created_clusters:
       self.G = nx.Graph()
@@ -62,11 +65,39 @@ cdef class GraphBasedClustering:
     return self.indexed_distances[v1_idx, v2_idx]
 
   cdef void _cluster(self, num_clusters, distances):
-    for (left, right, dist) in distances:
-      self.G.add_edge(self.vlmcs[int(left)], self.vlmcs[int(right)], weight=dist)
+    start_time = time.time()
 
-  cdef np.ndarray[FLOATTYPE_t, ndim=2] _calculate_distances(self):
-    cdef np.ndarray[FLOATTYPE_t, ndim=2] distances = calculate_distances_within_vlmcs(self.vlmcs, self.d)
+    if self.created_clusters < num_clusters:
+      self._initialise_clusters()
+      connections_to_make = len(self.vlmcs) - num_clusters
+    else:
+      connections_to_make = self.created_clusters - num_clusters
+
+    for i in range(connections_to_make):
+      left, right, distance = self._find_min_edge()
+      # If there are no more edges to add...
+      if (-1,) in [left, right]:
+        break
+
+      self.merge_distances.append(distance)
+
+      self.G.add_edge(self.vlmcs[left[0]], self.vlmcs[right[0]],
+                      weight=self.indexed_distances[left[0], right[0]])
+      self._merge_clusters(left, right)
+
+    cluster_time = time.time() - start_time
+    print("Cluster time: {} s".format(cluster_time))
+
+  cdef tuple _find_min_edge(self):
+    [left, right, distance] = np.random.choice(self.distances)
+    return ((left,), (right,), distance)
+
+  cdef void _merge_clusters(self, left, right):
+    return
+
+  cdef np.ndarray[FLOATTYPE_t, ndim = 2] _calculate_distances(self):
+    cdef np.ndarray[FLOATTYPE_t, ndim = 2] distances = calculate_distances_within_vlmcs(self.vlmcs, self.d)
+    # cdef np.ndarray[FLOATTYPE_t, ndim = 2] distances = np.load("kl_cluster_distances.npy")
     cdef int left_i = -1
     cdef int right_i = -1
     cdef FLOATTYPE_t dist = -1.0
@@ -80,4 +111,3 @@ cdef class GraphBasedClustering:
     np.save(self.file_name, distances)
 
     return distances
-

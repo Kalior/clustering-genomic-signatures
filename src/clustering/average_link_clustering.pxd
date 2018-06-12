@@ -10,9 +10,6 @@ cdef class AverageLinkClustering(GraphBasedClustering):
   cdef dict cluster_heaps
   cdef dict clustering
 
-  cdef void _initialise_clusters(self)
-  cdef tuple _find_min_edge(self)
-  cdef void _merge_clusters(self, left, right)
   cdef void _merge_clusters_(self, large_cluster, small_cluster)
   cdef void _merge_weights(self, left, right, left_size, right_size, new_cluster_key)
   cdef double _new_dist(self, left_size, left_dist, right_size, right_dist)
