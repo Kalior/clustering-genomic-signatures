@@ -6,3 +6,4 @@ from .fuzzy_similarity_clustering import FuzzySimilarityClustering
 from .clustering_metrics import ClusteringMetrics
 from .dendrogram import DendrogramClustering
 from .from_vsearch import FromVsearch
+from .neighbour_joining import NeighbourJoining

@@ -63,6 +63,9 @@ def parse_clustering_method(args):
   elif args.dendrogram:
     print("Clustering to dendrogram with the help of scipy")
     return DendrogramClustering
+  elif args.neighbour_joining:
+    print("Clustering with neighbour joining")
+    return NeighbourJoining
   else:
     print("Clustering with min single linkage")
     return AverageLinkClustering
@@ -87,6 +90,7 @@ def add_clustering_arguments(parser):
   parser.add_argument('--fuzzy-similarity-clustering', action='store_true')
   parser.add_argument('--kmeans', action='store_true')
   parser.add_argument('--dendrogram', action='store_true')
+  parser.add_argument('--neighbour-joining', action='store_true')
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(

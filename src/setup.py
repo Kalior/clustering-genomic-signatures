@@ -11,7 +11,8 @@ files = ['vlmc/vlmc.pyx', 'distance/naive_parameter_sampling.pyx', 'distance/neg
          'clustering/average_link_clustering.pyx',
          'clustering/k_means.pyx', 'clustering/util.pyx',
          'clustering/fuzzy_similarity_clustering.pyx',
-         'clustering/dendrogram.pyx']
+         'clustering/dendrogram.pyx',
+         'clustering/neighbour_joining.pyx']
 
 setup(
     name='A variable length markov chain model, with accompanying distance functions.',
